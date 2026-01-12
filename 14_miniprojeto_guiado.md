@@ -382,6 +382,71 @@ const feitas = tarefas.filter((t) => t.feita).length;
 const porFazer = tarefas.length - feitas;
 ```
 
+### EXTRA: persistência com localStorage
+
+```jsx
+import { useEffect } from "react";
+
+// Ao montar, tenta ler tarefas guardadas
+useEffect(() => {
+    const guardadas = localStorage.getItem("tarefas");
+    if (guardadas) {
+        setTarefas(JSON.parse(guardadas));
+    }
+}, []);
+
+// Sempre que tarefas mudam, guarda no browser
+useEffect(() => {
+    localStorage.setItem("tarefas", JSON.stringify(tarefas));
+}, [tarefas]);
+```
+
+> **Nota:** `localStorage` guarda texto, por isso usamos `JSON.stringify` e `JSON.parse`.
+
+### Milestones fullstack (opcionais)
+
+> Estas milestones preparam a transição para backend real. Faz por ordem.
+
+#### Milestone A: Paginação + filtros (query params)
+
+-   **Backend:** cria `GET /api/tarefas?page=&limit=&q=&sort=` e devolve `{ items, page, limit, total }`.
+-   **Frontend:** lê query params e mostra botões de paginação.
+-   **Definition of Done:**
+    -   A lista muda ao trocar de página.
+    -   A URL reflete `page` e `q`.
+    -   O backend devolve `total` correto.
+
+#### Milestone B: Contrato de erro e estados de UI
+
+-   **Backend:** erros no formato `{ "error": { "code", "message", "details" } }`.
+-   **Frontend:** normaliza erros e mostra mensagens úteis.
+-   **Definition of Done:**
+    -   Erros de validação mostram uma mensagem específica.
+    -   Existe estado de `loading`, `erro` e `sucesso` bem visível.
+    -   Não existem `alert` como solução final.
+
+#### Milestone C (opcional): Autenticação
+
+-   **Integração:** segue `16_autenticacao_em_spa_jwt_sessions_cookies.md`.
+-   **Definition of Done:**
+    -   Login cria sessão (ou token) e `me()` confirma o utilizador.
+    -   Rotas protegidas funcionam com `ProtectedRoute`.
+    -   Logout limpa o estado e bloqueia páginas privadas.
+
+#### Milestone D (opcional): Upload
+
+-   **Integração:** segue `17_upload_paginacao_filtros_e_cliente_api.md`.
+-   **Definition of Done:**
+    -   Upload envia `multipart/form-data` e o backend guarda o ficheiro.
+    -   A UI mostra `loading` e erro no upload.
+    -   O utilizador vê feedback do sucesso.
+
+### Checkpoint
+
+-   Qual é o objetivo principal da Milestone A?
+-   Que formato de erro deve ser devolvido no backend?
+-   Quando é que faz sentido começar a Milestone C?
+
 ### Boas práticas
 
 -   Não guardes contadores no estado, calcula a partir das tarefas.
@@ -412,3 +477,5 @@ const porFazer = tarefas.length - feitas;
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: transformação em mini-projeto React puro e tutorial detalhado.
 -   2026-01-12: checkpoints por secção e checklist de validação.
+-   2026-01-12: exemplo extra de persistência com `localStorage`.
+-   2026-01-12: milestones fullstack opcionais com Definition of Done.

@@ -160,6 +160,7 @@ Diferença rápida:
 
 -   **`Link`** muda a URL sem recarregar.
 -   **`NavLink`** faz o mesmo, mas também permite estilizar o link ativo.
+-   **`useNavigate`** é para navegar por código (ex.: depois de um submit).
 
 ### Sintaxe base (passo a passo)
 
@@ -234,6 +235,11 @@ export default App;
 -   Usa `NavLink` quando precisares de mostrar a página ativa.
 -   Centraliza o menu num componente `Nav` se ficar grande.
 
+### Resumo rápido: Link vs useNavigate
+
+-   **`Link`/`NavLink`:** navegação declarativa (cliques normais).
+-   **`useNavigate`:** navegação programática (depois de ações).
+
 ### Checkpoint
 
 -   Qual é a diferença prática entre `<a>` e `<Link>`?
@@ -282,6 +288,67 @@ function App() {
 export default App;
 ```
 
+### Layout Route com `<Outlet />`
+
+```jsx
+// src/pages/Layout.jsx
+import { Outlet, NavLink } from "react-router-dom";
+
+function Layout() {
+    return (
+        <div>
+            <nav>
+                <NavLink to="/">Home</NavLink>
+                <NavLink to="/sobre">Sobre</NavLink>
+            </nav>
+            <Outlet />
+        </div>
+    );
+}
+
+export default Layout;
+```
+
+```jsx
+// src/App.jsx
+import { Routes, Route } from "react-router-dom";
+import Layout from "./pages/Layout.jsx";
+import Home from "./pages/Home.jsx";
+import Sobre from "./pages/Sobre.jsx";
+
+function App() {
+    return (
+        <Routes>
+            <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="sobre" element={<Sobre />} />
+            </Route>
+        </Routes>
+    );
+}
+
+export default App;
+```
+
+### Rota 404 (quando nada coincide)
+
+```jsx
+// src/App.jsx
+import { Routes, Route } from "react-router-dom";
+import NotFound from "./pages/NotFound.jsx";
+
+function App() {
+    return (
+        <Routes>
+            {/* Outras rotas acima */}
+            <Route path="*" element={<NotFound />} />
+        </Routes>
+    );
+}
+
+export default App;
+```
+
 ### Erros comuns
 
 -   Importar páginas com caminhos errados.
@@ -318,5 +385,6 @@ export default App;
 ## Changelog
 
 -   2026-01-11: criação do ficheiro.
+-   2026-01-12: resumo Link vs useNavigate, exemplo de layout e rota 404.
 -   2026-01-12: explicações detalhadas, exemplos extra e exercícios guiados.
 -   2026-01-12: explicação reforçada sobre o React Router e exercícios 1-6 mais guiados.

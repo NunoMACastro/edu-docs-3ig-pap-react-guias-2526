@@ -229,6 +229,12 @@ function Aviso({ ativo }) {
 
 Componentes funcionais são **funções que devolvem JSX**. Pensa neles como **peças de LEGO**: cada peça faz uma parte da interface e depois juntas tudo no `App`.
 
+### Mini-seção: render = chamar a função
+
+-   **Componente é função:** `function Card() { return <div />; }`
+-   **Render é chamar a função:** o React chama o componente para obter o JSX.
+-   **Re-render é chamar de novo:** quando o estado/props mudam, o React volta a chamar a função e recalcula o JSX.
+
 Para usares um componente noutro ficheiro, tens de o **exportar** no ficheiro onde foi criado e **importar** onde o queres usar.
 
 ### Sintaxe base (passo a passo)
@@ -449,3 +455,4 @@ export default App;
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: detalhe extra nas secções 3 e 4 e exemplos adicionais.
 -   2026-01-12: exercícios iniciais reescritos em formato passo a passo.
+-   2026-01-12: mini-seção sobre render e re-render em componentes funcionais.

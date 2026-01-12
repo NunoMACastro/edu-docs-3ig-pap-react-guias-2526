@@ -3,7 +3,7 @@
 > **Objetivo deste ficheiro**
 > Entender a ligação entre frontend React e backend Node.js.
 > Criar uma API simples com Express e consumir dados com fetch.
-> Tratar loading, erro e problemas de CORS.
+> Tratar loading, erro e problemas de CORS com contratos consistentes.
 
 ---
 
@@ -11,10 +11,11 @@
 
 -   [0. Como usar este ficheiro](#sec-0)
 -   [1. [ESSENCIAL] Modelo cliente-servidor](#sec-1)
--   [2. [ESSENCIAL] Criar uma API simples em Node.js](#sec-2)
--   [3. [ESSENCIAL] Consumir a API no React](#sec-3)
--   [4. [ESSENCIAL] CORS e erros comuns](#sec-4)
--   [5. [EXTRA] Proxy no Vite e variáveis de ambiente](#sec-5)
+-   [2. [ESSENCIAL] Contrato de API (o que vai e vem)](#sec-2)
+-   [3. [ESSENCIAL] Criar uma API simples em Node.js](#sec-3)
+-   [4. [ESSENCIAL] Consumir a API no React (GET + POST)](#sec-4)
+-   [5. [ESSENCIAL] CORS e erros comuns](#sec-5)
+-   [6. [EXTRA] Proxy no Vite e variáveis de ambiente](#sec-6)
 -   [Exercícios - Consumo de API com backend Node.js](#exercicios)
 -   [Changelog](#changelog)
 
@@ -24,7 +25,10 @@
 
 -   **ESSENCIAL vs EXTRA:** cria a API e faz o fetch antes de usar proxy.
 -   **Como estudar:** corre o backend e o frontend em terminais diferentes.
--   **Ligações:** revê `08_useEffect_e_dados.md` para o fetch com `useEffect`.
+-   **Ligações úteis:**
+    -   HTTP/CORS e contratos: `15_http_rest_cors_e_contratos_api.md`
+    -   Autenticação: `16_autenticacao_em_spa_jwt_sessions_cookies.md`
+    -   Upload/paginação/filtros: `17_upload_paginacao_filtros_e_cliente_api.md`
 
 <a id="sec-1"></a>
 
@@ -52,13 +56,6 @@ Termos importantes (simples):
 | **Porta**     | Número que identifica o serviço (ex.: 3000)    |
 | **localhost** | O teu computador a fazer de servidor           |
 
-Métodos HTTP mais usados (começa por estes dois):
-
--   **GET:** pedir dados (ler).
--   **POST:** enviar dados para criar algo novo.
-
-> **Nota:** cada resposta tem um código (ex.: 200 = OK, 404 = não encontrado).
-
 ### Sintaxe base (passo a passo)
 
 -   **O backend expõe endpoints:** `/api/alunos`, `/api/cursos`, etc.
@@ -66,25 +63,6 @@ Métodos HTTP mais usados (começa por estes dois):
 -   **A resposta vem em JSON:** e tens de a converter com `res.json()`.
 -   **Cada serviço tem uma porta:** ex.: backend `3000`, frontend `5173`.
 -   **O caminho completo inclui protocolo + host + porta:** `http://localhost:3000/api/alunos`.
-
-### Exemplo
-
-```text
-# Fluxo básico de dados
-# 1) React faz um pedido HTTP
-# 2) Node.js responde com JSON
-# 3) React mostra os dados na UI
-```
-
-```text
-# Exemplo de pedido e resposta (simplificado)
-# Pedido: GET http://localhost:3000/api/alunos
-# Resposta: 200 OK
-# [
-#   { "id": 1, "nome": "Ana", "curso": "Web" },
-#   { "id": 2, "nome": "Bruno", "curso": "Redes" }
-# ]
-```
 
 ### Erros comuns
 
@@ -105,16 +83,73 @@ Métodos HTTP mais usados (começa por estes dois):
 
 <a id="sec-2"></a>
 
-## 2. [ESSENCIAL] Criar uma API simples em Node.js
+## 2. [ESSENCIAL] Contrato de API (o que vai e vem)
 
 ### Modelo mental
 
-O Express cria um servidor HTTP rápido. Cada rota devolve dados em JSON.
+Contrato de API é o acordo entre frontend e backend: **o que envio, o que recebo, e como vêm os erros**. Se o contrato for consistente, o frontend é mais fácil de escrever e testar.
 
-Pensa no Express como um "porteiro" que recebe pedidos e decide o que devolver. Cada pedido chega com:
+### Formato de erro (padrão base)
 
--   **req (request):** o pedido do cliente.
--   **res (response):** a resposta que o servidor vai enviar.
+```json
+{ "error": { "code": "SOME_CODE", "message": "Mensagem", "details": [] } }
+```
+
+### Exemplo de contrato (alunos)
+
+```text
+GET /api/alunos
+200 OK
+[
+  { "id": 1, "nome": "Ana", "curso": "Web" },
+  { "id": 2, "nome": "Bruno", "curso": "Redes" }
+]
+```
+
+```text
+POST /api/alunos
+Body: { "nome": "Carla", "curso": "Web" }
+
+201 Created
+{ "id": 3, "nome": "Carla", "curso": "Web" }
+```
+
+```text
+POST /api/alunos (dados inválidos)
+422 Unprocessable Entity
+{ "error": { "code": "VALIDATION_ERROR", "message": "Nome e curso são obrigatórios", "details": [ ... ] } }
+```
+
+```text
+GET /api/alunos/999 (não existe)
+404 Not Found
+{ "error": { "code": "NOT_FOUND", "message": "Aluno não encontrado", "details": [] } }
+```
+
+### Erros comuns
+
+-   Não combinar o formato de erro com o frontend.
+-   Usar 200 em tudo e esconder erros reais.
+-   Enviar body vazio ou com campos errados.
+
+### Boas práticas
+
+-   Decide o contrato antes de começar o frontend.
+-   Mantém sempre o mesmo formato de erro.
+-   Usa status codes coerentes (200/201/404/422/500).
+
+### Checkpoint
+
+-   Porque é que um contrato consistente facilita o frontend?
+-   Que campos mínimos tem o erro padrão?
+
+<a id="sec-3"></a>
+
+## 3. [ESSENCIAL] Criar uma API simples em Node.js
+
+### Modelo mental
+
+O Express cria um servidor HTTP rápido. Cada rota devolve dados em JSON. Vamos manter um **array em memória** (simples) e responder com status code correto.
 
 ### Sintaxe base (passo a passo)
 
@@ -122,12 +157,13 @@ Pensa no Express como um "porteiro" que recebe pedidos e decide o que devolver. 
 -   **Inicializa um projeto Node:** `npm init -y`.
 -   **Instala dependências:** `express` e `cors`.
 -   **Cria `index.js`:** configura o servidor.
--   **Define uma rota `GET /api/alunos`.**
--   **Arranca o servidor com `node index.js`.**
+-   **Ativa `express.json()`** para ler JSON.
+-   **Configura CORS** com a origem do Vite.
+-   **Define rotas `GET` e `POST`** com erros padronizados.
 
 > **Nota sobre CommonJS vs ESM:** por omissão, o Node usa **CommonJS**, que escreve imports com `require(...)` e exports com `module.exports`. O formato **ESM** usa `import`/`export` e exige `"type": "module"` no `package.json` (ou ficheiros `.mjs`). Aqui usamos `require` para evitar configuração extra.
 
-### Exemplo
+### Exemplo (backend mínimo e correto)
 
 ```bash
 # Cria uma pasta para o backend
@@ -147,25 +183,66 @@ const cors = require("cors");
 const app = express();
 const PORT = 3000;
 
-// Permite pedidos do frontend (origem diferente)
-app.use(cors());
-// Permite receber JSON no corpo do pedido (útil em POST/PUT)
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+    })
+);
 app.use(express.json());
 
-// Dados simulados (podem vir de uma base de dados)
 const alunos = [
     { id: 1, nome: "Ana", curso: "Web" },
     { id: 2, nome: "Bruno", curso: "Redes" },
 ];
 
-// Rota que devolve JSON
+function sendError(res, status, code, message, details = []) {
+    return res.status(status).json({ error: { code, message, details } });
+}
+
 app.get("/api/alunos", (req, res) => {
-    // Envia a lista como resposta
-    res.json(alunos);
+    res.status(200).json(alunos);
+});
+
+app.get("/api/alunos/:id", (req, res) => {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) {
+        return sendError(res, 400, "INVALID_ID", "Id inválido");
+    }
+
+    const aluno = alunos.find((a) => a.id === id);
+    if (!aluno) {
+        return sendError(res, 404, "NOT_FOUND", "Aluno não encontrado");
+    }
+
+    res.status(200).json(aluno);
+});
+
+app.post("/api/alunos", (req, res) => {
+    const { nome, curso } = req.body || {};
+
+    if (!nome || !curso) {
+        return sendError(res, 422, "VALIDATION_ERROR", "Nome e curso são obrigatórios", [
+            { field: "nome", message: "Obrigatório" },
+            { field: "curso", message: "Obrigatório" },
+        ]);
+    }
+
+    const duplicado = alunos.some((a) => a.nome === nome);
+    if (duplicado) {
+        return sendError(res, 409, "ALUNO_DUPLICADO", "Já existe um aluno com este nome");
+    }
+
+    const novo = { id: Date.now(), nome, curso };
+    alunos.push(novo);
+    res.status(201).json(novo);
+});
+
+app.use((err, req, res, next) => {
+    console.error(err);
+    return sendError(res, 500, "SERVER_ERROR", "Erro inesperado");
 });
 
 app.listen(PORT, () => {
-    // Mensagem para confirmar que o servidor arrancou
     console.log(`Servidor a correr em http://localhost:${PORT}`);
 });
 ```
@@ -179,97 +256,150 @@ node index.js
 
 -   Esquecer o `cors` e bloquear pedidos do browser.
 -   Usar uma porta diferente sem atualizar o frontend.
--   Escrever a rota errada e receber 404.
+-   Devolver erros sem formato consistente.
 
 ### Boas práticas
 
 -   Mantém o backend num terminal separado.
--   Usa nomes de rotas claros e previsíveis.
--   Testa a rota no browser antes de ligar ao React.
+-   Usa status codes coerentes (200/201/400/404/422/500).
+-   Centraliza o formato de erro num helper (`sendError`).
 
 ### Checkpoint
 
--   Porque é que usamos `require` neste ficheiro?
--   O que muda se o projeto usar `"type": "module"`?
+-   Porque é que usamos `express.json()`?
+-   O que acontece quando envias um `id` inválido?
 
-<a id="sec-3"></a>
+<a id="sec-4"></a>
 
-## 3. [ESSENCIAL] Consumir a API no React
+## 4. [ESSENCIAL] Consumir a API no React (GET + POST)
 
 ### Modelo mental
 
-No React, fazes o pedido com `fetch` dentro do `useEffect`. Guardas o resultado no estado e mostras loading enquanto esperas.
-
-O `fetch` é **assíncrono**, ou seja, o React não fica parado à espera. Por isso precisamos de estados:
-
--   **loading:** para indicar que está a carregar.
--   **erro:** para mostrar uma mensagem se algo falhar.
--   **dados:** para mostrar a lista quando chegar.
-
-Quando o estado muda, o React volta a renderizar e atualiza o ecrã.
+No React, fazes pedidos com `fetch` dentro do `useEffect` e guardas o resultado no estado. No POST, envias JSON e atualizas a lista sem recarregar a página.
 
 ### Sintaxe base (passo a passo)
 
 -   **Cria os estados:** `dados`, `loading`, `erro`.
--   **No `useEffect`, faz o pedido:** usa `fetch`.
--   **Converte a resposta:** `await res.json()`.
--   **Atualiza os estados:** dados no sucesso, erro no `catch`.
--   **Desliga o loading no fim.**
+-   **Cria um helper `requestJson`:** para normalizar erros.
+-   **GET:** carrega dados ao montar.
+-   **POST:** envia JSON e atualiza a lista.
+-   **Mostra loading e erro:** sempre que fizer sentido.
 
-### Exemplo
+### Exemplo (frontend com contrato consistente)
+
+```jsx
+// src/services/api.js
+const API_BASE = "http://localhost:3000";
+
+async function requestJson(path, options = {}) {
+    const res = await fetch(`${API_BASE}${path}`, options);
+    const contentType = res.headers.get("content-type") || "";
+    const body = contentType.includes("application/json")
+        ? await res.json()
+        : null;
+
+    if (!res.ok) {
+        const msg =
+            body?.error?.message || `Erro ${res.status}: pedido falhou`;
+        const err = new Error(msg);
+        err.code = body?.error?.code;
+        err.details = body?.error?.details || [];
+        throw err;
+    }
+
+    return body;
+}
+
+export function getAlunos() {
+    return requestJson("/api/alunos");
+}
+
+export function createAluno(data) {
+    return requestJson("/api/alunos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
+}
+```
 
 ```jsx
 // src/pages/ListaAlunos.jsx
 import { useEffect, useState } from "react";
+import { createAluno, getAlunos } from "../services/api.js";
 
 function ListaAlunos() {
     const [alunos, setAlunos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState("");
+    const [nome, setNome] = useState("");
+    const [curso, setCurso] = useState("");
+    const [aEnviar, setAEnviar] = useState(false);
+
+    async function carregar() {
+        setLoading(true);
+        setErro("");
+        try {
+            const dados = await getAlunos();
+            setAlunos(dados);
+        } catch (e) {
+            setErro(e.message || "Falha ao carregar alunos");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function criarAluno(e) {
+        e.preventDefault();
+        setErro("");
+        setAEnviar(true);
+
+        try {
+            const novo = await createAluno({ nome, curso });
+            setAlunos((prev) => [...prev, novo]);
+            setNome("");
+            setCurso("");
+        } catch (e) {
+            setErro(e.message || "Falha ao criar aluno");
+        } finally {
+            setAEnviar(false);
+        }
+    }
 
     useEffect(() => {
-        // Função async para poder usar await
-        async function carregar() {
-            try {
-                // Faz o pedido ao backend Node
-                const res = await fetch("http://localhost:3000/api/alunos");
-                if (!res.ok) {
-                    // Se a resposta não for 2xx, tratamos como erro
-                    throw new Error("Resposta inválida");
-                }
-                // Converte JSON para objeto JS
-                const dados = await res.json();
-                // Guarda os dados recebidos
-                setAlunos(dados);
-            } catch (e) {
-                // Mensagem simples de erro
-                setErro("Falha ao carregar alunos");
-            } finally {
-                // Desativa o loading quando termina
-                setLoading(false);
-            }
-        }
-
         carregar();
     }, []);
 
-    if (loading) {
-        return <p>A carregar...</p>;
-    }
-
-    if (erro) {
-        return <p>{erro}</p>;
-    }
+    if (loading) return <p>A carregar...</p>;
 
     return (
-        <ul>
-            {alunos.map((aluno) => (
-                <li key={aluno.id}>
-                    {/* Mostra dados recebidos do backend */}
-                    {aluno.nome} - {aluno.curso}
-                </li>
-            ))}
-        </ul>
+        <div>
+            <form onSubmit={criarAluno}>
+                <input
+                    placeholder="Nome"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                />
+                <input
+                    placeholder="Curso"
+                    value={curso}
+                    onChange={(e) => setCurso(e.target.value)}
+                />
+                <button type="submit" disabled={aEnviar}>
+                    {aEnviar ? "A enviar..." : "Adicionar"}
+                </button>
+            </form>
+
+            {erro && <p>{erro}</p>}
+
+            <ul>
+                {alunos.map((aluno) => (
+                    <li key={aluno.id}>
+                        {aluno.nome} - {aluno.curso}
+                    </li>
+                ))}
+            </ul>
+        </div>
     );
 }
 
@@ -278,25 +408,24 @@ export default ListaAlunos;
 
 ### Erros comuns
 
--   Fazer o `fetch` fora do `useEffect` e repetir pedidos.
--   Esquecer o `key` na lista.
--   Não verificar `res.ok` e tentar ler JSON de erro.
--   Tentar usar `await` diretamente no `useEffect`.
+-   Não validar `res.ok` e assumir sucesso.
+-   Enviar body sem `Content-Type: application/json`.
+-   Mostrar erros pouco claros ao utilizador.
 
 ### Boas práticas
 
--   Mostra sempre loading, erro e sucesso.
--   Evita repetir pedidos sem necessidade.
--   Mantém a URL da API num só lugar (ex.: ficheiro `services`).
+-   Normaliza erros num helper (`requestJson`).
+-   Mostra mensagens úteis (não só "deu erro").
+-   Atualiza a lista depois do POST sem recarregar a página.
 
 ### Checkpoint
 
--   Porque é que o `fetch` deve ficar dentro de `useEffect`?
--   Para que servem os estados `loading` e `erro`?
+-   Para que serve o `requestJson`?
+-   Onde está o `Content-Type` no POST?
 
-<a id="sec-4"></a>
+<a id="sec-5"></a>
 
-## 4. [ESSENCIAL] CORS e erros comuns
+## 5. [ESSENCIAL] CORS e erros comuns
 
 ### Modelo mental
 
@@ -307,34 +436,13 @@ O browser bloqueia pedidos entre origens diferentes por segurança. Uma origem �
 
 Como as portas são diferentes, o browser considera origens diferentes. O `cors` no backend permite esses pedidos.
 
+> **Nota importante:** CORS **não** é uma barreira de segurança real. É uma regra do browser, não do servidor.
+
 ### Sintaxe base (passo a passo)
 
--   **Ativa o CORS no backend:** `app.use(cors())`.
+-   **Ativa o CORS no backend:** `app.use(cors({ origin: "http://localhost:5173" }))`.
 -   **Garante que o backend está a correr:** sem servidor, dá erro de rede.
 -   **Usa o URL correto no `fetch`:** com a porta certa.
--   **Opcional:** restringe a origem permitida.
-
-### Exemplo
-
-```js
-// backend/index.js
-const cors = require("cors");
-
-// Esta linha permite o browser aceitar pedidos do frontend
-app.use(cors());
-```
-
-```js
-// Exemplo com origem específica (mais seguro)
-app.use(
-    cors({
-        // Só aceita pedidos desta origem
-        origin: "http://localhost:5173",
-    })
-);
-```
-
-> **Aviso:** se vires erros de CORS no console do browser, confirma se o backend tem `cors` ativo e se o servidor está a correr.
 
 ### Erros comuns
 
@@ -344,17 +452,18 @@ app.use(
 
 ### Boas práticas
 
--   Testa a API no browser antes do React (ex: `http://localhost:3000/api/alunos`).
--   Se possível, limita as origens permitidas.
+-   Testa a API no browser antes do React.
+-   Restringe a origem permitida em desenvolvimento.
+-   Lembra-te: CORS não substitui autenticação nem autorização.
 
 ### Checkpoint
 
 -   Porque é que `http://localhost:5173` e `http://localhost:3000` são origens diferentes?
--   Qual é o papel do `cors` no backend?
+-   CORS é segurança real? Porquê?
 
-<a id="sec-5"></a>
+<a id="sec-6"></a>
 
-## 5. [EXTRA] Proxy no Vite e variáveis de ambiente
+## 6. [EXTRA] Proxy no Vite e variáveis de ambiente
 
 ### Modelo mental
 
@@ -399,12 +508,15 @@ VITE_API_BASE=http://localhost:3000
 
 ```jsx
 // src/services/api.js
-// Base URL vem de uma variável de ambiente
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 export function fetchAlunos() {
-    // Usa /api quando existe proxy configurado
-    return fetch(`${API_BASE}/api/alunos`).then((res) => res.json());
+    return fetch(`${API_BASE}/api/alunos`).then((res) => {
+        if (!res.ok) {
+            throw new Error("Resposta inválida");
+        }
+        return res.json();
+    });
 }
 ```
 
@@ -412,7 +524,7 @@ export function fetchAlunos() {
 
 -   Esquecer de reiniciar o Vite depois de mudar o config.
 -   Escrever `VITE_API_BASE` sem reiniciar o servidor do Vite.
--   Tentar guardar segredos no frontend (eles ficam públicos).
+-   Tentar guardar segredos num `.env` do frontend (eles ficam públicos).
 
 ### Boas práticas
 
@@ -429,16 +541,16 @@ export function fetchAlunos() {
 ## Exercícios - Consumo de API com backend Node.js
 
 1. Cria a pasta `backend`. Entra nela no terminal e executa `npm init -y`. Abre o `package.json` e confirma que foi criado.
-2. Ainda em `backend`, instala `express` e `cors` com `npm install express cors`. Confirma no `package.json` que as dependências aparecem.
-3. Cria `backend/index.js`. Importa `express` e `cors`, cria o `app`, define a porta e adiciona uma rota `GET /api/alunos` que devolve um array simples.
-4. Corre `node index.js`. Abre `http://localhost:3000/api/alunos` no browser e confirma que aparece JSON.
-5. No React, cria `ListaAlunos.jsx`. Adiciona estados `alunos`, `loading` e `erro`, e coloca o `fetch` dentro do `useEffect`.
-6. No `ListaAlunos`, mostra "A carregar..." enquanto `loading` for `true`. Depois mostra a lista quando os dados chegarem e garante que o `loading` é desligado.
-7. Mostra uma mensagem se ocorrer erro.
-8. Adiciona mais um campo ao JSON (ex: `turma`).
-9. Mostra o novo campo no React.
-10. Muda a porta do backend e atualiza o fetch.
-11. Configura um proxy no Vite para usar `/api`.
+2. Ainda em `backend`, instala `express` e `cors` com `npm install express cors`.
+3. Cria `backend/index.js` com as rotas `GET /api/alunos` e `POST /api/alunos` e o helper `sendError`.
+4. Testa `GET /api/alunos` no browser e confirma o JSON.
+5. Testa `POST /api/alunos` com dados válidos e confirma `201`.
+6. Testa `POST /api/alunos` com dados vazios e confirma `422` com o formato de erro.
+7. No React, cria `src/services/api.js` com o `requestJson` e funções `getAlunos` e `createAluno`.
+8. Cria `ListaAlunos.jsx` com GET no `useEffect` e um formulário POST.
+9. Mostra mensagens de erro com base em `error.message`.
+10. Altera a porta do backend e confirma que o frontend falha com uma mensagem útil.
+11. Configura proxy no Vite e volta a usar `/api` sem escrever o URL completo.
 
 <a id="changelog"></a>
 
@@ -447,3 +559,4 @@ export function fetchAlunos() {
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas e exercícios iniciais em formato guia.
 -   2026-01-12: nota CommonJS vs ESM, checkpoints e exercícios 1-6 mais guiados.
+-   2026-01-12: contrato de API, erros padronizados e exemplo GET + POST fullstack.

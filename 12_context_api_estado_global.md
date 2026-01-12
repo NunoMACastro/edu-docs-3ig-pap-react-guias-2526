@@ -4,6 +4,7 @@
 > Perceber o problema do prop drilling e como o Context ajuda.
 > Criar um contexto com `createContext` e consumir com `useContext`.
 > Partilhar estado global simples entre componentes.
+> Preparar um gancho base para autenticação.
 
 ---
 
@@ -13,7 +14,9 @@
 -   [1. [ESSENCIAL] O problema do prop drilling](#sec-1)
 -   [2. [ESSENCIAL] Criar Context e Provider](#sec-2)
 -   [3. [ESSENCIAL] Consumir contexto com useContext](#sec-3)
--   [4. [EXTRA] Separar contexto e hook personalizado](#sec-4)
+-   [4. [ESSENCIAL] Gancho para autenticação (AuthContext)](#sec-4)
+-   [5. [ESSENCIAL] Quando NÃO usar Context](#sec-5)
+-   [6. [EXTRA] Separar contexto e hook personalizado](#sec-6)
 -   [Exercícios - Context API e estado global](#exercicios)
 -   [Changelog](#changelog)
 
@@ -23,7 +26,7 @@
 
 -   **ESSENCIAL vs EXTRA:** cria o contexto e consome-o antes de refatorar.
 -   **Como estudar:** escolhe um exemplo simples, como tema claro/escuro.
--   **Ligações:** revê props em `03_props_e_composicao.md`.
+-   **Ligações:** revê props em `03_props_e_composicao.md`. Para autenticação completa, vê `16_autenticacao_em_spa_jwt_sessions_cookies.md`.
 
 <a id="sec-1"></a>
 
@@ -228,7 +231,110 @@ export default SwitchTema;
 
 <a id="sec-4"></a>
 
-## 4. [EXTRA] Separar contexto e hook personalizado
+## 4. [ESSENCIAL] Gancho para autenticação (AuthContext)
+
+### Modelo mental
+
+Autenticação é um caso típico de Context: muitos componentes precisam de saber se o utilizador está autenticado. Aqui fica um **gancho simples** (sem JWT) para preparares o ficheiro 16.
+
+### Exemplo (AuthContext + ProtectedRoute)
+
+```jsx
+// src/context/AuthContext.jsx
+import { createContext, useState } from "react";
+
+export const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+    const [user, setUser] = useState(null);
+    const isAuthenticated = Boolean(user);
+
+    async function login(email, password) {
+        // Aqui vais ligar ao backend mais tarde
+        setUser({ nome: "Ana", email });
+    }
+
+    function logout() {
+        setUser(null);
+    }
+
+    return (
+        <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+```
+
+```jsx
+// src/routes/ProtectedRoute.jsx
+import { useContext } from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext.jsx";
+
+function ProtectedRoute() {
+    const { isAuthenticated } = useContext(AuthContext);
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    return <Outlet />;
+}
+
+export default ProtectedRoute;
+```
+
+```jsx
+// src/App.jsx
+import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./routes/ProtectedRoute.jsx";
+import Login from "./pages/Login.jsx";
+import Perfil from "./pages/Perfil.jsx";
+
+function App() {
+    return (
+        <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedRoute />}>
+                <Route path="/perfil" element={<Perfil />} />
+            </Route>
+        </Routes>
+    );
+}
+
+export default App;
+```
+
+> **Nota:** o fluxo completo de login/logout está em `16_autenticacao_em_spa_jwt_sessions_cookies.md`.
+
+### Checkpoint
+
+-   Que estado guardas no `AuthContext`?
+-   Para que serve o `ProtectedRoute`?
+
+<a id="sec-5"></a>
+
+## 5. [ESSENCIAL] Quando NÃO usar Context
+
+### Modelo mental
+
+Context é útil, mas também pode criar re-renders em massa. Evita quando o estado é local ou muda a toda a hora.
+
+### Anti-patterns comuns
+
+-   Estado que só 1 ou 2 componentes usam.
+-   Valores que mudam muitas vezes (ex.: posição do rato, timers rápidos).
+-   Dados que podiam ser passados por props simples.
+
+### Boas práticas
+
+-   Mantém o estado local quando possível.
+-   Se precisares de partilhar, começa por props e só depois Context.
+
+### Checkpoint
+
+-   Dá um exemplo de estado que não deve ir para Context.
+
+<a id="sec-6"></a>
+
+## 6. [EXTRA] Separar contexto e hook personalizado
 
 ### Modelo mental
 
@@ -283,6 +389,40 @@ export default SwitchTema;
 -   Usa hooks personalizados para esconder detalhes.
 -   Mantém o hook simples e com um único objetivo.
 
+### EXTRA rápido: useReducer + Context (mini-exemplo)
+
+Quando o estado começa a crescer, `useReducer` ajuda a organizar ações.
+
+```jsx
+// src/context/ContadorContext.jsx
+import { createContext, useReducer } from "react";
+
+export const ContadorContext = createContext();
+
+const estadoInicial = { total: 0 };
+
+function reducer(state, action) {
+    switch (action.type) {
+        case "incrementar":
+            return { total: state.total + 1 };
+        case "reset":
+            return { total: 0 };
+        default:
+            return state;
+    }
+}
+
+export function ContadorProvider({ children }) {
+    const [state, dispatch] = useReducer(reducer, estadoInicial);
+
+    return (
+        <ContadorContext.Provider value={{ state, dispatch }}>
+            {children}
+        </ContadorContext.Provider>
+    );
+}
+```
+
 ### Checkpoint
 
 -   Qual é a vantagem de ter um hook personalizado para Context?
@@ -303,6 +443,8 @@ export default SwitchTema;
 9. Garante que o Provider está no topo.
 10. Cria um hook personalizado para o contexto.
 11. Explica quando faz sentido usar Context.
+12. Cria um `AuthContext` com `user` e `isAuthenticated`.
+13. Cria um `ProtectedRoute` que bloqueia uma página quando não estás autenticado.
 
 <a id="changelog"></a>
 
@@ -311,3 +453,5 @@ export default SwitchTema;
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas e exercícios iniciais em formato guia.
 -   2026-01-12: quando usar Context, impacto em re-renders e checkpoints por secção.
+-   2026-01-12: mini-exemplo de `useReducer` com Context.
+-   2026-01-12: gancho de autenticação, ProtectedRoute e anti-patterns.

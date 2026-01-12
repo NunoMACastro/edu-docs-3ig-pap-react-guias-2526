@@ -73,6 +73,21 @@ function Contador() {
 export default Contador;
 ```
 
+> **Nota sobre setState:** `setCount` não atualiza imediatamente. O React pode agrupar atualizações (batching), por isso um `console.log` logo a seguir ainda mostra o valor antigo.
+
+```jsx
+function ExemploLog() {
+    const [count, setCount] = useState(0);
+
+    function somar() {
+        setCount(count + 1);
+        console.log("Valor ainda antigo:", count);
+    }
+
+    return <button onClick={somar}>Somar</button>;
+}
+```
+
 ### Erros comuns
 
 -   **Mudar o estado diretamente:** `count = count + 1` não provoca re-render.
@@ -184,7 +199,7 @@ Além disso, quando o estado é um **objeto** ou um **array**, tens de criar uma
 ### Sintaxe base (passo a passo)
 
 -   **Forma direta:** `setCount(count + 1)` (usa quando o valor não depende do anterior).
--   **Forma funcional:** `setCount((prev) => prev + 1)` (segura para atualizar várias vezes).
+-   **Forma funcional:** `setCount((prev) => prev + 1)` (segura quando dependes do valor anterior ou fazes várias atualizações seguidas).
 -   **Arrays:** cria novo array com `map`, `filter`, `concat` ou spread.
 -   **Objetos:** cria cópia com spread e altera só o que precisas.
 
@@ -236,9 +251,26 @@ function Perfil() {
 }
 ```
 
+```jsx
+import { useState } from "react";
+
+function ListaTarefas() {
+    const [tarefas, setTarefas] = useState([]);
+
+    function adicionar(texto) {
+        const nova = { id: Date.now(), texto };
+        // Não uses push: cria sempre um array novo
+        setTarefas((prev) => [...prev, nova]);
+    }
+
+    return <button onClick={() => adicionar("Nova tarefa")}>Adicionar</button>;
+}
+```
+
 ### Erros comuns
 
 -   Atualizar objetos/arrays sem criar uma cópia.
+-   Usar `push`/`splice` e depois `setState` com o mesmo array (mutação direta).
 -   Guardar no estado valores que podem ser calculados.
 -   Usar a forma direta quando dependes do valor anterior.
 
@@ -348,3 +380,4 @@ function NomeCompleto() {
 
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas, exemplos extra e exercícios em formato passo a passo.
+-   2026-01-12: nota sobre batching e reforço de imutabilidade em arrays/objetos.

@@ -53,6 +53,18 @@ Em contraste, um input **não controlado** guarda o valor internamente (no DOM).
 -   **Usa `label` com `htmlFor`:** melhora a acessibilidade.
 -   **Mantém o estado e o input sincronizados:** o input mostra o estado e o estado segue o input.
 
+> **Nota sobre números:** inputs devolvem **strings**. Se precisares de um número, converte com `Number(...)` ou `parseInt(...)`.
+
+```jsx
+const [idade, setIdade] = useState(0);
+// ...
+<input
+    type="number"
+    value={idade}
+    onChange={(e) => setIdade(Number(e.target.value))}
+/>
+```
+
 ### Exemplo
 
 ```jsx
@@ -301,6 +313,7 @@ import { useState } from "react";
 
 function FormCompleto() {
     const [dados, setDados] = useState({ nome: "", email: "" });
+    const [erro, setErro] = useState("");
 
     function atualizar(e) {
         const { name, value } = e.target;
@@ -308,10 +321,22 @@ function FormCompleto() {
         setDados((prev) => ({ ...prev, [name]: value }));
     }
 
+    function enviar(e) {
+        e.preventDefault();
+        if (dados.nome.trim() === "" || dados.email.trim() === "") {
+            setErro("Preenche nome e email.");
+            return;
+        }
+        setErro("");
+        alert("Formulário válido");
+    }
+
     return (
-        <form>
+        <form onSubmit={enviar}>
             <input name="nome" value={dados.nome} onChange={atualizar} />
             <input name="email" value={dados.email} onChange={atualizar} />
+            <button type="submit">Enviar</button>
+            {erro && <p>{erro}</p>}
         </form>
     );
 }
@@ -356,3 +381,4 @@ export default FormCompleto;
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas, exemplos extra e exercícios em formato passo a passo.
 -   2026-01-12: exercícios 1-6 reescritos em formato tutorial.
+-   2026-01-12: nota sobre inputs como strings e exemplo extra com validação simples.

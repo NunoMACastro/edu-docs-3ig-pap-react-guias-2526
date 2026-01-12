@@ -55,6 +55,42 @@ Pensa na `key` como o número de aluno numa turma: se dois alunos mudam de lugar
 | Lista fixa (nunca muda) | `key={index}`   | `key={Math.random()}` |
 | Lista ordenada/filtrada | `key={item.id}` | `key={index}`         |
 
+### Porque o índice falha (exemplo curto)
+
+Se a lista muda (remover, ordenar, inserir no meio), o índice também muda e o React pode reaproveitar o DOM errado.
+
+```jsx
+import { useState } from "react";
+
+const tarefasIniciais = [
+    { id: 1, texto: "Estudar" },
+    { id: 2, texto: "Treinar" },
+    { id: 3, texto: "Descansar" },
+];
+
+function ListaComIndice() {
+    const [tarefas, setTarefas] = useState(tarefasIniciais);
+
+    function removerPrimeira() {
+        setTarefas((prev) => prev.slice(1));
+    }
+
+    return (
+        <>
+            <button onClick={removerPrimeira}>Remover primeira</button>
+            <ul>
+                {/* ERRADO quando a lista muda */}
+                {tarefas.map((tarefa, index) => (
+                    <li key={index}>{tarefa.texto}</li>
+                ))}
+            </ul>
+        </>
+    );
+}
+```
+
+Troca por `key={tarefa.id}` e o React mantém cada item certo.
+
 ### Exemplo
 
 ```jsx
@@ -195,15 +231,21 @@ Se a lista estiver vazia, o utilizador precisa de uma mensagem clara. Um ecrã v
 ### Exemplo
 
 ```jsx
-function ListaTarefas({ tarefas = [] }) {
+function ListaTarefas({ tarefas = [], filtro = "todas" }) {
+    const filtradas = tarefas.filter((tarefa) => {
+        if (filtro === "feitas") return tarefa.feita;
+        if (filtro === "por-fazer") return !tarefa.feita;
+        return true;
+    });
+
     return (
         <div>
             {/* Mensagem quando não há tarefas */}
-            {tarefas.length === 0 ? (
+            {filtradas.length === 0 ? (
                 <p>Sem tarefas por agora.</p>
             ) : (
                 <ul>
-                    {tarefas.map((tarefa) => (
+                    {filtradas.map((tarefa) => (
                         <li key={tarefa.id}>{tarefa.texto}</li>
                     ))}
                 </ul>
@@ -329,3 +371,4 @@ function ListaOrdenada() {
 
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas, exemplos extra e exercícios em formato passo a passo.
+-   2026-01-12: reforço de `key` estável e exemplo de estado vazio com lista filtrada.

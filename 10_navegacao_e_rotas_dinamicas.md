@@ -31,25 +31,25 @@
 
 ### Modelo mental
 
-Rotas dinâmicas usam uma parte da URL como **parâmetro**. Por exemplo, `/produtos/3` indica o id 3. O `useParams` permite ler esse valor dentro do componente.
+Rotas dinâmicas usam uma parte da URL como **parâmetro**. Por exemplo, `/alunos/3` indica o id 3. O `useParams` permite ler esse valor dentro do componente.
 
 Pensa assim: o caminho tem uma **parte variável**. O React Router guarda esse valor e entrega-te com `useParams`.
 
 Exemplo mental:
 
--   URL: `/produtos/3`
--   Rota: `/produtos/:id`
+-   URL: `/alunos/3`
+-   Rota: `/alunos/:id`
 -   `useParams()` devolve `{ id: "3" }`
 
 Repara que o id vem como **texto**. Se precisares de tratar como número, faz a conversão (ex.: `Number(id)`).
 
 ### Sintaxe base (passo a passo)
 
--   **Define a rota com `:id`:** `/produtos/:id`.
--   **Cria uma página de detalhe:** `DetalheProduto`.
+-   **Define a rota com `:id`:** `/alunos/:id`.
+-   **Cria uma página de detalhe:** `DetalheAluno`.
 -   **Usa `useParams`:** `const { id } = useParams()`.
 -   **Usa o id para mostrar dados:** por enquanto, podes só mostrar o id no ecrã.
--   **Se o id for inválido:** mostra uma mensagem simples (ex.: "Produto não encontrado").
+-   **Se o id for inválido:** mostra uma mensagem simples (ex.: "Aluno não encontrado").
 -   **Lembra-te:** `id` é texto; converte se precisares de comparar com números.
 
 ### Exemplo
@@ -57,16 +57,16 @@ Repara que o id vem como **texto**. Se precisares de tratar como número, faz a 
 ```jsx
 // src/App.jsx
 import { Routes, Route } from "react-router-dom";
-import ListaProdutos from "./pages/ListaProdutos.jsx";
-import DetalheProduto from "./pages/DetalheProduto.jsx";
+import ListaAlunos from "./pages/ListaAlunos.jsx";
+import DetalheAluno from "./pages/DetalheAluno.jsx";
 
 function App() {
     return (
         <Routes>
             {/* Rota de lista */}
-            <Route path="/produtos" element={<ListaProdutos />} />
+            <Route path="/alunos" element={<ListaAlunos />} />
             {/* Rota dinâmica com parâmetro id */}
-            <Route path="/produtos/:id" element={<DetalheProduto />} />
+            <Route path="/alunos/:id" element={<DetalheAluno />} />
         </Routes>
     );
 }
@@ -75,50 +75,50 @@ export default App;
 ```
 
 ```jsx
-// src/pages/DetalheProduto.jsx
+// src/pages/DetalheAluno.jsx
 import { useParams } from "react-router-dom";
 
-function DetalheProduto() {
+function DetalheAluno() {
     // Lemos o id diretamente da URL
     const { id } = useParams();
 
     return (
         <div>
             {/* Mostra o id para confirmar que funcionou */}
-            <h1>Detalhe do produto {id}</h1>
+            <h1>Detalhe do aluno {id}</h1>
         </div>
     );
 }
 
-export default DetalheProduto;
+export default DetalheAluno;
 ```
 
 ```jsx
-// src/pages/ListaProdutos.jsx
+// src/pages/ListaAlunos.jsx
 import { Link } from "react-router-dom";
 
 // Lista de exemplo com id e nome
-const produtos = [
-    { id: 1, nome: "Caderno" },
-    { id: 2, nome: "Mochila" },
-    { id: 3, nome: "Caneta" },
+const alunos = [
+    { id: 1, nome: "Ana" },
+    { id: 2, nome: "Bruno" },
+    { id: 3, nome: "Carla" },
 ];
 
-function ListaProdutos() {
+function ListaAlunos() {
     return (
         <ul>
-            {/* map cria um <li> por cada produto */}
-            {produtos.map((p) => (
-                <li key={p.id}>
-                    {/* Link aponta para o detalhe do produto */}
-                    <Link to={`/produtos/${p.id}`}>{p.nome}</Link>
+            {/* map cria um <li> por cada aluno */}
+            {alunos.map((aluno) => (
+                <li key={aluno.id}>
+                    {/* Link aponta para o detalhe do aluno */}
+                    <Link to={`/alunos/${aluno.id}`}>{aluno.nome}</Link>
                 </li>
             ))}
         </ul>
     );
 }
 
-export default ListaProdutos;
+export default ListaAlunos;
 ```
 
 ### Erros comuns
@@ -136,7 +136,7 @@ export default ListaProdutos;
 
 ### Checkpoint
 
--   O que é que `useParams()` devolve num URL como `/produtos/3`?
+-   O que é que `useParams()` devolve num URL como `/alunos/3`?
 -   Porque é que `id` vem como texto?
 
 <a id="sec-2"></a>
@@ -157,7 +157,7 @@ Também podes usar para voltar atrás (`navigate(-1)`) ou substituir o históric
 -   **Cria a função:** `const navigate = useNavigate();`
 -   **Navega:** `navigate("/caminho")`.
 -   **Opcional:** `navigate(-1)` para voltar atrás.
--   **Podes construir o caminho:** `navigate(`/produtos/${id}`)`.
+-   **Podes construir o caminho:** `navigate(`/alunos/${id}`)`.
 
 ### Exemplo
 
@@ -193,7 +193,7 @@ function IrParaDetalhe({ id }) {
 
     function abrir() {
         // Vai para a página de detalhe desse id
-        navigate(`/produtos/${id}`);
+        navigate(`/alunos/${id}`);
     }
 
     return <button onClick={abrir}>Ver detalhe</button>;
@@ -313,8 +313,8 @@ Isto permite manter o estado de pesquisa na URL, para que o utilizador possa par
 
 Diferença simples:
 
--   **Parâmetro de rota:** faz parte do caminho (`/produtos/3`).
--   **Query string:** vem depois do `?` e é opcional (`/produtos?q=abc`).
+-   **Parâmetro de rota:** faz parte do caminho (`/alunos/3`).
+-   **Query string:** vem depois do `?` e é opcional (`/alunos?q=abc`).
 
 ### Sintaxe base (passo a passo)
 
@@ -347,11 +347,19 @@ export default App;
 import { useSearchParams } from "react-router-dom";
 
 function Pesquisa() {
-    const [params] = useSearchParams();
+    const [params, setParams] = useSearchParams();
     // Lemos o valor da query string
     const termo = params.get("q") || "";
 
-    return <p>Pesquisa: {termo}</p>;
+    return (
+        <div>
+            <input
+                value={termo}
+                onChange={(e) => setParams({ q: e.target.value })}
+            />
+            <p>Pesquisa: {termo}</p>
+        </div>
+    );
 }
 
 export default Pesquisa;
@@ -376,11 +384,11 @@ export default Pesquisa;
 
 ## Exercícios - Navegação e rotas dinâmicas
 
-1. Em `src/pages`, cria `ListaProdutos.jsx`. Dentro, cria um array com 3 objetos `{ id, nome }`. Depois, usa `map` para renderizar um `<ul>` com `<li>` e confirma que aparece na página.
-2. No `ListaProdutos`, importa `Link` de `"react-router-dom"`. Envolve o nome do produto num `<Link>` com `to={`/produtos/${produto.id}`}`. Clica e confirma que a URL muda.
-3. No `App`, importa `ListaProdutos` e `DetalheProduto`. Cria `<Routes>` com `/produtos` e `/produtos/:id`. Abre `/produtos` no browser e confirma que a lista aparece.
-4. No `DetalheProduto`, importa `useParams`, lê `id` e mostra num `<h1>`. Escreve `/produtos/1` e `/produtos/2` na barra e confirma a diferença.
-5. Cria um formulário simples com `<form>` e um botão "Guardar". No `onSubmit`, faz `preventDefault()` e usa `useNavigate` para ir para `/produtos`.
+1. Em `src/pages`, cria `ListaAlunos.jsx`. Dentro, cria um array com 3 objetos `{ id, nome }`. Depois, usa `map` para renderizar um `<ul>` com `<li>` e confirma que aparece na página.
+2. No `ListaAlunos`, importa `Link` de `"react-router-dom"`. Envolve o nome do aluno num `<Link>` com `to={`/alunos/${aluno.id}`}`. Clica e confirma que a URL muda.
+3. No `App`, importa `ListaAlunos` e `DetalheAluno`. Cria `<Routes>` com `/alunos` e `/alunos/:id`. Abre `/alunos` no browser e confirma que a lista aparece.
+4. No `DetalheAluno`, importa `useParams`, lê `id` e mostra num `<h1>`. Escreve `/alunos/1` e `/alunos/2` na barra e confirma a diferença.
+5. Cria um formulário simples com `<form>` e um botão "Guardar". No `onSubmit`, faz `preventDefault()` e usa `useNavigate` para ir para `/alunos`.
 6. Cria `Layout.jsx` com `<nav>` e `<Outlet>`. No `App`, coloca o `Layout` como rota pai, move as rotas para dentro e confirma que o menu fica visível em todas as páginas.
 7. Cria uma página 404 com `path="*"`.
 8. Testa um caminho inexistente e confirma a 404.
@@ -396,3 +404,4 @@ export default Pesquisa;
 -   2026-01-12: explicações detalhadas e exercícios iniciais em formato guia.
 -   2026-01-12: detalhes extra sobre parâmetros, layouts e exercícios 1-6 mais guiados.
 -   2026-01-12: checkpoints por secção e exercícios iniciais mais passo a passo.
+-   2026-01-12: exemplos alinhados com alunos e query string com atualização.

@@ -13,7 +13,8 @@
 -   [1. [ESSENCIAL] Síncrono vs assíncrono](#sec-1)
 -   [2. [ESSENCIAL] Promessas (Promise)](#sec-2)
 -   [3. [ESSENCIAL] async/await e try/catch](#sec-3)
--   [4. [EXTRA] Padrão simples de loading e erro](#sec-4)
+-   [4. [ESSENCIAL] HTTP em 2 minutos: request/response](#sec-4)
+-   [5. [EXTRA] Padrão simples de loading e erro](#sec-5)
 -   [Exercícios - Comunicação síncrona e assíncrona](#exercicios)
 -   [Changelog](#changelog)
 
@@ -52,6 +53,8 @@ Porque é que existem os dois?
 -   **Assíncrono:** `setTimeout` ou `fetch` correm "mais tarde".
 -   **A ordem muda:** o código continua enquanto o pedido não termina.
 -   **O JavaScript não "para" o resto do código** só porque uma tarefa demora.
+
+No `fetch`, isto é exatamente o que acontece: o pedido é feito, o código continua, e a Promise resolve mais tarde com a resposta.
 
 ### Exemplo
 
@@ -228,7 +231,68 @@ executar();
 
 <a id="sec-4"></a>
 
-## 4. [EXTRA] Padrão simples de loading e erro
+## 4. [ESSENCIAL] HTTP em 2 minutos: request/response
+
+### Modelo mental
+
+HTTP é uma conversa simples:
+
+-   O **cliente** envia um **request** (pedido).
+-   O **servidor** responde com **status**, **headers** e **body**.
+
+### Métodos (quando usar)
+
+-   **GET:** pedir dados (ler).
+-   **POST:** criar algo novo.
+-   **PUT:** substituir um recurso inteiro.
+-   **PATCH:** alterar só parte do recurso.
+-   **DELETE:** apagar.
+
+### Status codes rápidos
+
+-   **200 OK:** pedido com sucesso.
+-   **201 Created:** criado com sucesso (normal em POST).
+-   **204 No Content:** sucesso sem body (ex.: DELETE).
+-   **400 Bad Request:** pedido mal formado.
+-   **401 Unauthorized:** falta autenticação.
+-   **403 Forbidden:** estás autenticado, mas não tens permissão.
+-   **404 Not Found:** recurso não existe.
+-   **409 Conflict:** conflito (ex.: email já existe).
+-   **422 Unprocessable Entity:** dados inválidos.
+-   **500 Server Error:** erro inesperado no servidor.
+
+### Headers e body (no básico)
+
+-   **Content-Type:** diz o formato do body (`application/json`).
+-   **Authorization:** onde vai a credencial (conceito, vamos ver mais tarde).
+-   **Body JSON:** `{ "nome": "Ana" }` quando envias dados.
+
+### CORS (só o conceito)
+
+O browser bloqueia pedidos entre origens diferentes por segurança. O CORS é a regra que **permite ou bloqueia** pedidos cross‑origin. Mais detalhes em `15_http_rest_cors_e_contratos_api.md`.
+
+### Erros comuns
+
+-   Confundir 401 com 403.
+-   Enviar `POST` sem `Content-Type: application/json`.
+-   Usar `GET` para criar dados.
+
+### Boas práticas
+
+-   Escolhe o método certo para cada ação.
+-   Usa status codes coerentes (não devolvas 200 em tudo).
+-   Valida o body no backend antes de aceitar.
+
+### Mini-checkpoint rápido
+
+-   Que método usas para criar um aluno novo?
+-   O que significa `204`?
+-   Em que header costuma ir a autenticação?
+-   Porque existe CORS?
+
+<a id="sec-5"></a>
+
+## 5. [EXTRA] Padrão simples de loading e erro
 
 ### Modelo mental
 
@@ -334,3 +398,5 @@ function PedidoSimples() {
 
 -   2026-01-12: criação do ficheiro.
 -   2026-01-12: explicações teóricas aprofundadas e exercícios mais guiados.
+-   2026-01-12: clarificação do comportamento assíncrono do `fetch`.
+-   2026-01-12: secção ESSENCIAL sobre HTTP (métodos, status e CORS).

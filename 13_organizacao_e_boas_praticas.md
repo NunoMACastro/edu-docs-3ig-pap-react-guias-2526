@@ -208,6 +208,12 @@ Um erro típico tem três partes:
 -   **Começa pela linha indicada.**
 -   **Lê de cima para baixo.**
 
+### ESLint/Prettier (curto)
+
+-   **ESLint:** avisa sobre erros e más práticas.
+-   **Prettier:** formata o código de forma consistente.
+-   Em projetos com Vite, podes adicionar depois, quando o básico estiver sólido.
+
 ### Exemplo
 
 ```text
@@ -220,6 +226,14 @@ Um erro típico tem três partes:
 -   Ignorar a linha indicada e procurar no sítio errado.
 -   Mudar vários ficheiros ao mesmo tempo e não saber o que causou o erro.
 -   Copiar e colar mensagens sem as ler.
+
+### 5 erros comuns que vais ver muitas vezes
+
+1. **Import em falta:** "is not defined" ou "Failed to resolve import".
+2. **JSX mal fechado:** tag sem `</...>` ou sem `/>`.
+3. **Hook fora do sítio:** `useState`/`useEffect` fora do componente.
+4. **`map` sem `key`:** aviso no console.
+5. **`class` em vez de `className`:** estilos não aplicam.
 
 ### Boas práticas
 
@@ -244,6 +258,7 @@ Um erro típico tem três partes:
 -   Imports limpos e sem caminhos confusos.
 -   Erros lidos com atenção (ficheiro, linha, mensagem).
 -   Debug feito com passos pequenos e controlados.
+-   Linting e formatação (ESLint/Prettier) quando fizer sentido.
 
 <a id="changelog"></a>
 
@@ -253,3 +268,4 @@ Um erro típico tem três partes:
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas e exercícios iniciais em formato guia.
 -   2026-01-12: checkpoints por secção e checklist de validação.
+-   2026-01-12: notas sobre ESLint/Prettier e lista de erros comuns.

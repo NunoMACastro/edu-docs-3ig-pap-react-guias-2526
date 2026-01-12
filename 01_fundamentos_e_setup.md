@@ -38,6 +38,8 @@
 
 React é uma biblioteca para construir interfaces. Em vez de dizeres ao browser "faz isto, depois aquilo", descreves o estado desejado e o React trata das atualizações.
 
+> **Nota sobre SPA:** "Single Page Application" não significa uma única página de conteúdo. Significa que a app não recarrega o browser; o conteúdo muda por JavaScript (ver `09_react_router_fundamentos.md`).
+
 #### DOM e DOM virtual (explicação simples)
 
 -   **DOM (Document Object Model):** é a árvore de elementos HTML que o browser usa para mostrar a página. Se mudares o DOM, a página muda.
@@ -142,6 +144,8 @@ npm run dev
 ### Modelo mental
 
 O ficheiro `main.jsx` é o ponto de entrada. Ele liga o React ao `div#root` no `index.html`. O `App.jsx` é o componente principal que vais editar.
+
+Na prática, vais **editar quase sempre `src/App.jsx`** e criar componentes em `src/components`. O React renderiza o `App` dentro do `div#root`.
 
 ### Sintaxe base
 
@@ -253,3 +257,4 @@ Ferramentas como React DevTools e extensões do editor ajudam-te a perceber a es
 ## Changelog
 
 -   2026-01-11: criação do ficheiro.
+-   2026-01-12: clarificação de SPA e reforço de onde editar e do papel do `root`.

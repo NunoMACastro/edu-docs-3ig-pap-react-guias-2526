@@ -12,8 +12,9 @@
 -   [0. Como usar este ficheiro](#sec-0)
 -   [1. [ESSENCIAL] Props como entradas de um componente](#sec-1)
 -   [2. [ESSENCIAL] Props com tipos diferentes](#sec-2)
--   [3. [ESSENCIAL] Children e composição](#sec-3)
--   [4. [EXTRA] Props opcionais e valores por defeito](#sec-4)
+-   [3. [ESSENCIAL] Callbacks e fluxo de dados](#sec-3)
+-   [4. [ESSENCIAL] Children e composição](#sec-4)
+-   [5. [EXTRA] Props opcionais e valores por defeito](#sec-5)
 -   [Exercícios - Props e composição](#exercicios)
 -   [Changelog](#changelog)
 
@@ -205,7 +206,98 @@ export default App;
 
 <a id="sec-3"></a>
 
-## 3. [ESSENCIAL] Children e composição
+## 3. [ESSENCIAL] Callbacks e fluxo de dados
+
+### Modelo mental
+
+No React, **dados descem** por props e **ações sobem** por callbacks.
+
+-   **Dados descem:** o pai passa informação para o filho.
+-   **Ações sobem:** o filho chama uma função do pai para pedir mudanças.
+-   **Levantar estado:** se dois filhos precisam do mesmo dado, o estado sobe para o pai.
+
+Pensa assim: o componente pai controla o estado, e os filhos pedem mudanças através de funções.
+
+### Sintaxe base (passo a passo)
+
+-   **O pai guarda o estado.**
+-   **O pai cria uma função que altera o estado.**
+-   **O pai passa a função ao filho como prop.**
+-   **O filho chama a função quando o utilizador interage.**
+
+### Exemplo (levantar estado)
+
+```jsx
+// src/App.jsx
+import { useState } from "react";
+import Editor from "./components/Editor.jsx";
+import Preview from "./components/Preview.jsx";
+
+function App() {
+    const [texto, setTexto] = useState("");
+
+    function atualizarTexto(novoTexto) {
+        setTexto(novoTexto);
+    }
+
+    return (
+        <main>
+            {/* Dados descem */}
+            <Editor texto={texto} onTextoChange={atualizarTexto} />
+            <Preview texto={texto} />
+        </main>
+    );
+}
+
+export default App;
+```
+
+```jsx
+// src/components/Editor.jsx
+function Editor({ texto, onTextoChange }) {
+    return (
+        <div>
+            <label htmlFor="texto">Texto</label>
+            <input
+                id="texto"
+                value={texto}
+                onChange={(e) => onTextoChange(e.target.value)}
+            />
+        </div>
+    );
+}
+
+export default Editor;
+```
+
+```jsx
+// src/components/Preview.jsx
+function Preview({ texto }) {
+    return <p>Pré-visualização: {texto || "—"}</p>;
+}
+
+export default Preview;
+```
+
+### Erros comuns
+
+-   Tentar alterar uma prop diretamente no filho.
+-   Criar estado duplicado em dois componentes que precisam do mesmo dado.
+-   Esquecer de passar o callback e ficar sem resposta ao clicar/escrever.
+
+### Boas práticas
+
+-   Mantém o estado no componente mais alto que precisa dele.
+-   Dá nomes claros aos callbacks (`onTextoChange`, `onGuardar`, `onSelecionar`).
+
+### Checkpoint
+
+-   O que significa “dados descem, ações sobem”?
+-   Quando é que faz sentido levantar o estado?
+
+<a id="sec-4"></a>
+
+## 4. [ESSENCIAL] Children e composição
 
 ### Modelo mental
 
@@ -284,9 +376,9 @@ function Botao(props) {
 -   O que é `children` numa frase?
 -   Quando é que `children` é melhor do que uma prop específica?
 
-<a id="sec-4"></a>
+<a id="sec-5"></a>
 
-## 4. [EXTRA] Props opcionais e valores por defeito
+## 5. [EXTRA] Props opcionais e valores por defeito
 
 ### Modelo mental
 
@@ -362,3 +454,4 @@ function Avatar({ nome, foto }) {
 
 -   2026-01-11: criação do ficheiro.
 -   2026-01-12: explicações detalhadas, exemplos extra e exercícios em formato passo a passo.
+-   2026-01-12: secção ESSENCIAL sobre callbacks, fluxo de dados e levantar estado.

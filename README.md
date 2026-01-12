@@ -13,7 +13,7 @@ Conjunto de materiais em Markdown para o módulo de React.js.
 -   **Node.js + npm:** idealmente Node 18+.
 -   **Editor de código:** VS Code ou equivalente.
 -   **Terminal:** para correr comandos (`npm`, `node`).
--   **Browser atualizado:**.
+-   **Browser atualizado:** Chrome, Edge ou Firefox.
 
 ## Setup rápido
 
@@ -43,6 +43,7 @@ npm run dev
 -   **Página em branco:** confirma o `div#root` no `index.html`.
 -   **CORS:** verifica se o backend tem `cors` ativo. (Se se aplicar)
 -   **StrictMode em dev:** alguns efeitos podem correr duas vezes (ver ficheiro 08).
+-   **Windows/PowerShell (npm.ps1):** se aparecer "cannot be loaded because running scripts is disabled", abre o PowerShell como administrador e corre `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. Em alternativa, usa o terminal "Command Prompt" (cmd).
 
 ## Índice de ficheiros
 
@@ -60,3 +61,6 @@ npm run dev
 -   [12 - Context API e estado global](12_context_api_estado_global.md)
 -   [13 - Organização e boas práticas](13_organizacao_e_boas_praticas.md)
 -   [14 - Mini-projeto guiado (React puro)](14_miniprojeto_guiado.md)
+-   [15 - HTTP, REST, CORS e contratos de API](15_http_rest_cors_e_contratos_api.md)
+-   [16 - Autenticação em SPA: JWT, sessões e cookies](16_autenticacao_em_spa_jwt_sessions_cookies.md)
+-   [17 - Upload, paginação, filtros e cliente de API](17_upload_paginacao_filtros_e_cliente_api.md)

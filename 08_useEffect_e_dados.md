@@ -175,6 +175,18 @@ function LogSempre() {
 -   Colocar objetos/arrays criados no render no array e criar efeitos a toda a hora.
 -   Criar efeitos que atualizam o mesmo estado que escutam (loop).
 
+```jsx
+// ERRADO: filtro usado no efeito, mas não está nas dependências
+useEffect(() => {
+    console.log("Filtro atual:", filtro);
+}, []);
+
+// CERTO: inclui tudo o que o efeito usa
+useEffect(() => {
+    console.log("Filtro atual:", filtro);
+}, [filtro]);
+```
+
 ### Boas práticas
 
 -   Se o linter avisar, entende o motivo antes de ignorar.
@@ -212,13 +224,74 @@ Isto evita que o utilizador fique a olhar para uma página vazia sem perceber o 
 
 > **Nota sobre StrictMode (dev):** em desenvolvimento, o `useEffect` pode correr duas vezes para ajudar a detetar problemas. Isso pode duplicar pedidos. Em produção, corre uma vez. Se precisares, usa `AbortController` ou uma flag para evitar efeitos duplicados.
 
+### Template base de fetch (copiar/colar)
+
+Este template assume que o backend devolve erros neste formato:
+
+```json
+{ "error": { "code": "SOME_CODE", "message": "Mensagem", "details": [] } }
+```
+
+```jsx
+import { useEffect, useState } from "react";
+
+function ListaAlunos() {
+    const [alunos, setAlunos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState("");
+
+    useEffect(() => {
+        async function carregar() {
+            setLoading(true);
+            setErro("");
+
+            try {
+                const res = await fetch("http://localhost:3000/api/alunos");
+                const contentType = res.headers.get("content-type") || "";
+                const body = contentType.includes("application/json")
+                    ? await res.json()
+                    : null;
+
+                if (!res.ok) {
+                    const msg =
+                        body?.error?.message ||
+                        `Erro ${res.status}: pedido falhou`;
+                    throw new Error(msg);
+                }
+
+                setAlunos(body || []);
+            } catch (e) {
+                setErro(e.message || "Falha ao carregar");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        carregar();
+    }, []);
+
+    if (loading) return <p>A carregar...</p>;
+    if (erro) return <p>{erro}</p>;
+
+    return (
+        <ul>
+            {alunos.map((aluno) => (
+                <li key={aluno.id}>{aluno.nome}</li>
+            ))}
+        </ul>
+    );
+}
+
+export default ListaAlunos;
+```
+
 ### Exemplo
 
 ```jsx
 import { useEffect, useState } from "react";
 
-function ListaPosts() {
-    const [posts, setPosts] = useState([]);
+function ListaAlunos() {
+    const [alunos, setAlunos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState("");
 
@@ -226,16 +299,19 @@ function ListaPosts() {
         // Função interna async para poder usar await
         async function carregar() {
             try {
+                setLoading(true);
+                setErro("");
+                // API de teste (podes trocar pelo teu backend mais tarde)
                 const resposta = await fetch(
-                    "https://jsonplaceholder.typicode.com/posts"
+                    "https://jsonplaceholder.typicode.com/users"
                 );
                 if (!resposta.ok) {
                     // Se a resposta vier com erro (ex.: 404)
                     throw new Error("Resposta inválida");
                 }
                 const dados = await resposta.json();
-                // Guarda apenas os primeiros 5 posts
-                setPosts(dados.slice(0, 5));
+                // Guarda apenas os primeiros 5 alunos
+                setAlunos(dados.slice(0, 5));
             } catch (e) {
                 setErro("Falha ao carregar");
             } finally {
@@ -257,14 +333,14 @@ function ListaPosts() {
 
     return (
         <ul>
-            {posts.map((post) => (
-                <li key={post.id}>{post.title}</li>
+            {alunos.map((aluno) => (
+                <li key={aluno.id}>{aluno.name}</li>
             ))}
         </ul>
     );
 }
 
-export default ListaPosts;
+export default ListaAlunos;
 ```
 
 ### Erros comuns
@@ -297,6 +373,10 @@ Essa limpeza acontece:
 
 -   Quando o componente é removido do ecrã (unmount).
 -   Antes do efeito correr novamente (se tiver dependências).
+
+Isto também evita tentar fazer `setState` **depois** do componente sair do ecrã.
+
+> **Nota curta:** se um pedido termina depois do componente sair, podes ter warnings. O `AbortController` ajuda a evitar este problema.
 
 ### Sintaxe base (passo a passo)
 
@@ -364,11 +444,14 @@ function ListaComAbort() {
         async function carregar() {
             try {
                 const res = await fetch(
-                    "https://jsonplaceholder.typicode.com/posts",
+                    "https://jsonplaceholder.typicode.com/users",
                     {
                         signal: controller.signal,
                     }
                 );
+                if (!res.ok) {
+                    throw new Error("Resposta inválida");
+                }
                 const json = await res.json();
                 // Guarda alguns dados para não encher a UI
                 setDados(json.slice(0, 3));
@@ -391,7 +474,7 @@ function ListaComAbort() {
     return (
         <ul>
             {dados.map((item) => (
-                <li key={item.id}>{item.title}</li>
+                <li key={item.id}>{item.name}</li>
             ))}
         </ul>
     );
@@ -439,3 +522,5 @@ function ListaComAbort() {
 -   2026-01-12: explicações detalhadas, exemplos extra e exercícios guiados.
 -   2026-01-12: nota sobre StrictMode, motivo do `useEffect` não ser `async`, e exemplo com `AbortController`.
 -   2026-01-12: secção de limpeza completada, checkpoints e exercícios 1-6 mais guiados.
+-   2026-01-12: padrão de `fetch` alinhado e exemplo de dependências em falta.
+-   2026-01-12: template base de `fetch` com parsing de erro JSON.
