@@ -378,17 +378,69 @@ export default App;
 
 ## Exercícios - JSX e componentes
 
-1. Cria um componente chamado `Saudacao`. Dentro do `return`, escreve uma frase tua (ex.: uma mensagem de boas‑vindas).
-2. Importa o componente `Saudacao` no `App` e coloca a tag `<Saudacao />` dentro do `return`. Abre a página e confirma que aparece.
-3. Cria um componente `Cartao`. No JSX, inclui um título (`<h2>`) e um parágrafo (`<p>`).
+1. Cria um ficheiro novo, chamado `Saudacao.jsx`. Dentro, cria um componente chamado Saudacao, que devolve um `<h1>` com a mensagem “Olá, Mundo!”.
+2. Importa o componente `Saudacao` no `App` e coloca a tag `<Saudacao />` dentro do `return` do `App`. Abre a página e confirma que aparece.
+3. Cria um ficheiro e componente `Cartao` que devolve um `<div>` com um título `<h2>` e um parágrafo `<p>`. Importa e usa no `App`.
 4. No componente `Cartao`, adiciona uma imagem e um comentário em JSX. Garante que a imagem é uma tag auto-fechada e que o `return` continua com um único elemento pai.
 5. Escreve um `return` com dois elementos “soltos” (ex.: `<h1>` e `<p>`). Corrige a seguir colocando um elemento pai à volta.
+   Por exemplo:
+
+```jsx
+return (
+    <h1>Olá</h1>
+    <p>Bem-vindo</p>
+);
+```
+
+Corrige para:
+
+```jsx
+return (
+    <div>
+        <h1>Olá</h1>
+        <p>Bem-vindo</p>
+    </div>
+);
+```
+
 6. Escolhe um componente e adiciona uma classe CSS. Troca `class` por `className` e confirma no HTML final.
 7. Cria um botão com `onClick`. Quando clicares, mostra um `alert` com o teu nome.
-8. Divide a página em `Header`, `Main` e `Footer` e monta tudo no `App`.
-9. Renomeia um componente para ter um nome mais claro e em PascalCase (ex.: `MenuTopo`).
-10. Adiciona um comentário em JSX a explicar o que faz um bloco específico.
-11. Cria um componente `ListaLinks` com 3 links simples e um título antes da lista.
+   Por exemplo:
+
+```jsx
+<button onClick={() => alert("O meu nome é Ana")}>Clica aqui</button>
+```
+
+8. Divide a página em `Header`, `Main` e `Footer` e monta tudo no `App`. Cria um ficheiro para cada componente e importa-os no `App`.
+   Por exemplo:
+
+```jsx
+// Header.jsx
+function Header() {
+    return (
+        <header>
+            <h1>Bem-vindo à minha página</h1>
+        </header>
+    );
+}
+export default Header;
+```
+
+```jsx
+// App.jsx
+import Header from "./Header.jsx";
+function App() {
+    return (
+        <div>
+            <Header />
+        </div>
+    );
+}
+export default App;
+```
+
+9. Adiciona um comentário em JSX a explicar o que faz um bloco específico.
+10. Cria um componente `ListaLinks` com 3 links simples e um título antes da lista.
 
 <a id="changelog"></a>
 
