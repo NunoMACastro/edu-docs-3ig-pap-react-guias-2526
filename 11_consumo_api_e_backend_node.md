@@ -161,7 +161,7 @@ O Express cria um servidor HTTP rápido. Cada rota devolve dados em JSON. Vamos 
 -   **Configura CORS** com a origem do Vite.
 -   **Define rotas `GET` e `POST`** com erros padronizados.
 
-> **Nota sobre CommonJS vs ESM:** por omissão, o Node usa **CommonJS**, que escreve imports com `require(...)` e exports com `module.exports`. O formato **ESM** usa `import`/`export` e exige `"type": "module"` no `package.json` (ou ficheiros `.mjs`). Aqui usamos `require` para evitar configuração extra.
+> **Nota sobre ESM (padrão do curso):** usa sempre `import`/`export` e garante `"type": "module"` no `package.json`. **CommonJS (histórico)** usa `require(...)` e `module.exports`, mas não é o padrão recomendado.
 
 ### Exemplo (backend mínimo e correto)
 
@@ -177,8 +177,8 @@ npm install express cors
 
 ```js
 // backend/index.js
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
 
 const app = express();
 const PORT = 3000;
@@ -560,3 +560,4 @@ export function fetchAlunos() {
 -   2026-01-12: explicações detalhadas e exercícios iniciais em formato guia.
 -   2026-01-12: nota CommonJS vs ESM, checkpoints e exercícios 1-6 mais guiados.
 -   2026-01-12: contrato de API, erros padronizados e exemplo GET + POST fullstack.
+-   2026-01-12: snippets convertidos para ESM e nota de padrão do curso.

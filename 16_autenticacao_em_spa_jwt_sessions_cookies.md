@@ -146,8 +146,8 @@ Fluxo mínimo com cookies:
 
 ```js
 // backend/index.js
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
 
 const app = express();
 const PORT = 3000;
@@ -314,3 +314,4 @@ Quando usas cookies, existe risco de **CSRF**. O `SameSite=Lax` ajuda e, em sist
 ## Changelog
 
 -   2026-01-12: criação do ficheiro com fluxo mínimo de autenticação.
+-   2026-01-12: exemplos convertidos para ESM.

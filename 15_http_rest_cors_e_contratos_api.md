@@ -177,7 +177,7 @@ O browser bloqueia pedidos entre origens diferentes. O CORS permite abrir a port
 ### Exemplo no Express
 
 ```js
-const cors = require("cors");
+import cors from "cors";
 
 app.use(
     cors({
@@ -242,3 +242,4 @@ Se repetires o mesmo PUT, o resultado deve ser igual. Isso é **idempotente**.
 ## Changelog
 
 -   2026-01-12: criação do ficheiro com bases de HTTP, REST e CORS.
+-   2026-01-12: snippets ajustados para ESM.

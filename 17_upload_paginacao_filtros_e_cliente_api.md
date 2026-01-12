@@ -182,7 +182,7 @@ npm install multer
 
 ```js
 // backend/index.js
-const multer = require("multer");
+import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 
 app.post("/api/upload", upload.single("ficheiro"), (req, res) => {
@@ -356,3 +356,4 @@ api.interceptors.response.use(
 ## Changelog
 
 -   2026-01-12: criação do ficheiro com paginação, upload e cliente de API.
+-   2026-01-12: snippets ajustados para ESM.
