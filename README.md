@@ -7,14 +7,13 @@ Conjunto de materiais em Markdown para o módulo de React.js.
 -   Começa no ficheiro `01_fundamentos_e_setup.md` e segue a ordem.
 -   Faz os exemplos no teu projeto e depois resolve os exercícios.
 -   Os blocos [EXTRA] são opcionais para quem quer aprofundar.
--   Os ficheiros 13 e 14 não têm exercícios; usam checklist e critérios de validação.
 
 ## Pré-requisitos
 
 -   **Node.js + npm:** idealmente Node 18+.
 -   **Editor de código:** VS Code ou equivalente.
 -   **Terminal:** para correr comandos (`npm`, `node`).
--   **Browser atualizado:** Chrome, Edge ou Firefox.
+-   **Browser atualizado:**.
 
 ## Setup rápido
 
@@ -42,7 +41,7 @@ npm run dev
 
 -   **Erro de dependências:** apaga `node_modules` e corre `npm install`.
 -   **Página em branco:** confirma o `div#root` no `index.html`.
--   **CORS:** verifica se o backend tem `cors` ativo.
+-   **CORS:** verifica se o backend tem `cors` ativo. (Se se aplicar)
 -   **StrictMode em dev:** alguns efeitos podem correr duas vezes (ver ficheiro 08).
 
 ## Índice de ficheiros
