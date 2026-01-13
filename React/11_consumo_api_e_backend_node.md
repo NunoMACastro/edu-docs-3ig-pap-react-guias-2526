@@ -163,6 +163,8 @@ O Express cria um servidor HTTP rápido. Cada rota devolve dados em JSON. Vamos 
 
 > **Nota sobre ESM (padrão do curso):** usa sempre `import`/`export` e garante `"type": "module"` no `package.json`. **CommonJS (histórico)** usa `require(...)` e `module.exports`, mas não é o padrão recomendado.
 
+> **Nota de alinhamento com o módulo Node:** nos capítulos de Node usamos `src/app.js` + `src/server.js` e, nalguns exemplos, o recurso `/api/v1/todos`. Podes adaptar este exemplo para essa estrutura — o contrato e o `fetch` mantêm‑se iguais.
+
 ### Exemplo (backend mínimo e correto)
 
 ```bash

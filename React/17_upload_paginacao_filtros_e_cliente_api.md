@@ -46,6 +46,12 @@ A API deve devolver um pedaço da lista, não tudo. Isso melhora desempenho e ex
 
 ```js
 // backend/index.js
+const tarefas = [
+    { id: 1, texto: "Estudar React" },
+    { id: 2, texto: "Rever Node" },
+    { id: 3, texto: "Treinar fetch" },
+];
+
 app.get("/api/tarefas", (req, res) => {
     const page = Number(req.query.page || 1);
     const limit = Number(req.query.limit || 10);
@@ -99,17 +105,36 @@ function ListaTarefas() {
     const [items, setItems] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [erro, setErro] = useState("");
 
     useEffect(() => {
         async function carregar() {
             setLoading(true);
-            const res = await fetch(
-                `/api/tarefas?page=${page}&limit=5&q=${encodeURIComponent(q)}`
-            );
-            const data = await res.json();
-            setItems(data.items);
-            setTotal(data.total);
-            setLoading(false);
+            setErro("");
+
+            try {
+                const res = await fetch(
+                    `/api/tarefas?page=${page}&limit=5&q=${encodeURIComponent(q)}`
+                );
+                const contentType = res.headers.get("content-type") || "";
+                const data = contentType.includes("application/json")
+                    ? await res.json()
+                    : null;
+
+                if (!res.ok) {
+                    const msg =
+                        data?.error?.message ||
+                        `Erro ${res.status}: pedido falhou`;
+                    throw new Error(msg);
+                }
+
+                setItems(data?.items || []);
+                setTotal(data?.total || 0);
+            } catch (e) {
+                setErro(e.message || "Falha ao carregar tarefas");
+            } finally {
+                setLoading(false);
+            }
         }
         carregar();
     }, [page, q]);
@@ -126,6 +151,8 @@ function ListaTarefas() {
 
             {loading ? (
                 <p>A carregar...</p>
+            ) : erro ? (
+                <p>{erro}</p>
             ) : (
                 <ul>
                     {items.map((t) => (
@@ -199,6 +226,8 @@ app.post("/api/upload", upload.single("ficheiro"), (req, res) => {
 ### Frontend (React)
 
 ```jsx
+import { useState } from "react";
+
 function UploadForm() {
     const [ficheiro, setFicheiro] = useState(null);
     const [erro, setErro] = useState("");
@@ -206,6 +235,11 @@ function UploadForm() {
     async function enviar(e) {
         e.preventDefault();
         setErro("");
+
+        if (!ficheiro) {
+            setErro("Escolhe um ficheiro antes de enviar");
+            return;
+        }
 
         const form = new FormData();
         form.append("ficheiro", ficheiro);
@@ -216,7 +250,10 @@ function UploadForm() {
         });
 
         if (!res.ok) {
-            const data = await res.json();
+            const contentType = res.headers.get("content-type") || "";
+            const data = contentType.includes("application/json")
+                ? await res.json()
+                : null;
             setErro(data?.error?.message || "Falha no upload");
         }
     }
@@ -318,6 +355,10 @@ setTimeout(() => controller.abort(), 5000);
 Axios é um upgrade: permite baseURL, timeouts e interceptors. Usa quando o projeto cresce.
 
 ### Exemplo rápido
+
+```bash
+npm install axios
+```
 
 ```js
 import axios from "axios";
