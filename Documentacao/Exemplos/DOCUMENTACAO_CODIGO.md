@@ -1,16 +1,16 @@
-# Documentacao de Codigo
+# Documentação de Código
 
-## Convencoes de nomes
+## Convenções de nomes
 
-- camelCase para variaveis e funcoes
+- camelCase para variáveis e funções
 - PascalCase para componentes e classes
-- Funcoes com verbo: get/create/update/delete
+- Funções com verbo: get/create/update/delete
 - Booleanos: is/has/can/should
 
-## Comentarios
+## Comentários
 
-- Explicar decisoes e contexto
-- Evitar comentarios redundantes
+- Explicar decisões e contexto
+- Evitar comentários redundantes
 
 ## JSDoc
 
@@ -27,21 +27,21 @@ export async function createTarefa(data) {
 
 ## Contratos internos (DTOs e services)
 
-- Documentar entradas e saidas dos services
-- Indicar campos obrigatorios e tipos
+- Documentar entradas e saídas dos services
+- Indicar campos obrigatórios e tipos
 - Manter alinhado com API.md e DADOS.md
 
 ## Erros e logs
 
-- Usar contrato de erro padrao
-- Nao expor segredos em logs
+- Usar contrato de erro padrão
+- Não expor segredos em logs
 
 ## Estrutura de ficheiros
 
 - Separar controllers, services, repositories
-- Evitar logica de negocio em controllers
+- Evitar lógica de negócio em controllers
 
-## Lint e formatacao (recomendado)
+## Lint e formatação (recomendado)
 
 - ESLint para regras de estilo
-- Prettier para formatacao automatica
+- Prettier para formatação automática

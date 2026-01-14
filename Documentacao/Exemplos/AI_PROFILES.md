@@ -1,13 +1,13 @@
 # AI_PROFILES.md
 
-Perfil: Revisao de documentacao
-- Objetivo: encontrar incoerencias e lacunas
-- Output: lista de issues com ficheiro + sugestao
+Perfil: Revisão de documentação
+- Objetivo: encontrar incoerências e lacunas
+- Output: lista de issues com ficheiro + sugestão
 
-Perfil: Edicao de texto
-- Objetivo: melhorar clareza sem mudar conteudo tecnico
-- Output: alteracoes com resumo
+Perfil: Edição de texto
+- Objetivo: melhorar clareza sem mudar conteúdo técnico
+- Output: alterações com resumo
 
-Perfil: Exemplos de codigo
+Perfil: Exemplos de código
 - Objetivo: gerar snippets completos e coerentes
-- Output: blocos de codigo com imports/exports
+- Output: blocos de código com imports/exports

@@ -1,11 +1,13 @@
 # AI_LIMITS.md
 
-Nao alterar:
+Não alterar:
 - Nomes de ficheiros
-- Numeracao dos capitulos
+- Numeração dos capítulos
 - Contrato de erro
 
-Nao fazer:
-- Adicionar dependencias novas
+Não fazer:
+- Adicionar dependências novas
 - Usar comandos destrutivos
 - Reorganizar estrutura sem pedido
+- Deixar placeholders por preencher
+- Inventar endpoints/campos sem confirmar

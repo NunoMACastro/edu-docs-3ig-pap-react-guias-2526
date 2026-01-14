@@ -1,15 +1,17 @@
-# Documentacao da API
+# Documentação da API
 
 ## Base URL
 
 - Dev: [BASE_URL_DEV]
 - Prod: [BASE_URL_PROD]
 
-## Autenticacao
+## Autenticação
 
-- Metodo: [JWT | COOKIE | OUTRO]
-- Header (JWT): Authorization: Bearer <token>
-- Cookies (se aplicavel): credentials + httpOnly
+- Método preferido: cookie httpOnly com JWT.
+- Alternativa: Bearer token.
+
+**JWT (header):** `Authorization: Bearer <token>`
+**Cookies:** `credentials: include`
 
 ## Contrato de erro
 
@@ -17,43 +19,66 @@
 { "error": { "code": "SOME_CODE", "message": "Mensagem", "details": [] } }
 ```
 
-## Status codes
+## Regras padrão
 
-- 200 OK
-- 201 Created
-- 204 No Content
+- Listas devolvem envelope `{ items, page, limit, total }`.
+- DELETE devolve `204` (sem body).
+- PATCH devolve objeto atualizado.
+- Timestamps: `createdAt` e `updatedAt`.
+
+## Regras de erro por ID
+
+- ID malformado: `400 INVALID_ID`.
+- ID válido mas inexistente: `404 NOT_FOUND`.
+
+## Convenção de auth por recurso
+
+- Se o recurso for por utilizador, então `/api/*` exige auth.
+- Se o recurso for público, marcar `Autenticação: Não` e tornar `userId` opcional no modelo.
+
+## Query params padrão
+
+| Param | Tipo | Default | Descrição |
+| --- | --- | --- | --- |
+| page | number | 1 | Página (>= 1) |
+| limit | number | 20 | Itens por página (1..100) |
+| q | string | - | Pesquisa por título |
+| feito | boolean | - | Filtrar por estado |
+| sort | string | createdAt | Campo de ordenação |
+| order | string | desc | asc/desc |
+
+## Template por endpoint (preencher)
+
+**Método + path:** [GET/POST/PATCH/DELETE] `/api/[recurso]`
+
+**Autenticação:** [Sim/Não] ([Cookie/Bearer])
+
+**Query params:** [TABELA OU LISTA]
+
+**Body (schema mínimo):**
+```json
+{ "campo": "valor" }
+```
+
+**Resposta (sucesso):**
+```json
+{ "exemplo": "..." }
+```
+
+**Erros possíveis:**
 - 400 INVALID_ID
 - 401 NOT_AUTHENTICATED
 - 403 FORBIDDEN
 - 404 NOT_FOUND
 - 409 DUPLICATE_KEY
 - 422 VALIDATION_ERROR
-- 500 INTERNAL_ERROR
 
-## Regras de erro por ID
+**Exemplo curl:**
+```bash
+curl -X [METHOD] [URL]
+```
 
-- ID malformado: 400 INVALID_ID
-- ID valido mas inexistente: 404 NOT_FOUND
-
-## Endpoints
-
-| Metodo | URL | Auth | Descricao |
-| --- | --- | --- | --- |
-| GET | /api/tarefas | Nao | Lista tarefas |
-| POST | /api/tarefas | Sim | Cria tarefa |
-| GET | /api/tarefas/:id | Sim | Detalhe da tarefa |
-| PATCH | /api/tarefas/:id | Sim | Atualiza tarefa |
-| DELETE | /api/tarefas/:id | Sim | Remove tarefa |
-| POST | /auth/login | Nao | Login |
-| GET | /auth/me | Sim | Utilizador atual |
-| POST | /auth/logout | Sim | Logout |
-
-## PATCH /api/tarefas/:id (body permitido)
-
-- titulo (string nao vazia)
-- feito (boolean)
-
-## Exemplos
+## Exemplo mínimo (lista)
 
 ```text
 GET /api/tarefas
@@ -68,45 +93,30 @@ GET /api/tarefas
 
 Nota: a resposta usa sempre envelope, mesmo sem query params.
 
+## Exemplo mínimo (criar)
+
 ```text
 POST /api/tarefas
 Body: { "titulo": "Rever React" }
 
 201 Created
-{ "_id": "...", "titulo": "Rever React", "feito": false }
+{ "_id": "...", "titulo": "Rever React", "feito": false, "createdAt": "...", "updatedAt": "..." }
 ```
 
-```json
-{ "error": { "code": "VALIDATION_ERROR", "message": "Titulo e obrigatorio", "details": ["titulo"] } }
-```
+## PATCH /api/tarefas/:id (body permitido)
 
-## Paginacao e filtros
+- titulo (string não vazia)
+- feito (boolean)
 
-```text
-GET /api/tarefas?page=1&limit=20
-GET /api/tarefas?q=estudar&feito=false
-GET /api/tarefas?sort=createdAt&order=desc
-```
+## Status codes
 
-```json
-{ "items": [], "page": 1, "limit": 20, "total": 42 }
-```
-
-## Regras de query
-
-- page: >= 1 (default 1)
-- limit: 1..100 (default 20)
-- q: pesquisa por titulo
-- feito: true/false
-- sort: createdAt/updatedAt
-- order: asc/desc
-
-## Uploads
-
-```text
-POST /api/upload
-Body: multipart/form-data (campo: file)
-```
-
-- Tipos permitidos: [TIPOS]
-- Tamanho maximo: [TAMANHO]
+- 200 OK
+- 201 Created
+- 204 No Content
+- 400 INVALID_ID
+- 401 NOT_AUTHENTICATED
+- 403 FORBIDDEN
+- 404 NOT_FOUND
+- 409 DUPLICATE_KEY
+- 422 VALIDATION_ERROR
+- 500 INTERNAL_ERROR

@@ -1,22 +1,19 @@
-# Documentacao Tecnica
+# Documentação Técnica
 
 ## Objetivo
 
 - Descrever arquitetura, camadas e responsabilidades.
-- Registar fluxos criticos e decisoes tecnicas.
+- Registar fluxos críticos e decisões técnicas.
 
 ## Arquitetura
 
 ```text
-Request -> Route -> Controller -> Service -> DB -> Response
+Request -> Route -> Controller -> Service -> Repository/DB -> Response
 ```
 
-### Camadas
+### Regra base (quem chama quem)
 
-- Routes: ligam URLs a controllers
-- Controllers: validacao e status codes
-- Services: regras de negocio
-- Repositories/DB: acesso a dados
+Controller → Service → Repository/DB. O controller não fala diretamente com a BD.
 
 ## Estrutura de pastas
 
@@ -31,46 +28,40 @@ src/
   utils/
 ```
 
-### Responsabilidades
+## Fluxos críticos (exemplo mínimo)
 
-- routes/: definicao de endpoints
-- controllers/: validacao e respostas
-- services/: regras de negocio
-- repositories/: operacoes de BD
-- models/: schemas e modelos
-- middlewares/: auth, validacoes, logs
-- utils/: helpers reutilizaveis
+### Criar tarefa
 
-## Fluxos criticos
+1. POST /api/tarefas
+2. Controller valida input
+3. Service aplica regras
+4. Repository grava na BD
 
-### Login
+Sucesso (201):
+```json
+{ "_id": "...", "titulo": "Estudar", "feito": false, "createdAt": "...", "updatedAt": "..." }
+```
 
-1. POST /auth/login com email e password
-2. Controller valida credenciais
-3. Service cria sessao/token
-4. Response 200 com utilizador
+Erro (422):
+```json
+{ "error": { "code": "VALIDATION_ERROR", "message": "Título obrigatório", "details": ["titulo"] } }
+```
 
-### Upload
-
-1. POST /upload com multipart/form-data
-2. Middleware valida ficheiro
-3. Service guarda e devolve URL
-
-### Paginacao
+### Paginação
 
 1. GET /api/tarefas?page=1&limit=20
 2. Response com { items, page, limit, total }
 
-## Integracoes externas
+## Integrações externas
 
 - [SERVICO_EXTERNO_1]
 - [SERVICO_EXTERNO_2]
 
-## Decisoes tecnicas (ADR)
+## Decisões técnicas (ADR)
 
 ```text
-Titulo: [DECISAO]
+Título: [DECISAO]
 Contexto: [CONTEXTO]
-Decisao: [DECISAO_TOMADA]
-Consequencias: [IMPACTO]
+Decisão: [DECISAO_TOMADA]
+Consequências: [IMPACTO]
 ```

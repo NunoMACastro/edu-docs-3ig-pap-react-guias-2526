@@ -1,10 +1,15 @@
 # AI_TESTING.md
 
-Testes automaticos:
-- npm run test
-- npm run test -- --coverage
+Fonte: TESTES.md
 
-Validacao manual:
+Testes críticos (mínimo):
+- GET /api/tarefas devolve envelope correto
+- POST /api/tarefas inválido -> 422
+- GET /api/tarefas/:id inválido -> 400
+- GET /api/tarefas/:id inexistente -> 404
+- DELETE /api/tarefas/:id -> 204
+
+Validação manual:
 - GET /api/tarefas devolve { items, page, limit, total }
-- POST /api/tarefas sem titulo -> 422
-- Frontend mostra erro no ecra
+- POST /api/tarefas sem título -> 422
+- Status codes corretos + erro no formato padrão

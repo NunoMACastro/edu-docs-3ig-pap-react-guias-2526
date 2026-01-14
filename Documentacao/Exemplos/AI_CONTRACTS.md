@@ -1,18 +1,27 @@
 # AI_CONTRACTS.md
 
-Contrato de erro (padrao):
+Fonte: API.md
+
+Contrato de erro (padrão):
 { "error": { "code": "SOME_CODE", "message": "Mensagem", "details": [] } }
 
-Endpoint: GET /api/tarefas
-200 OK
+Regras:
+- Listas devolvem envelope { items, page, limit, total }
+- Create/detail devolvem objeto
+- DELETE devolve 204
+- PATCH devolve objeto atualizado
+
+Exemplo (lista):
+```json
 {
   "items": [ { "_id": "...", "titulo": "Estudar", "feito": false } ],
   "page": 1,
   "limit": 20,
   "total": 1
 }
+```
 
-Endpoint: POST /api/tarefas
-Body: { "titulo": "Rever React" }
-201 Created
-{ "_id": "...", "titulo": "Rever React", "feito": false }
+Exemplo (erro):
+```json
+{ "error": { "code": "VALIDATION_ERROR", "message": "Título obrigatório", "details": ["titulo"] } }
+```

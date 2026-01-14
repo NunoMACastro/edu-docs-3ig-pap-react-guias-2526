@@ -6,8 +6,10 @@ Objetivo: [OBJETIVO]
 
 Regras:
 - Manter estrutura e nomes dos ficheiros.
-- Nao criar dependencias novas sem pedido.
-- Nao usar comandos destrutivos.
+- Não criar dependências novas sem pedido.
+- Não usar comandos destrutivos.
+- Não deixar placeholders por preencher.
+- Não inventar endpoints/campos; se faltar, perguntar.
 
 Contrato de erro:
 { "error": { "code": "SOME_CODE", "message": "Mensagem", "details": [] } }

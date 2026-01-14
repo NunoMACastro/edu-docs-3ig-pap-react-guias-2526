@@ -1,4 +1,4 @@
-# Deploy e Operacao
+# Deploy e Operação
 
 ## Ambientes
 
@@ -12,7 +12,7 @@ Prod
 - Backend: https://api.exemplo.pt
 ```
 
-## Variaveis de ambiente
+## Variáveis de ambiente
 
 ```text
 PORT=3000
@@ -21,24 +21,26 @@ CORS_ORIGIN=http://localhost:5173
 JWT_SECRET=...
 ```
 
-## Build e run
+## Build e start
 
 ```bash
 npm run build
-npm run start
+npm start
 ```
 
-## Logs e monitorizacao
+> Confirma no `package.json` se o script é `start` ou `npm run start`.
+
+## Logs e monitorização
 
 - Logs: [LOCAL_LOGS]
 - Health check: GET /health
 - Alertas: [SISTEMA_ALERTAS]
-- Nao registar segredos ou dados pessoais
+- Não registar segredos nem dados pessoais.
 
 ## Rollback
 
 - Processo: [DESCREVER_PASSOS]
-- Verificar /health apos rollback
+- Validar /health após rollback
 
 ## Backup e restore
 
@@ -47,10 +49,10 @@ mongodump --uri "$MONGODB_URI" --out ./backups/AAAA-MM-DD
 mongorestore --uri "$MONGODB_URI" ./backups/AAAA-MM-DD
 ```
 
-- Frequencia: [DIARIO | SEMANAL]
+- Frequência: [DIÁRIO | SEMANAL]
 - Local: [LOCAL_BACKUP]
 
-## Responsaveis
+## Responsáveis
 
-- Operacao: [CONTACTO]
+- Operação: [CONTACTO]
 - Incidentes: [CONTACTO]

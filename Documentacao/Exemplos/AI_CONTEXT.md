@@ -2,17 +2,17 @@
 
 Contexto do projeto:
 - Nome: [NOME_PROJETO]
-- Dominio: [DOMINIO]
+- Domínio: [DOMÍNIO]
 - Stack: React 18 + Vite, Node 20 (ESM), MongoDB Atlas
 - Objetivo: [OBJETIVO]
-- Publico: [PUBLICO]
+- Público: [PÚBLICO]
 
 Estilo:
 - PT-PT, informal
 - Sem emojis
-- Explicacoes claras e diretas
+- Explicações claras e diretas
 
 Limites:
-- Nao renomear ficheiros
-- Nao mudar numeracao
-- Nao criar ficheiros novos sem pedido
+- Não renomear ficheiros
+- Não mudar numeração
+- Não criar ficheiros novos sem pedido

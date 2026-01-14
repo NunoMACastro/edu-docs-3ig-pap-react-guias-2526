@@ -13,37 +13,42 @@
 - Frontend: [STACK_FRONTEND]
 - Backend: [STACK_BACKEND]
 - Base de dados: [STACK_DB]
+- Autenticação: [COOKIE_HTTPONLY | BEARER]
+
+## Decisões padrão do kit
+
+- Contrato de erro: `{ "error": { "code": "...", "message": "...", "details": [] } }`
+- Listas devolvem envelope: `{ "items": [], "page": 1, "limit": 20, "total": 0 }`
+- POST/GET detalhe devolvem objeto; PATCH devolve objeto atualizado; DELETE devolve `204`.
+- Autenticação recomendada: cookie httpOnly com JWT. Alternativa: Bearer token (documentar header).
+- Timestamps: `createdAt` / `updatedAt`.
+- Paginação: `page >= 1`, `limit` default 20, máximo 100.
 
 ## Requisitos
 
-- Node.js [VERSAO]
-- npm [VERSAO]
+- Node.js [VERSÃO]
+- npm [VERSÃO]
 - [OUTROS_REQUISITOS]
 
-## Setup rapido
+## Como correr (dev)
+
+### Instalação
 
 ```bash
 # frontend
 cd frontend
 npm install
-npm run dev
 
 # backend
 cd backend
 npm install
-npm run dev
 ```
 
-## Scripts
+### Variáveis de ambiente
 
-```text
-- npm run dev: [DESCRICAO]
-- npm run build: [DESCRICAO]
-- npm run start: [DESCRICAO]
-- npm run test: [DESCRICAO]
-```
-
-## Variaveis de ambiente
+- Criar `.env` no backend.
+- Criar `.env` no frontend (se necessário).
+- Entregar `.env.example` com todas as variáveis.
 
 ```text
 # backend
@@ -56,9 +61,16 @@ JWT_SECRET=...
 VITE_API_BASE=http://localhost:3000
 ```
 
-Inclui um `.env.example` com todas as variaveis necessarias.
+### Comandos
 
-## Estrutura de documentacao
+```text
+- npm run dev: [DESCRIÇÃO]
+- npm run test: [DESCRIÇÃO]
+- npm run build: [DESCRIÇÃO]
+- npm run start: [DESCRIÇÃO]
+```
+
+## Estrutura de documentação
 
 - DOCUMENTACAO_TECNICA.md
 - API.md
@@ -77,13 +89,26 @@ Inclui um `.env.example` com todas as variaveis necessarias.
 
 ## Troubleshooting
 
-- Backend nao arranca: confirmar .env e MONGODB_URI
-- CORS bloqueado: confirmar CORS_ORIGIN
-- Pagina em branco: confirmar div#root e consola
+- Backend não arranca: confirmar `.env` e `MONGODB_URI`.
+- CORS bloqueado: confirmar `CORS_ORIGIN`.
+- Página em branco: confirmar `div#root` e consola.
 
-## Licenca
+## Checklist de entrega
 
-[LICENCA]
+- [ ] README completo e sem placeholders
+- [ ] API documentada (exemplos + erros)
+- [ ] Dados documentados (campos/validações/índices)
+- [ ] Testes mínimos descritos e como correr
+- [ ] Deploy/operação com dev/prod e backups
+- [ ] Documentação para IA com regras e limites
+
+## Proibido entregar com placeholders
+
+- Remover `[NOME_PROJETO]`, `[FEATURE_X]`, `TODO`, `TBD`, `???`.
+
+## Licença
+
+[LICENÇA]
 
 ## Contacto
 

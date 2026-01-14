@@ -1,9 +1,17 @@
-# Documentacao para Agentes de IA
+# Documentação para Agentes de IA
 
 ## Objetivo
 
 - Definir contexto, regras e limites para uso de IA.
-- Manter consistencia entre frontend, backend e dados.
+- Manter consistência entre frontend, backend e dados.
+
+## Fonte de verdade
+
+- API.md (contratos e endpoints)
+- DADOS.md (modelos e validações)
+- TESTES.md (testes críticos)
+
+AI_CONTRACTS.md e AI_TESTING.md são resumos e devem ser atualizados quando a fonte muda.
 
 ## Ficheiros base
 
@@ -21,12 +29,13 @@
 { "error": { "code": "SOME_CODE", "message": "Mensagem", "details": [] } }
 ```
 
-## Testes e validacao
+## Testes e validação
 
 - npm run test
-- Validacao manual listada em AI_TESTING.md
+- Validação manual listada em AI_TESTING.md
 
 ## Regra de pedidos
 
 - Se faltar contexto, pedir esclarecimento.
-- Declarar suposicoes quando nao houver informacao.
+- Declarar suposições quando não houver informação.
+- Não inventar endpoints ou campos.

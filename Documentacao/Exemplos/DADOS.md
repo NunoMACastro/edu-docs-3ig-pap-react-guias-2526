@@ -1,48 +1,52 @@
-# Documentacao de Dados
+# Documentação de Dados
 
 ## Entidades
 
-### Tarefas
+### Tarefa
 
 ```json
 { "_id": "...", "titulo": "Estudar", "feito": false, "createdAt": "...", "updatedAt": "...", "userId": "..." }
 ```
 
-Campos:
+| Campo | Tipo | Obrigatório | Default | Validação | Exemplo |
+| --- | --- | --- | --- | --- | --- |
+| _id | ObjectId | sim | - | gerado | "..." |
+| titulo | string | sim | - | min 3, max 100 | "Estudar" |
+| feito | boolean | não | false | - | false |
+| userId | ObjectId | opcional* | - | válido | "..." |
+| createdAt | date | sim* | - | timestamp | "2026-01-14" |
+| updatedAt | date | sim* | - | timestamp | "2026-01-14" |
 
-- titulo: string, obrigatorio, min 3
-- feito: boolean, default false
-- createdAt: date
-- updatedAt: date
-- userId: ObjectId, obrigatorio
+*Obrigatório se o recurso for por utilizador.
 
-### Utilizadores
+### Utilizador (mínimo)
 
 ```json
-{ "_id": "...", "nome": "Ana", "email": "ana@escola.pt", "role": "user" }
+{ "_id": "...", "nome": "Ana", "email": "ana@escola.pt", "passwordHash": "...", "createdAt": "...", "updatedAt": "..." }
 ```
 
-Campos:
+| Campo | Tipo | Obrigatório | Default | Validação | Exemplo |
+| --- | --- | --- | --- | --- | --- |
+| nome | string | sim | - | min 2 | "Ana" |
+| email | string | sim | - | formato válido, unique | "ana@escola.pt" |
+| passwordHash | string | sim | - | min 60 | "..." |
+| createdAt | date | sim | - | timestamp | "2026-01-14" |
+| updatedAt | date | sim | - | timestamp | "2026-01-14" |
 
-- nome: string, obrigatorio
-- email: string, obrigatorio, unique
-- role: string, default user
+## Relações
 
-## Relacoes
+- Tarefa pertence a Utilizador (userId).
 
-- Tarefa pertence a utilizador (userId)
-
-## Indices e constraints
+## Índices e constraints
 
 - email: unique
 - createdAt: index
 
-## Validacoes
+## Impacto na API
 
-- titulo: min 3, max 100
-- email: formato valido
+- Campos `unique` geram `409 DUPLICATE_KEY`.
+- Falhas de validação geram `422 VALIDATION_ERROR`.
 
 ## Notas
 
-- Decidir entre delete fisico ou soft delete
-- Se mudares campos, atualizar API.md e TESTES.md
+- Se mudares campos, atualiza `API.md` e `TESTES.md`.
