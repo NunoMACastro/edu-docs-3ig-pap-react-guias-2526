@@ -26,7 +26,7 @@
 -   **Como estudar:** segue o pedido do início ao fim e confirma o JSON.
 -   **Ligações úteis:**
     -   React: `../React/11_consumo_api_e_backend_node.md`
-    -   Node: `../Node/06_express_basico.md`
+    -   Node: `../Node/04_express_basico.md`
     -   MongoDB: `../MongoDB/04_node_driver_fundamentos.md`
 
 <a id="sec-1"></a>
@@ -86,9 +86,12 @@ React UI <- JSON  <- Express <- MongoDB
 ```text
 GET /api/tarefas
 200 OK
-[
-  { "_id": "...", "titulo": "Estudar Mongo", "feito": false }
-]
+{
+  "items": [ { "_id": "...", "titulo": "Estudar Mongo", "feito": false } ],
+  "page": 1,
+  "limit": 20,
+  "total": 1
+}
 ```
 
 ```text
@@ -138,7 +141,7 @@ function App() {
 
 <a id="sec-5"></a>
 
-## 5. [EXTRA] Pontes para auth/upload/paginacao
+## 5. [EXTRA] Pontes para auth/upload/paginação
 
 -   **Auth:** vê `../React/16_autenticacao_em_spa_jwt_sessions_cookies.md`.
 -   **Upload:** vê `../React/17_upload_paginacao_filtros_e_cliente_api.md`.
@@ -148,12 +151,37 @@ function App() {
 
 ## Exercícios - Fluxo fullstack
 
-1. Faz `GET /api/tarefas` no backend e mostra a lista no React.
-2. Faz `POST /api/tarefas` e atualiza a lista sem recarregar.
-3. Força um erro de validação e mostra a mensagem na UI.
+1. **GET /api/tarefas no backend e lista no React**
+   Passos:
+   - Implementa o GET no backend com o envelope `{ items, page, limit, total }`.
+   - No React, faz fetch e mostra os `items`.
+   Critério de aceitação:
+   - A UI mostra a lista e o response inclui `page`, `limit`, `total`.
+   Dica de debugging:
+   - Abre DevTools → Network e confirma status + JSON.
+
+2. **POST /api/tarefas e atualizar lista sem recarregar**
+   Passos:
+   - Faz POST com `titulo` válido.
+   - Atualiza o estado local com o item criado.
+   Critério de aceitação:
+   - A nova tarefa aparece sem refresh.
+   Dica de debugging:
+   - Verifica se o `setTarefas` usa cópia (`...prev`).
+
+3. **POST inválido → 422 → mostrar erro no frontend**
+   Passos:
+   - Envia `POST /api/tarefas` com `titulo` vazio.
+   - Backend responde `422` com JSON de erro.
+   - Frontend mostra a mensagem ao utilizador.
+   Critério de aceitação:
+   - Status `422` e mensagem visível na UI.
+   Dica de debugging:
+   - Confirma o `res.ok` e a leitura do JSON de erro.
 
 <a id="changelog"></a>
 
 ## Changelog
 
 -   2026-01-14: criação do ficheiro com o fluxo fullstack base.
+-   2026-01-14: contrato GET com envelope, links corrigidos e exercícios guiados.

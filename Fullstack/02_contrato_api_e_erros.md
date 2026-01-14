@@ -25,7 +25,7 @@
 -   **Como estudar:** testa cada endpoint e confirma o JSON.
 -   **Ligações úteis:**
     -   React: `../React/11_consumo_api_e_backend_node.md`
-    -   Node: `../Node/08_rotas_controladores_validacao.md`
+    -   Node: `../Node/06_rotas_controladores_validacao.md`
     -   MongoDB: `../MongoDB/08_validacao_e_erros.md`
 
 <a id="sec-1"></a>
@@ -34,7 +34,7 @@
 
 ### Contrato mínimo
 
--   `GET /api/tarefas` → lista
+-   `GET /api/tarefas` → lista (envelope)
 -   `GET /api/tarefas/:id` → detalhe
 -   `POST /api/tarefas` → cria
 -   `PATCH /api/tarefas/:id` → atualiza
@@ -43,10 +43,25 @@
 ### Exemplo (resposta GET)
 
 ```json
-[
-  { "_id": "...", "titulo": "Estudar Mongo", "feito": false }
-]
+{
+  "items": [ { "_id": "...", "titulo": "Estudar Mongo", "feito": false } ],
+  "page": 1,
+  "limit": 20,
+  "total": 1
+}
 ```
+
+### Porque usamos envelope sempre
+
+-   O frontend fica mais simples e previsível.
+-   Evitas ter dois formatos diferentes (com/sem paginação).
+
+### PATCH /api/tarefas/:id (body permitido)
+
+-   `titulo` (string não vazia)
+-   `feito` (boolean)
+
+**PUT vs PATCH:** `PUT` substitui o recurso completo, `PATCH` altera só campos específicos.
 
 ### Checkpoint
 
@@ -64,8 +79,9 @@
 
 ### Casos comuns
 
+-   **Regra base:** id malformado → `400 INVALID_ID`; id válido mas inexistente → `404 NOT_FOUND`.
 -   **400 INVALID_ID** → id inválido
--   **404 NOT_FOUND** → recurso não existe
+-   **404 NOT_FOUND** → id válido mas recurso não existe
 -   **409 DUPLICATE_KEY** → valor repetido
 -   **422 VALIDATION_ERROR** → campos inválidos
 
@@ -85,14 +101,26 @@
 
 ### Query string
 
--   `?page=1&limit=10`
+-   `?page=1&limit=20`
 -   `?q=react`
--   `?sort=criadoEm`
+-   `?feito=true`
+-   `?sort=createdAt&order=desc`
+
+### Regras dos params
+
+-   `page`: >= 1 (default 1)
+-   `limit`: 1..100 (default 20)
+-   `q`: pesquisa por título
+-   `feito`: true/false
+-   `sort`: campo permitido (ex.: `createdAt`, `updatedAt`)
+-   `order`: `asc` ou `desc`
+
+> **Nota:** o backend deve garantir `createdAt/updatedAt` (timestamps).
 
 ### Resposta recomendada
 
 ```json
-{ "items": [], "page": 1, "limit": 10, "total": 42 }
+{ "items": [], "page": 1, "limit": 20, "total": 42 }
 ```
 
 ### Boas práticas
@@ -115,13 +143,46 @@
 
 ## Exercícios - Contrato e erros
 
-1. Implementa `GET /api/tarefas` e confirma `200`.
-2. Força um `INVALID_ID` e confirma `400` com JSON de erro.
-3. Cria uma validação `titulo` obrigatório e confirma `422`.
-4. Adiciona um campo `unique` e confirma `409`.
+1. **GET /api/tarefas com envelope**
+   Passos:
+   - Implementa GET com defaults `page=1` e `limit=20`.
+   - Devolve sempre `{ items, page, limit, total }`.
+   Critério de aceitação:
+   - Response inclui `items`, `page`, `limit`, `total`.
+   Dica de debugging:
+   - Confirma o JSON no Network do browser.
+
+2. **INVALID_ID vs NOT_FOUND**
+   Passos:
+   - Chama `GET /api/tarefas/:id` com um id malformado.
+   - Chama com um id válido que não existe.
+   Critério de aceitação:
+   - Malformado → `400 INVALID_ID`.
+   - Válido mas inexistente → `404 NOT_FOUND`.
+   Dica de debugging:
+   - Usa `mongoose.Types.ObjectId.isValid`.
+
+3. **Validação de PATCH**
+   Passos:
+   - Envia `PATCH` com `titulo` vazio e `feito` não boolean.
+   - Garante `422` e JSON de erro.
+   Critério de aceitação:
+   - Erro coerente com `VALIDATION_ERROR`.
+   Dica de debugging:
+   - Confirma o body real no Network.
+
+4. **Campo unique**
+   Passos:
+   - Marca um campo como `unique`.
+   - Cria dois registos iguais.
+   Critério de aceitação:
+   - `409 DUPLICATE_KEY` com JSON de erro.
+   Dica de debugging:
+   - Confirma o índice na BD.
 
 <a id="changelog"></a>
 
 ## Changelog
 
 -   2026-01-14: criação do ficheiro com contrato e erros base.
+-   2026-01-14: envelope em GET, regras de erro e exercícios guiados.

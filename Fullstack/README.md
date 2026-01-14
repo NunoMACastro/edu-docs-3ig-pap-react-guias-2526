@@ -8,6 +8,12 @@ Conjunto de materiais em Markdown para integrar React, Node e MongoDB.
 -   Faz os exemplos no teu projeto e depois resolve os exercícios.
 -   Os blocos [EXTRA] são opcionais para quem quer aprofundar.
 
+## O que vais aprender
+
+-   Fluxo completo React → Express → MongoDB.
+-   Contrato de API com envelope `{ items, page, limit, total }` em `GET /api/tarefas`.
+-   Setup para correr frontend, backend e Atlas em conjunto.
+
 ## Pré-requisitos
 
 -   **React + Vite:** módulo React concluído até ao consumo de API.
@@ -25,3 +31,7 @@ Conjunto de materiais em Markdown para integrar React, Node e MongoDB.
 -   [01 - Fluxo React → Express → MongoDB](01_fluxo_front_back_db.md)
 -   [02 - Contrato de API e erros](02_contrato_api_e_erros.md)
 -   [03 - Setup e correr os 3 juntos](03_setup_fullstack.md)
+
+## Changelog
+
+-   2026-01-14: links revistos e contrato de GET com envelope destacado.
