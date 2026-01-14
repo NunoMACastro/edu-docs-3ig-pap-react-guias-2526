@@ -31,6 +31,16 @@ Antes de avançares, duas definições rápidas:
 -   **Deploy:** colocar a app num servidor para outras pessoas usarem.
 -   **Operação:** manter a app a funcionar (logs, backups, segurança, monitorização).
 
+### Checklist de operação oficial
+
+-   URLs e ambientes (dev/prod).
+-   Variáveis de ambiente e segredos.
+-   Logs e monitorização.
+-   Backups e restore.
+-   Responsáveis e contactos em caso de falha.
+
+Este ficheiro corresponde ao `DEPLOY.md` da estrutura mínima e completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] Ambientes (dev/prod)
@@ -260,3 +270,4 @@ Indica onde guardar backups e quem tem acesso.
 -   2026-01-14: criação do ficheiro sobre deploy e operação.
 -   2026-01-14: expansão pedagógica com exemplos e guias de documentação.
 -   2026-01-14: explicações de conceitos base (dev/prod, logs, monitorização, backups).
+-   2026-01-14: checklist de operação oficial e alinhamento com estrutura mínima/completa.

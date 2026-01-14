@@ -92,6 +92,26 @@ Vais perceber que documentação não é "tudo de uma vez". Existem níveis e ca
 
 É a documentação final para avaliação ou cliente. Deve estar completa e sem falhas.
 
+### Estrutura mínima (cenário profissional)
+
+Este é o **mínimo profissional** para um projeto fullstack. Se não houver backend ou BD, adapta os ficheiros relevantes.
+
+-   `README.md` — resumo, setup, scripts, envs e troubleshooting.
+-   `DOCUMENTACAO_TECNICA.md` — arquitetura, estrutura de pastas e fluxos críticos.
+-   `API.md` — endpoints, request/response, erros e autenticação.
+-   `DADOS.md` — modelos, campos, validações e índices.
+-   `TESTES.md` — como correr testes e quais são críticos.
+-   `DEPLOY.md` — ambientes, segredos, logs e backups.
+
+### Estrutura completa (cenário profissional)
+
+Inclui tudo o que está no mínimo, mais documentação interna e para agentes.
+
+-   `DOCUMENTACAO_CODIGO.md` — convenções de nomes, comentários e JSDoc.
+-   `Ficheiros de documentação para agentes` — contexto, guardrails, contratos e validação para agentes.
+
+Estes temas estão nos ficheiros `02` a `09`.
+
 <a id="sec-3"></a>
 
 ## 3. [EXTRA] O mínimo aceitável vs completo
@@ -155,3 +175,4 @@ Vais comparar o que é "suficiente" com o que é "excelente". Isto ajuda-te a ge
 
 -   2026-01-14: criação do ficheiro de visão geral.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
+-   2026-01-14: estruturas mínima e completa de documentação profissional.

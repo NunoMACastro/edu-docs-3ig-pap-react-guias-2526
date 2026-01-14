@@ -35,6 +35,8 @@ Aqui vais aprender a **documentar a API** de forma que outra pessoa consiga usar
 -   **Como estudar:** usa exemplos reais do teu backend.
 -   **Objetivo final:** um colega consegue testar a API só com esta página.
 
+Este ficheiro corresponde ao `API.md` da estrutura mínima e completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] Endpoints com request/response
@@ -223,3 +225,5 @@ Mesmo que não uses OpenAPI, um README com exemplos já ajuda muito.
 
 -   2026-01-14: criação do ficheiro sobre documentação da API.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
+-   2026-01-14: checklist de documentação oficial por endpoint.
+-   2026-01-14: alinhado com a estrutura mínima e completa de documentação.

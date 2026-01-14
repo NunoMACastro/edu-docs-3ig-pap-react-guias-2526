@@ -34,6 +34,8 @@ Aqui vais aprender a **escrever um README que qualquer pessoa consegue usar**, m
 -   **Como estudar:** compara o teu README com a checklist.
 -   **Objetivo final:** alguém consegue correr o projeto sem te pedir ajuda.
 
+Este ficheiro corresponde ao `README.md` da estrutura mínima e completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] O que é o projeto + features
@@ -214,3 +216,5 @@ Esta secção é útil se outras pessoas vão colaborar contigo.
 
 -   2026-01-14: criação do ficheiro sobre README profissional.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
+-   2026-01-14: checklist de conteúdo obrigatório para README oficial.
+-   2026-01-14: alinhado com a estrutura mínima e completa de documentação.

@@ -35,6 +35,8 @@ Aqui vais aprender a **escrever documentação que explica o teu projeto a um ag
 -   **Como estudar:** imagina que um bot vai trabalhar no teu projeto sem te perguntar nada.
 -   **Objetivo final:** o agente deve conseguir ajudar **sem inventar, sem adivinhar e sem destruir**.
 
+Este ficheiro corresponde ao `DOCUMENTACAO_IA.md` da estrutura completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] O que é um contrato e porquê importa
@@ -312,3 +314,5 @@ MONGODB_URI=mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/escola
 -   2026-01-14: reorganização e explicações detalhadas de conceitos.
 -   2026-01-14: expansão completa com ficheiros recomendados, guardrails e perfis.
 -   2026-01-14: criação do ficheiro sobre documentação para IA.
+-   2026-01-14: checklist de documentação oficial para agentes de IA.
+-   2026-01-14: alinhado com a estrutura completa de documentação.

@@ -34,6 +34,8 @@ Aqui vais aprender a **explicar como o projeto está organizado por dentro**. Do
 -   **Como estudar:** desenha o teu projeto numa folha e compara.
 -   **Objetivo final:** alguém consegue navegar no projeto sem te perguntar onde estão as coisas.
 
+Este ficheiro corresponde ao `DOCUMENTACAO_TECNICA.md` da estrutura mínima e completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] Arquitetura (MVC e camadas)
@@ -223,3 +225,5 @@ Consequências: Depende de internet, mas é simples de usar
 
 -   2026-01-14: criação do ficheiro sobre documentação técnica.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
+-   2026-01-14: checklist de documentação técnica oficial.
+-   2026-01-14: alinhado com a estrutura mínima e completa de documentação.

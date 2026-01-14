@@ -33,6 +33,8 @@ Aqui vais aprender a **explicar o que são testes** e como alguém pode correr e
 -   **Como estudar:** corre os testes e confirma o output.
 -   **Objetivo final:** qualquer pessoa consegue correr testes e perceber se o projeto está OK.
 
+Este ficheiro corresponde ao `TESTES.md` da estrutura mínima e completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] Como correr testes
@@ -180,3 +182,5 @@ npm run test -- --coverage
 
 -   2026-01-14: criação do ficheiro sobre documentação de testes.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
+-   2026-01-14: checklist de documentação oficial de testes.
+-   2026-01-14: alinhado com a estrutura mínima e completa de documentação.

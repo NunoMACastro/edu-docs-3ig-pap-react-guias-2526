@@ -33,6 +33,8 @@ Aqui vais aprender a **documentar o código no próprio código**, sem confundir
 -   **Como estudar:** escolhe um ficheiro do teu projeto e melhora-o.
 -   **Objetivo final:** alguém entende o teu código sem te perguntar "porquê fizeste isto?".
 
+Este ficheiro corresponde ao `DOCUMENTACAO_CODIGO.md` da estrutura completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] Comentários úteis (o porquê)
@@ -236,3 +238,5 @@ const response = await fetch(url);
 
 -   2026-01-14: criação do ficheiro sobre documentação de código.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
+-   2026-01-14: checklist de documentação de código oficial.
+-   2026-01-14: alinhado com a estrutura completa de documentação.

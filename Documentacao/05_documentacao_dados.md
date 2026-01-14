@@ -34,6 +34,8 @@ Aqui vais aprender a **explicar o modelo de dados** de forma clara, para que out
 -   **Como estudar:** faz um diagrama simples com setas.
 -   **Objetivo final:** alguém consegue criar dados corretos e evitar erros só lendo esta documentação.
 
+Este ficheiro corresponde ao `DADOS.md` da estrutura mínima e completa.
+
 <a id="sec-1"></a>
 
 ## 1. [ESSENCIAL] Modelo base (tarefas e utilizadores)
@@ -187,3 +189,5 @@ Vais listar regras que não são só "tipo de campo", mas sim **lógica do proje
 
 -   2026-01-14: criação do ficheiro sobre documentação de dados.
 -   2026-01-14: expansão pedagógica com definições e templates de documentação.
+-   2026-01-14: checklist de documentação oficial por entidade.
+-   2026-01-14: alinhado com a estrutura mínima e completa de documentação.
