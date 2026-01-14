@@ -56,6 +56,8 @@ JWT_SECRET=...
 VITE_API_BASE=http://localhost:3000
 ```
 
+Inclui um `.env.example` com todas as variaveis necessarias.
+
 ## Estrutura de documentacao
 
 - DOCUMENTACAO_TECNICA.md
@@ -65,6 +67,13 @@ VITE_API_BASE=http://localhost:3000
 - DEPLOY.md
 - DOCUMENTACAO_CODIGO.md
 - DOCUMENTACAO_IA.md
+- AGENTS.md
+- AI_CONTEXT.md
+- AI_PROFILES.md
+- AI_CONTRACTS.md
+- AI_TESTING.md
+- AI_LIMITS.md
+- AI_CHANGELOG.md
 
 ## Troubleshooting
 

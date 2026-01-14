@@ -176,9 +176,10 @@ Vais aprender o que são testes (de forma simples), porque existem e como descre
 
 ```text
 Validação:
-- GET /api/tarefas devolve array
+- GET /api/tarefas devolve { items, page, limit, total }
 - POST /api/tarefas sem titulo -> 422
 - Frontend mostra erro no ecrã
+- Status codes corretos e erro no formato padrão
 ```
 
 ### Exemplo (teste automático)
@@ -209,6 +210,21 @@ Vais definir **o que a IA pode e não pode fazer**. Isto é vital para proteger 
 -   **Consistência primeiro:** mesmo domínio e mesmo contrato.
 -   **Exemplos completos:** imports e exports incluídos.
 -   **Explicar termos novos:** não assumir que o aluno sabe.
+
+### Regra para pedidos à IA
+
+-   Só alterar o que foi pedido.
+-   Se faltar contexto, perguntar antes de assumir.
+-   Quando assumires algo, declarar a suposição.
+
+### Pedido mau vs pedido bom (mini exemplo)
+
+```text
+Pedido mau: "Melhora a documentação."
+
+Pedido bom: "Revê 04_documentacao_api.md e alinha GET /api/tarefas com o envelope
+{ items, page, limit, total }. Se faltar contexto, pergunta."
+```
 
 ### Exemplo curto (bloco de regras)
 
@@ -316,3 +332,4 @@ MONGODB_URI=mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/escola
 -   2026-01-14: criação do ficheiro sobre documentação para IA.
 -   2026-01-14: checklist de documentação oficial para agentes de IA.
 -   2026-01-14: alinhado com a estrutura completa de documentação.
+-   2026-01-14: validação manual com envelope e regra para pedidos à IA.

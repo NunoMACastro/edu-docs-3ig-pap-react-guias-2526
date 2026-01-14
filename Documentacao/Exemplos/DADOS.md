@@ -5,14 +5,15 @@
 ### Tarefas
 
 ```json
-{ "_id": "...", "titulo": "Estudar", "feito": false, "criadoEm": "...", "userId": "..." }
+{ "_id": "...", "titulo": "Estudar", "feito": false, "createdAt": "...", "updatedAt": "...", "userId": "..." }
 ```
 
 Campos:
 
 - titulo: string, obrigatorio, min 3
 - feito: boolean, default false
-- criadoEm: date
+- createdAt: date
+- updatedAt: date
 - userId: ObjectId, obrigatorio
 
 ### Utilizadores
@@ -34,7 +35,7 @@ Campos:
 ## Indices e constraints
 
 - email: unique
-- criadoEm: index
+- createdAt: index
 
 ## Validacoes
 
@@ -44,3 +45,4 @@ Campos:
 ## Notas
 
 - Decidir entre delete fisico ou soft delete
+- Se mudares campos, atualizar API.md e TESTES.md

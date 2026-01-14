@@ -8,7 +8,8 @@
 ## Autenticacao
 
 - Metodo: [JWT | COOKIE | OUTRO]
-- Header: Authorization: Bearer <token>
+- Header (JWT): Authorization: Bearer <token>
+- Cookies (se aplicavel): credentials + httpOnly
 
 ## Contrato de erro
 
@@ -29,6 +30,11 @@
 - 422 VALIDATION_ERROR
 - 500 INTERNAL_ERROR
 
+## Regras de erro por ID
+
+- ID malformado: 400 INVALID_ID
+- ID valido mas inexistente: 404 NOT_FOUND
+
 ## Endpoints
 
 | Metodo | URL | Auth | Descricao |
@@ -36,21 +42,31 @@
 | GET | /api/tarefas | Nao | Lista tarefas |
 | POST | /api/tarefas | Sim | Cria tarefa |
 | GET | /api/tarefas/:id | Sim | Detalhe da tarefa |
-| PUT | /api/tarefas/:id | Sim | Atualiza tarefa |
+| PATCH | /api/tarefas/:id | Sim | Atualiza tarefa |
 | DELETE | /api/tarefas/:id | Sim | Remove tarefa |
 | POST | /auth/login | Nao | Login |
 | GET | /auth/me | Sim | Utilizador atual |
 | POST | /auth/logout | Sim | Logout |
+
+## PATCH /api/tarefas/:id (body permitido)
+
+- titulo (string nao vazia)
+- feito (boolean)
 
 ## Exemplos
 
 ```text
 GET /api/tarefas
 200 OK
-[
-  { "_id": "...", "titulo": "Estudar", "feito": false }
-]
+{
+  "items": [ { "_id": "...", "titulo": "Estudar", "feito": false } ],
+  "page": 1,
+  "limit": 20,
+  "total": 1
+}
 ```
+
+Nota: a resposta usa sempre envelope, mesmo sem query params.
 
 ```text
 POST /api/tarefas
@@ -67,13 +83,23 @@ Body: { "titulo": "Rever React" }
 ## Paginacao e filtros
 
 ```text
-GET /api/tarefas?page=1&limit=10
+GET /api/tarefas?page=1&limit=20
 GET /api/tarefas?q=estudar&feito=false
+GET /api/tarefas?sort=createdAt&order=desc
 ```
 
 ```json
-{ "items": [], "page": 1, "limit": 10, "total": 42 }
+{ "items": [], "page": 1, "limit": 20, "total": 42 }
 ```
+
+## Regras de query
+
+- page: >= 1 (default 1)
+- limit: 1..100 (default 20)
+- q: pesquisa por titulo
+- feito: true/false
+- sort: createdAt/updatedAt
+- order: asc/desc
 
 ## Uploads
 

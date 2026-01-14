@@ -25,6 +25,12 @@ export async function createTarefa(data) {
 }
 ```
 
+## Contratos internos (DTOs e services)
+
+- Documentar entradas e saidas dos services
+- Indicar campos obrigatorios e tipos
+- Manter alinhado com API.md e DADOS.md
+
 ## Erros e logs
 
 - Usar contrato de erro padrao
@@ -34,3 +40,8 @@ export async function createTarefa(data) {
 
 - Separar controllers, services, repositories
 - Evitar logica de negocio em controllers
+
+## Lint e formatacao (recomendado)
+
+- ESLint para regras de estilo
+- Prettier para formatacao automatica

@@ -54,14 +54,21 @@ Vais aprender a **descrever cada endpoint** com exemplos reais. Isto evita que o
 -   **Body** (se existir)
 -   **Resposta** (status + JSON)
 
+### Nota de consistência
+
+Cada endpoint deve referenciar o modelo de dados relevante (ver `05_documentacao_dados.md`) e listar os erros possíveis.
+
 ### Exemplo
 
 ```text
 GET /api/tarefas
 200 OK
-[
-  { "_id": "...", "titulo": "Estudar", "feito": false }
-]
+{
+  "items": [ { "_id": "...", "titulo": "Estudar", "feito": false } ],
+  "page": 1,
+  "limit": 20,
+  "total": 1
+}
 ```
 
 ```text
@@ -75,6 +82,11 @@ Body: { "titulo": "Rever React" }
 ### Dica
 
 Escreve sempre pelo menos 1 exemplo de sucesso e 1 exemplo de erro.
+
+### Nota sobre o envelope
+
+Devolvemos sempre `{ items, page, limit, total }` para o frontend e os testes serem mais simples e previsíveis.
+Mesmo sem query params, usamos defaults (`page=1`, `limit=20`).
 
 <a id="sec-2"></a>
 
@@ -134,6 +146,7 @@ Vais aprender a explicar **como a API responde quando algo corre mal**, para o f
 -   Que erros cada endpoint pode devolver.
 -   O formato do erro.
 -   Como o frontend deve mostrar a mensagem.
+-   O modelo de dados relevante (ver `05_documentacao_dados.md`).
 
 <a id="sec-4"></a>
 
@@ -144,19 +157,20 @@ Vais explicar como **pedir listas grandes**, como **filtrar resultados** e como 
 ### Paginação
 
 ```
-GET /api/tarefas?page=1&limit=10
+GET /api/tarefas?page=1&limit=20
 ```
 
 ### Filtros (exemplo simples)
 
 ```
 GET /api/tarefas?q=estudar&feito=false
+GET /api/tarefas?sort=createdAt&order=desc
 ```
 
 ### Resposta recomendada
 
 ```json
-{ "items": [], "page": 1, "limit": 10, "total": 42 }
+{ "items": [], "page": 1, "limit": 20, "total": 42 }
 ```
 
 ### O que documentar na paginação
@@ -164,6 +178,9 @@ GET /api/tarefas?q=estudar&feito=false
 -   O significado de `page` e `limit`.
 -   O que acontece se não enviar parâmetros.
 -   Se existe limite máximo.
+-   Que campos podem ser usados no `sort` (ex.: `createdAt`, `updatedAt`).
+
+> **Nota:** o backend deve garantir `createdAt/updatedAt` (timestamps).
 
 ### Upload
 
@@ -227,3 +244,4 @@ Mesmo que não uses OpenAPI, um README com exemplos já ajuda muito.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
 -   2026-01-14: checklist de documentação oficial por endpoint.
 -   2026-01-14: alinhado com a estrutura mínima e completa de documentação.
+-   2026-01-14: GET com envelope, sort por createdAt e ligações a dados.

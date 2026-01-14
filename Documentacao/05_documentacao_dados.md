@@ -49,7 +49,7 @@ Vais definir **quais são as entidades principais** do teu projeto e o aspeto ba
 ### Exemplo (tarefas)
 
 ```json
-{ "_id": "...", "titulo": "Estudar", "feito": false, "criadoEm": "..." }
+{ "_id": "...", "titulo": "Estudar", "feito": false, "createdAt": "...", "updatedAt": "..." }
 ```
 
 ### Exemplo (utilizadores)
@@ -82,7 +82,8 @@ São regras que dizem o que é aceitável. Exemplo: "o título tem de ter pelo m
 
 -   `titulo`: string, obrigatório, min 3
 -   `feito`: boolean, default false
--   `criadoEm`: date
+-   `createdAt`: date
+-   `updatedAt`: date
 
 ### Utilizador
 
@@ -103,6 +104,10 @@ Exemplo válido: "Estudar"
 
 Se o backend valida, o frontend deve seguir as mesmas regras. Documenta ambas no mesmo sítio para não haver confusões.
 
+### Regra de ligação com a API
+
+Se mudares campos ou validações, atualiza o contrato em `04_documentacao_api.md` e os exemplos de testes em `07_documentacao_testes.md`.
+
 <a id="sec-3"></a>
 
 ## 3. [ESSENCIAL] Índices e constraints
@@ -120,7 +125,7 @@ Vais explicar **porque alguns campos precisam de índices** e o que são constra
 ### Exemplos
 
 -   `email` com `unique: true`
--   `criadoEm` com índice para ordenar
+-   `createdAt` com índice para ordenar
 
 ### Nota
 
@@ -191,3 +196,4 @@ Vais listar regras que não são só "tipo de campo", mas sim **lógica do proje
 -   2026-01-14: expansão pedagógica com definições e templates de documentação.
 -   2026-01-14: checklist de documentação oficial por entidade.
 -   2026-01-14: alinhado com a estrutura mínima e completa de documentação.
+-   2026-01-14: timestamps em createdAt/updatedAt e regra de ligação à API.

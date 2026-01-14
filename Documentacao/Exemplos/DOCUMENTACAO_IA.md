@@ -25,3 +25,8 @@
 
 - npm run test
 - Validacao manual listada em AI_TESTING.md
+
+## Regra de pedidos
+
+- Se faltar contexto, pedir esclarecimento.
+- Declarar suposicoes quando nao houver informacao.

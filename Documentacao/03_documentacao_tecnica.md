@@ -63,6 +63,12 @@ No backend, usamos a ideia de MVC mais as **camadas** (routes, services, etc.).
 -   **Services:** regras de negócio.
 -   **Repositories/DB:** acesso a dados.
 
+### Regra base (quem chama quem)
+
+Controller → Service → Repository/DB. O controller não fala diretamente com a BD.
+
+> Se mudares um endpoint, valida se o contrato em `04_documentacao_api.md` e os dados em `05_documentacao_dados.md` continuam consistentes.
+
 ### Porque usar camadas
 
 -   Facilita a manutenção.
@@ -143,7 +149,7 @@ Vais explicar **passo a passo** como o utilizador faz ações importantes no teu
 
 -   **Login:** `/auth/login` -> valida -> cria sessão.
 -   **Upload:** `POST /upload` -> valida ficheiro -> guarda.
--   **Paginação:** `GET /tarefas?page=1&limit=10`.
+-   **Paginação:** `GET /api/tarefas?page=1&limit=20`.
 
 ### Exemplo de fluxo (login) com passos
 
@@ -227,3 +233,5 @@ Consequências: Depende de internet, mas é simples de usar
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
 -   2026-01-14: checklist de documentação técnica oficial.
 -   2026-01-14: alinhado com a estrutura mínima e completa de documentação.
+-   2026-01-14: regra de chamadas entre camadas e ligações a API/Dados.
+-   2026-01-14: exemplo de paginação alinhado com o contrato da API.

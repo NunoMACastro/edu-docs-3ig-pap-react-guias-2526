@@ -112,6 +112,12 @@ Inclui tudo o que está no mínimo, mais documentação interna e para agentes.
 
 Estes temas estão nos ficheiros `02` a `09`.
 
+### Evitar doc drift
+
+-   Se mudares um endpoint, atualiza `04_documentacao_api.md` + `07_documentacao_testes.md` + changelog.
+-   Se mudares um schema, atualiza `05_documentacao_dados.md` + exemplos na API + testes.
+-   Se mudares auth, atualiza API + setup + documentação para IA.
+
 <a id="sec-3"></a>
 
 ## 3. [EXTRA] O mínimo aceitável vs completo
@@ -176,3 +182,4 @@ Vais comparar o que é "suficiente" com o que é "excelente". Isto ajuda-te a ge
 -   2026-01-14: criação do ficheiro de visão geral.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
 -   2026-01-14: estruturas mínima e completa de documentação profissional.
+-   2026-01-14: regras para evitar doc drift e ligações entre docs.

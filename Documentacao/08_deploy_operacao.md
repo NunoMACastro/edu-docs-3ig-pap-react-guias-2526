@@ -71,6 +71,15 @@ Se não explicares isto, alguém pode:
 -   Variáveis que mudam entre ambientes.
 -   Comandos de build e arranque.
 
+### Build e arranque (produção)
+
+```bash
+npm run build
+npm run start
+```
+
+Indica se há scripts diferentes para frontend/backend.
+
 ### Exemplo de bloco de documentação
 
 ```text
@@ -189,7 +198,12 @@ Monitorização é **saber se o serviço está vivo**. Pode ser só:
 
 ### Dica
 
-Não guardes segredos nos logs e escreve quem deve ser contactado quando algo falha (professor, colega, equipa).
+Não guardes segredos nem dados pessoais nos logs e escreve quem deve ser contactado quando algo falha (professor, colega, equipa).
+
+### Rollback e health check (curto)
+
+-   Rollback: voltar à versão anterior se um deploy falhar.
+-   Health check: confirmar que `/health` responde após deploy.
 
 <a id="sec-4"></a>
 
@@ -271,3 +285,4 @@ Indica onde guardar backups e quem tem acesso.
 -   2026-01-14: expansão pedagógica com exemplos e guias de documentação.
 -   2026-01-14: explicações de conceitos base (dev/prod, logs, monitorização, backups).
 -   2026-01-14: checklist de operação oficial e alinhamento com estrutura mínima/completa.
+-   2026-01-14: build/arranque, rollback/health check e reforço de segurança nos logs.

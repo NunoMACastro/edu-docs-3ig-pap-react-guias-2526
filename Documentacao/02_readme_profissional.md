@@ -175,6 +175,12 @@ Esta secção é útil se outras pessoas vão colaborar contigo.
 
 -   Para escola, basta indicar "Uso educativo".
 
+### Extras profissionais (curto)
+
+-   Incluir screenshots ou demo (se o projeto tiver UI).
+-   Entregar `.env.example` quando há configuração.
+-   Indicar claramente o tipo de uso/licença.
+
 <a id="erros-comuns"></a>
 
 ## Erros comuns
@@ -218,3 +224,4 @@ Esta secção é útil se outras pessoas vão colaborar contigo.
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
 -   2026-01-14: checklist de conteúdo obrigatório para README oficial.
 -   2026-01-14: alinhado com a estrutura mínima e completa de documentação.
+-   2026-01-14: extras profissionais (screenshots, .env.example, licença).

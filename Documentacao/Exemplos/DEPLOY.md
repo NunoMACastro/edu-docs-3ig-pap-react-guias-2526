@@ -33,6 +33,12 @@ npm run start
 - Logs: [LOCAL_LOGS]
 - Health check: GET /health
 - Alertas: [SISTEMA_ALERTAS]
+- Nao registar segredos ou dados pessoais
+
+## Rollback
+
+- Processo: [DESCREVER_PASSOS]
+- Verificar /health apos rollback
 
 ## Backup e restore
 

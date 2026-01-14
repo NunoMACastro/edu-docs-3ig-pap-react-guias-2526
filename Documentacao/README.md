@@ -24,3 +24,12 @@ Conjunto de materiais em Markdown para ensinar documentação de projetos fullst
 -   [07 - Documentação de testes](07_documentacao_testes.md)
 -   [08 - Deploy e operação](08_deploy_operacao.md)
 -   [09 - Documentação para agentes de IA](09_documentacao_para_ia.md)
+
+## Checklist de entrega
+
+- [ ] README completo e setup funcional
+- [ ] API documentada (exemplos + erros)
+- [ ] Dados documentados (campos/validações/índices)
+- [ ] Testes mínimos descritos e como correr
+- [ ] Deploy/operação (dev/prod, logs, backups)
+- [ ] Documentação para IA (contexto e limites)

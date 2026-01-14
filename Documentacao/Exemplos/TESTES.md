@@ -15,7 +15,7 @@ npm run test -- --coverage
 
 ## Testes criticos
 
-- GET /api/tarefas devolve 200 e array
+- GET /api/tarefas devolve 200 e envelope { items, page, limit, total }
 - POST /api/tarefas devolve 201
 - POST /auth/login devolve 200
 
@@ -27,6 +27,13 @@ npm run test -- --coverage
   ✓ POST /api/tarefas devolve 201
 ```
 
+## Criterios de aceitacao
+
+- status 200 no GET
+- items e array
+- page e limit sao numeros
+- total existe e e numero
+
 ## Cobertura
 
 - Target: [PERCENTAGEM]
@@ -34,6 +41,6 @@ npm run test -- --coverage
 
 ## Validacao manual
 
-- GET /api/tarefas devolve array
+- GET /api/tarefas devolve { items, page, limit, total }
 - POST /api/tarefas sem titulo -> 422
 - Frontend mostra erro

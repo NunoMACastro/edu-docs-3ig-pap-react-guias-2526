@@ -84,7 +84,7 @@ São testes que validam **as funcionalidades principais** do projeto. Se falhare
 
 ### Exemplos
 
--   `GET /api/tarefas` devolve 200 e array.
+-   `GET /api/tarefas` devolve 200 e envelope `{ items, page, limit, total }`.
 -   `POST /api/tarefas` devolve 201 com tarefa criada.
 -   Erro de validação devolve 422.
 
@@ -93,6 +93,23 @@ São testes que validam **as funcionalidades principais** do projeto. Se falhare
 -   Fluxos mais usados pelos utilizadores.
 -   Funcionalidades que dão nota (login, CRUD, pesquisa).
 -   Partes que já falharam antes.
+
+### Critério de aceitação (exemplo)
+
+-   Status `200` no GET.
+-   `items` é array.
+-   `page` e `limit` são números.
+-   `total` existe e é número.
+
+### Exemplo de asserção (ideia)
+
+```text
+res.status deve ser 200
+res.body.items deve ser array
+res.body.page deve ser 1
+res.body.limit deve ser 20
+res.body.total deve ser numero
+```
 <a id="sec-3"></a>
 
 ## 3. [ESSENCIAL] Output esperado
@@ -184,3 +201,4 @@ npm run test -- --coverage
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
 -   2026-01-14: checklist de documentação oficial de testes.
 -   2026-01-14: alinhado com a estrutura mínima e completa de documentação.
+-   2026-01-14: testes críticos com envelope e critérios de aceitação.

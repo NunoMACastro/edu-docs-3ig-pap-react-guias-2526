@@ -166,6 +166,12 @@ export async function updateTarefaFeito(id, feito) {
 
 Se mudares a função, atualiza o JSDoc no mesmo momento.
 
+### Contratos internos (DTOs e services)
+
+-   Documenta objetos de entrada/saída dos services (ex.: `CreateTarefaDTO`).
+-   Indica campos obrigatórios, tipos e defaults.
+-   Mantém estes contratos alinhados com `04_documentacao_api.md` e `05_documentacao_dados.md`.
+
 <a id="sec-4"></a>
 
 ## 4. [EXTRA] Good vs bad comments
@@ -215,6 +221,7 @@ const response = await fetch(url);
 -   Usa nomes que expliquem a intenção.
 -   Documenta interfaces usadas por outros ficheiros.
 -   Prefere explicar decisões em vez de descrever linhas.
+-   Recomenda usar ESLint/Prettier para consistência (sem obrigar).
 
 <a id="checkpoint"></a>
 
@@ -240,3 +247,4 @@ const response = await fetch(url);
 -   2026-01-14: expansão pedagógica com explicações e exemplos detalhados.
 -   2026-01-14: checklist de documentação de código oficial.
 -   2026-01-14: alinhado com a estrutura completa de documentação.
+-   2026-01-14: contratos internos e nota sobre lint/formatting.

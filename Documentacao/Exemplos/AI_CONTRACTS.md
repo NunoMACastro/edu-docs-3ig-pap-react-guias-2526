@@ -5,9 +5,12 @@ Contrato de erro (padrao):
 
 Endpoint: GET /api/tarefas
 200 OK
-[
-  { "_id": "...", "titulo": "Estudar", "feito": false }
-]
+{
+  "items": [ { "_id": "...", "titulo": "Estudar", "feito": false } ],
+  "page": 1,
+  "limit": 20,
+  "total": 1
+}
 
 Endpoint: POST /api/tarefas
 Body: { "titulo": "Rever React" }

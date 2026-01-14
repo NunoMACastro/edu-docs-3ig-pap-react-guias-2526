@@ -58,8 +58,8 @@ src/
 
 ### Paginacao
 
-1. GET /api/tarefas?page=1&limit=10
-2. Response com items, page, limit, total
+1. GET /api/tarefas?page=1&limit=20
+2. Response com { items, page, limit, total }
 
 ## Integracoes externas
 
