@@ -9,6 +9,8 @@ O objetivo é treinar os **5 primeiros temas de React** de forma gradual, com ex
 
 ## 0) O que vais construir
 
+![texto alternativo](./Images/01/01.png)
+
 Uma página com 5 secções, cada uma mostrando um tema:
 
 1. Fundamentos e setup
@@ -549,6 +551,8 @@ Aqui já vês **props** (`step`, `title`, `subtitle`) e **children** (o conteúd
 
 ## 10) Secção 1 - Fundamentos e setup
 
+![texto alternativo](./Images/01/02.png)
+
 Cria `src/documents/Fundamentos.jsx`:
 
 ```jsx
@@ -626,6 +630,8 @@ Pontos pedagógicos:
 ---
 
 ## 11) Secção 2 - JSX e componentes
+
+![texto alternativo](./Images/01/03.png)
 
 Cria `src/documents/JsxComponentes.jsx`:
 
@@ -707,6 +713,8 @@ O que o aluno aprende aqui:
 ---
 
 ## 12) Secção 3 - Props e composição
+
+![texto alternativo](./Images/01/04.png)
 
 Vamos criar dois componentes: `InfoCard` e `PropsComposicao`.
 
@@ -836,6 +844,8 @@ Aqui praticas:
 ---
 
 ## 13) Secção 4 - Estado e eventos
+
+![texto alternativo](./Images/01/05.png)
 
 Criamos um componente principal e dois exemplos: `Counter` e `ToggleNote`.
 
@@ -994,6 +1004,8 @@ Pontos pedagógicos:
 ---
 
 ## 14) Secção 5 - Listas e condicionais
+
+![texto alternativo](./Images/01/06.png)
 
 Cria `src/documents/ListasCondicionais.jsx`:
 
