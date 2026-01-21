@@ -91,6 +91,7 @@ code .
 O Vite cria ficheiros de exemplo. Vamos deixar o projeto “limpo” para começarmos do zero.
 
 - Apaga `src/App.css` (não vamos usar).
+- Remove o import `./App.css` do `App.jsx` (se existir).
 - Apaga `src/assets/` (imagens de exemplo), se existir.
 
 No fim, deves ter no mínimo:
@@ -126,7 +127,7 @@ Para isto funcionar, temos de configurar o Vite.
 
 ### 4.1) Criar `vite.config.js` (compatível com ESM)
 
-O teu `package.json` tem `"type": "module"`. Isso significa que o Node está a usar **ES Modules**.
+Vamos usar sintaxe **ESM** (`import`/`export`) no `vite.config.js`.
 Por isso, evita `__dirname` (não existe em ESM).
 
 Cria este ficheiro na raiz do projeto: `vite.config.js`
@@ -1978,6 +1979,18 @@ function App() {
 export default App;
 ```
 
+**Observações (React 18 + StrictMode):**
+
+- Em desenvolvimento, o `<React.StrictMode>` pode executar o `useEffect` duas vezes, por isso o `fetch` pode acontecer 2x.
+- Isto só acontece em dev; no build de produção não acontece.
+- Não removas o StrictMode. É normal veres pedidos duplicados no Network.
+
+**Observações (Dev vs Prod):**
+
+- **Dev** é o modo de desenvolvimento local (`npm run dev`): mais avisos e verificações. É normal ver efeitos duplicados.
+- **Prod** é o build final (`npm run build` + `npm run preview`): código otimizado, mais rápido e sem efeitos duplicados do StrictMode. É o código que vai ser colocado no servidor.
+- Se vires comportamento “estranho” em dev (duplicações, logs extra), confirma se acontece também em prod.
+
 Nesta fase, os cards já aparecem, mas ainda não fazem nada ao clicar e ainda não há favoritos.
 
 ### 18.4) Checkpoint rápido
@@ -2332,7 +2345,7 @@ Depois abre o endereço que o Vite te der.
 
 ---
 
-## 23) Exercícios extra (para consolidar)
+## 23) Exercícios de consolidação
 
 1. **Só favoritos**: cria um toggle e mostra apenas os favoritos.
 2. **Ordenar**: adiciona um seletor (por id asc/desc, por nome).
