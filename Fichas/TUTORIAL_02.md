@@ -1368,6 +1368,8 @@ Atualiza o `App.jsx` e adiciona a secção. Experimenta fazer tu sozinho agora.
 
 ![App 02](./Images/02/06.png)
 
+Antes de usares callbacks pela primeira vez neste tutorial, reve a secao "Callbacks e fluxo de dados" em `React/03_props_e_composicao.md#sec-3`.
+
 Objetivo do passo:
 
 -   aprender `useState`

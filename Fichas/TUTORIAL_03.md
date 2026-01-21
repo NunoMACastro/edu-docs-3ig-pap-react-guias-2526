@@ -1096,6 +1096,8 @@ export default LoadingSpinner;
 
 ## 11) `ErrorMessage.jsx` — mensagem de erro e botão de retry
 
+Antes de usares callbacks pela primeira vez neste tutorial, reve a secao "Callbacks e fluxo de dados" em `React/03_props_e_composicao.md#sec-3`.
+
 ### 11.1) Teoria
 
 Falhas comuns em pedidos à internet:

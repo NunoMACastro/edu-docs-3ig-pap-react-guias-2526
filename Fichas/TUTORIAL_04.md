@@ -831,6 +831,8 @@ e `ErrorMessage` exatamente como estão na Ficha 3; só ajusta imports.
 > **Hooks só podem ser chamados dentro do corpo de um componente.**
 > Não coloques `useState`, `useMemo`, `useEffect` fora do `function`.
 
+Antes de usares callbacks pela primeira vez nesta ficha, reve a secao "Callbacks e fluxo de dados" em `React/03_props_e_composicao.md#sec-3`.
+
 ### 10.1) Fase A — lista simples
 
 Este bloco **SUBSTITUI** o anterior (se existir).

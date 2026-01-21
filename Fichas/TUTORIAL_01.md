@@ -871,6 +871,8 @@ export default EstadoEventos;
 
 ### 13.2) Counter
 
+Antes de usares `onClick` pela primeira vez, reve a secao "Callbacks e fluxo de dados" em `React/03_props_e_composicao.md#sec-3`.
+
 Cria `src/documents/Counter.jsx`:
 
 ```jsx

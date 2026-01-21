@@ -208,22 +208,90 @@ export default App;
 
 ## 3. [ESSENCIAL] Callbacks e fluxo de dados
 
-### Modelo mental
+### O que e uma funcao callback (definicao simples)
 
-No React, **dados descem** por props e **ações sobem** por callbacks.
+Uma **funcao callback** e uma funcao passada como argumento para outra funcao,
+para ser chamada **mais tarde**, normalmente quando algo acontece.
 
--   **Dados descem:** o pai passa informação para o filho.
--   **Ações sobem:** o filho chama uma função do pai para pedir mudanças.
+No JavaScript do dia a dia, callbacks aparecem em muitos sitios:
+
+-   **Eventos:** o browser chama a funcao quando clicas.
+-   **Timers:** `setTimeout(() => { ... })`.
+-   **Arrays:** `items.map((item) => ...)`.
+-   **Promessas:** `fetch(...).then((data) => ...)`.
+
+No React, a ideia e a mesma: passas funcoes para que outro componente (ou o React)
+as chame no momento certo.
+
+### Porque e importante no React
+
+O React tem **fluxo de dados unidirecional**:
+
+-   **Dados descem** por props (do pai para o filho).
+-   **Acoes sobem** por callbacks (do filho para o pai).
+
+O filho **nao altera o estado do pai diretamente**. Em vez disso, ele
+**chama uma funcao** que o pai lhe deu. Isto mantem o controlo do estado
+no sitio certo e torna o codigo previsivel.
+
+### Onde aparecem callbacks no React (com exemplos curtos)
+
+-   **Handlers de eventos:** `onClick`, `onChange`, `onSubmit` esperam uma funcao.
+-   **Props de callback:** `onRetry`, `onSelect`, `onToggleFavorite`.
+-   **Atualizacao baseada no valor anterior:** `setCount((prev) => prev + 1)`.
+-   **Efeitos:** `useEffect(() => { ... }, [])` (o React chama a funcao).
+
+### Modelo mental (fluxo de dados)
+
+No React, **dados descem** por props e **acoes sobem** por callbacks.
+
+-   **Dados descem:** o pai passa informacao para o filho.
+-   **Acoes sobem:** o filho chama uma funcao do pai para pedir mudancas.
 -   **Levantar estado:** se dois filhos precisam do mesmo dado, o estado sobe para o pai.
 
-Pensa assim: o componente pai controla o estado, e os filhos pedem mudanças através de funções.
+Pensa assim: o componente pai controla o estado, e os filhos pedem mudancas
+atraves de funcoes.
+
+### Passar a funcao vs executar a funcao
+
+Quando ligas eventos ou passas callbacks por props, **passa a funcao** (referencia),
+nao o resultado da chamada.
+
+```jsx
+// Certo: React guarda a funcao e chama-a no evento
+<button onClick={guardar}>Guardar</button>
+
+// Errado: executa logo no render
+<button onClick={guardar()}>Guardar</button>
+```
+
+Se precisares de passar dados, cria uma funcao pequena:
+
+```jsx
+<button onClick={() => selecionar(id)}>Selecionar</button>
+```
+
+### Assinatura do callback (o que recebe)
+
+-   **Eventos:** o React passa um objeto `event` automaticamente.
+-   **Callbacks custom:** decides tu o formato (ex.: `onSelect(id)`).
+
+```jsx
+function SearchBar({ onChange }) {
+    function handleInputChange(event) {
+        onChange(event.target.value);
+    }
+
+    return <input onChange={handleInputChange} />;
+}
+```
 
 ### Sintaxe base (passo a passo)
 
 -   **O pai guarda o estado.**
--   **O pai cria uma função que altera o estado.**
--   **O pai passa a função ao filho como prop.**
--   **O filho chama a função quando o utilizador interage.**
+-   **O pai cria uma funcao que altera o estado.**
+-   **O pai passa a funcao ao filho como prop.**
+-   **O filho chama a funcao quando o utilizador interage.**
 
 ### Exemplo (levantar estado)
 
@@ -284,11 +352,13 @@ export default Preview;
 -   Tentar alterar uma prop diretamente no filho.
 -   Criar estado duplicado em dois componentes que precisam do mesmo dado.
 -   Esquecer de passar o callback e ficar sem resposta ao clicar/escrever.
+-   Passar `onClick={funcao()}` e disparar o efeito no render.
 
 ### Boas práticas
 
 -   Mantém o estado no componente mais alto que precisa dele.
 -   Dá nomes claros aos callbacks (`onTextoChange`, `onGuardar`, `onSelecionar`).
+-   Usa callbacks curtos no JSX e extrai quando a logica cresce.
 
 ### Checkpoint
 

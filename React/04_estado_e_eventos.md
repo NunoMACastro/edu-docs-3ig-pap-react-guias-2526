@@ -110,6 +110,8 @@ function ExemploLog() {
 
 ## 2. [ESSENCIAL] Eventos e handlers
 
+Se precisares de rever o que e uma funcao callback, ve a secao "Callbacks e fluxo de dados" em `03_props_e_composicao.md#sec-3`.
+
 ### Modelo mental
 
 Eventos são a forma de reagir a ações do utilizador: cliques, teclas, mudanças num input, submissão de formulário. Um **handler** é uma função que o React chama quando o evento acontece.
