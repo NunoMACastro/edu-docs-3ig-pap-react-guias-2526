@@ -1362,8 +1362,12 @@ function PokemonCard({ pokemon, isFavorite, onToggleFavorite, onClick }) {
     function handleCardClick() {
         onClick(pokemon);
     }
-
+    // A seguir vamos formatar o número e obter a artwork.
+    // O padstStart adiciona zeros à esquerda para termos sempre 3 dígitos.
+    // Exemplo: 1 → 001, 25 → 025, 300 → 300
     const pokemonNumber = `#${String(pokemon.id).padStart(3, "0")}`;
+    // Tentamos obter a imagem oficial, se não houver, usamos a sprite normal.
+    // Um sprite é uma imagem pequena e simples.
     const artwork =
         pokemon.sprites?.other?.["official-artwork"]?.front_default ||
         pokemon.sprites?.front_default ||
