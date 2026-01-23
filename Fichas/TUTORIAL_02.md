@@ -1795,6 +1795,12 @@ Uma breve explicação do conceito:
 -   Quando o formulário é submetido, podemos usar um handler (`onSubmit`) para validar os dados e evitar que a página recarregue (com `event.preventDefault()`).
 -   Se o utilizador não preencher os dados corretamente, podemos mostrar mensagens de erro ou sucesso que aparecem dinamicamente e sem recarregar a página.
 
+Definições rápidas (para não confundir):
+
+-   **Input controlado:** o `value` vem do estado; sem `onChange` o input bloqueia.
+-   **Handler:** função ligada ao evento (ex.: `onChange`, `onSubmit`).
+-   **preventDefault:** impede o refresh automático do `<form>`.
+
 Objetivo do passo:
 
 -   perceber inputs controlados (`value` + `onChange`)
@@ -1819,6 +1825,23 @@ function FormulariosControlados() {
     const [aceito, setAceito] = useState(false);
     const [erro, setErro] = useState("");
     const [sucesso, setSucesso] = useState("");
+
+    // Handlers individuais para treinar eventos e legibilidade.
+    function handleNomeChange(event) {
+        setNome(event.target.value);
+    }
+
+    function handleCursoChange(event) {
+        setCurso(event.target.value);
+    }
+
+    function handleObjetivoChange(event) {
+        setObjetivo(event.target.value);
+    }
+
+    function handleAceitoChange(event) {
+        setAceito(event.target.checked);
+    }
 
     /**
      * Valida o formulário e mostra mensagens de erro/sucesso.
@@ -1857,7 +1880,7 @@ function FormulariosControlados() {
                         <input
                             id="nome"
                             value={nome}
-                            onChange={(event) => setNome(event.target.value)}
+                            onChange={handleNomeChange}
                             placeholder="Escreve o teu nome"
                         />
                         <span className="form__help">
@@ -1870,7 +1893,7 @@ function FormulariosControlados() {
                         <select
                             id="curso"
                             value={curso}
-                            onChange={(event) => setCurso(event.target.value)}
+                            onChange={handleCursoChange}
                         >
                             <option value="web">Técnico de Programação</option>
                             <option value="redes">Técnico de Redes</option>
@@ -1883,9 +1906,7 @@ function FormulariosControlados() {
                         <textarea
                             id="objetivo"
                             value={objetivo}
-                            onChange={(event) =>
-                                setObjetivo(event.target.value)
-                            }
+                            onChange={handleObjetivoChange}
                             placeholder="Quero praticar componentes..."
                         />
                     </div>
@@ -1894,9 +1915,7 @@ function FormulariosControlados() {
                         <input
                             type="checkbox"
                             checked={aceito}
-                            onChange={(event) =>
-                                setAceito(event.target.checked)
-                            }
+                            onChange={handleAceitoChange}
                         />
                         Aceito os termos da turma
                     </label>
@@ -2272,6 +2291,12 @@ O que quero que observes:
 -   O `useEffect` corre depois do render, permitindo buscar dados sem bloquear a UI.
 -   O estado controla o que é mostrado na UI (loading, erro, dados).
 
+Definições rápidas:
+
+-   **Efeito (side effect):** trabalho fora do render (fetch, storage, DOM).
+-   **Dependências:** valores que fazem o effect correr de novo.
+-   **Cleanup:** função devolvida pelo effect para limpar timers/listeners.
+
 ### 18.1) Colocar o ficheiro mini-data.json no sítio certo (public)
 
 Cria o ficheiro `public/mini-data.json`:
@@ -2375,10 +2400,13 @@ function UseEffectDados() {
     // Segundo useEffect: corre quando o filtro muda (e quando os dados mudam)
     useEffect(() => {
         if (estado === "ready") {
-            const total = itensFiltrados.length;
+            const total =
+                filtro === "todos"
+                    ? itens.length
+                    : itens.filter((item) => item.categoria === filtro).length;
             document.title = `React Ficha 02 - ${total} temas`;
         }
-    }, [estado, filtro, itensFiltrados.length]);
+    }, [estado, filtro, itens]);
 
     return (
         <Section

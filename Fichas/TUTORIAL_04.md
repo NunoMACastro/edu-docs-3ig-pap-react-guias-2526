@@ -189,6 +189,62 @@ Exemplo mental: `Route` é uma regra do mapa; `Routes` é o conjunto de regras.
 - `NavLink` faz o mesmo, mas adiciona estado “ativo” para estilos.
 - `useNavigate` permite navegar **por código** (ex.: clique num card).
 
+### 5.5.4.1) Mini-sandbox do Router (3 ficheiros, sem Pokédex)
+
+Se algum aluno estiver perdido, faz este mini-teste isolado antes de continuar:
+
+```jsx
+// src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App.jsx";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    </React.StrictMode>
+);
+```
+
+```jsx
+// src/App.jsx
+import { Routes, Route, NavLink } from "react-router-dom";
+
+function Home() {
+    return <h1>Home</h1>;
+}
+
+function Sobre() {
+    return <h1>Sobre</h1>;
+}
+
+function Contactos() {
+    return <h1>Contactos</h1>;
+}
+
+function App() {
+    return (
+        <div>
+            <nav>
+                <NavLink to="/">Home</NavLink>
+                <NavLink to="/sobre">Sobre</NavLink>
+                <NavLink to="/contactos">Contactos</NavLink>
+            </nav>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/sobre" element={<Sobre />} />
+                <Route path="/contactos" element={<Contactos />} />
+            </Routes>
+        </div>
+    );
+}
+
+export default App;
+```
+
 ### 5.5.5) Outlet e rotas aninhadas
 
 `Outlet` é o “buraco” onde aparece a rota filha.

@@ -45,6 +45,15 @@ Se esqueceres o `onChange`, o input fica "bloqueado", porque o React não permit
 
 Em contraste, um input **não controlado** guarda o valor internamente (no DOM). Aqui vamos usar sempre controlados porque dão mais controlo e previsibilidade.
 
+### Definições essenciais
+
+-   **Input controlado:** o `value` vem do estado e o `onChange` atualiza esse estado.
+-   **Input não controlado:** o valor fica no DOM; o React não controla diretamente.
+-   **Fonte de verdade:** o local onde o valor real vive (aqui, o estado).
+-   **Handler de input:** função chamada no `onChange` para atualizar o estado.
+
+> **Regra prática:** um input controlado **não pode ter `value` undefined**. Começa sempre com `""`, `0`, `false` ou um valor inicial coerente.
+
 ### Sintaxe base (passo a passo)
 
 -   **Cria estado para o input:** `const [nome, setNome] = useState("")`.
@@ -108,6 +117,38 @@ function FormNome() {
         </div>
     );
 }
+```
+
+### Reset simples (limpar formulário)
+
+```jsx
+const [nome, setNome] = useState("");
+const [email, setEmail] = useState("");
+
+function limpar() {
+    setNome("");
+    setEmail("");
+}
+```
+
+### Handler único com `name` (versão essencial)
+
+Mesmo num formulário pequeno, já podes treinar o padrão com `name`:
+
+```jsx
+const [form, setForm] = useState({ nome: "", email: "" });
+
+function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+}
+
+return (
+    <>
+        <input name="nome" value={form.nome} onChange={handleChange} />
+        <input name="email" value={form.email} onChange={handleChange} />
+    </>
+);
 ```
 
 ### Erros comuns
@@ -194,6 +235,41 @@ function FormPreferencias() {
 }
 
 export default FormPreferencias;
+```
+
+#### Radio (opção única)
+
+```jsx
+import { useState } from "react";
+
+function FormRadio() {
+    const [sexo, setSexo] = useState("f");
+
+    return (
+        <div>
+            <label>
+                <input
+                    type="radio"
+                    name="sexo"
+                    value="f"
+                    checked={sexo === "f"}
+                    onChange={(e) => setSexo(e.target.value)}
+                />
+                Feminino
+            </label>
+            <label>
+                <input
+                    type="radio"
+                    name="sexo"
+                    value="m"
+                    checked={sexo === "m"}
+                    onChange={(e) => setSexo(e.target.value)}
+                />
+                Masculino
+            </label>
+        </div>
+    );
+}
 ```
 
 ### Erros comuns

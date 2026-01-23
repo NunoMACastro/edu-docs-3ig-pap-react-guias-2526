@@ -42,6 +42,12 @@ Exemplos de efeitos:
 
 O `useEffect` existe para separar o **render** (puro) do **efeito** (trabalho extra). Assim o React mantém a interface estável e previsível.
 
+### Definições essenciais
+
+-   **Efeito (side effect):** qualquer ação que mexe com algo fora do render (API, timers, DOM, storage).
+-   **Dependências:** valores que o efeito “ouve” para decidir quando voltar a correr.
+-   **Limpeza (cleanup):** função devolvida pelo effect para desfazer timers/listeners quando o componente sai ou antes do próximo effect.
+
 ### Sintaxe base (passo a passo)
 
 -   **Importa o hook:** `import { useEffect } from "react";`
@@ -90,6 +96,18 @@ function LogMontagem() {
 -   Alterar o estado em loop infinito sem dependências.
 -   Usar `useEffect` para calcular algo que podia ser calculado no render.
 
+### Quando **não** usar useEffect
+
+-   **Valores derivados:** se consegues calcular no render, não precisas de effect.
+-   **Transformações simples:** `const total = preco * quantidade;` é render, não effect.
+-   **Sincronizar UI interna:** se é apenas para mostrar algo, usa variáveis locais.
+
+Exemplo de derivação (sem effect):
+
+```jsx
+const total = preco * quantidade;
+```
+
 ### Boas práticas
 
 -   Usa efeitos apenas para tarefas externas ao render.
@@ -136,6 +154,13 @@ Isto liga ao "ciclo de vida":
 | _(sem array)_ | Em todos os renders | Logging simples       |
 | `[]`          | Apenas ao montar    | Buscar dados iniciais |
 | `[count]`     | Quando `count` muda | Atualizar título      |
+
+### Checklist de dependências (rápido)
+
+-   Lista **tudo o que usas dentro do effect** (props, estado, funções).
+-   Se usas uma função criada no render, **move-a para dentro do effect** ou usa `useCallback`.
+-   Evita colocar **objetos/arrays novos** no array (criam mudanças a cada render).
+-   Se o linter avisar, **entende o motivo antes de ignorar**.
 
 ### Exemplo
 

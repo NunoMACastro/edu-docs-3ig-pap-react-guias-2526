@@ -43,6 +43,12 @@ Exemplo mental:
 
 Repara que o id vem como **texto**. Se precisares de tratar como número, faz a conversão (ex.: `Number(id)`).
 
+### Definições essenciais
+
+-   **Parâmetro de rota:** parte variável do caminho (`/alunos/:id`).
+-   **useParams:** hook que devolve um objeto com os parâmetros da rota.
+-   **Slug/Id:** identificador no caminho (normalmente texto).
+
 ### Sintaxe base (passo a passo)
 
 -   **Define a rota com `:id`:** `/alunos/:id`.
@@ -121,6 +127,29 @@ function ListaAlunos() {
 export default ListaAlunos;
 ```
 
+### Validação simples do id (caso não exista)
+
+```jsx
+import { useParams } from "react-router-dom";
+
+const alunos = [
+    { id: 1, nome: "Ana" },
+    { id: 2, nome: "Bruno" },
+];
+
+function DetalheAluno() {
+    const { id } = useParams();
+    const alunoId = Number(id);
+    const aluno = alunos.find((a) => a.id === alunoId);
+
+    if (!aluno) {
+        return <p>Aluno não encontrado.</p>;
+    }
+
+    return <h1>{aluno.nome}</h1>;
+}
+```
+
 ### Erros comuns
 
 -   Escrever `:id` no `Link` em vez de passar o valor.
@@ -150,6 +179,10 @@ export default ListaAlunos;
 Pensa assim: em vez de clicares num link, **o código decide** mudar de página.
 
 Também podes usar para voltar atrás (`navigate(-1)`) ou substituir o histórico (`navigate("/x", { replace: true })`).
+
+### Definição curta
+
+-   **useNavigate:** hook que devolve uma função para navegação programática.
 
 ### Sintaxe base (passo a passo)
 

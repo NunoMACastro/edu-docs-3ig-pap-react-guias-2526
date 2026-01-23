@@ -1164,6 +1164,8 @@ Um **input controlado** é um input cujo valor vem do estado.
 
 Isto parece “mais trabalho”, mas dá-te controlo total do formulário.
 
+> **Nota importante:** em inputs controlados, o `value` deve começar em `""` (string vazia). Se começar como `undefined`, o React dá aviso de “controlado vs não controlado”.
+
 ### 12.2) Prática
 
 Cria `src/components/SearchBar.jsx`:
@@ -1829,6 +1831,19 @@ Notas didáticas antes do código:
 - `useCallback` evita recriar a função de carregamento a cada render, o que previne loops no `useEffect`.
 - O helper usa `Promise.all` para fazer pedidos de detalhe em paralelo.
 - Guardamos uma mensagem “segura” em `error` para mostrar na UI.
+
+**Versão simples (sem `useCallback`)** — útil para quem ainda está a dominar `useEffect`:
+
+```jsx
+useEffect(() => {
+    async function carregar() {
+        // fetch aqui
+    }
+    carregar();
+}, []);
+```
+
+Depois, quando já estiveres confortável, podes introduzir `useCallback` para separar a função e evitar dependências confusas.
 
 Vamos criar agora estados para dados e erros e um `useEffect` para carregar ao iniciar.
 

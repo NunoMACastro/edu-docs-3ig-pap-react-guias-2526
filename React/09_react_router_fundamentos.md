@@ -23,7 +23,7 @@
 
 -   **ESSENCIAL vs EXTRA:** foca as rotas básicas antes de estruturar pastas.
 -   **Como estudar:** cria 2 ou 3 páginas e muda entre elas.
--   **Ligações:** se precisares, revê componentes e estado em `08_useEffect_e_dados.md`.
+-   **Ligações:** se precisares, revê componentes e estado em `04_estado_e_eventos.md`.
 
 <a id="sec-1"></a>
 
@@ -50,6 +50,13 @@ O React Router é a **biblioteca oficial mais usada** para fazer routing em apps
 
 > **Nota:** o servidor continua a devolver o mesmo `index.html`. Quem decide o que mostrar é o React Router, no lado do cliente.
 
+### Definições essenciais
+
+-   **Rota (route):** regra que liga um caminho (`/sobre`) a um componente.
+-   **Router:** componente que observa a URL e escolhe a rota certa.
+-   **SPA:** aplicação de uma única página que troca conteúdo sem reload.
+-   **Histórico (history):** lista de navegações para voltar/avançar.
+
 ### Sintaxe base (passo a passo)
 
 -   **Uma rota liga um caminho a um componente:** `/sobre` → `<Sobre />`.
@@ -70,6 +77,54 @@ function Sobre() {
     // Esta é a página "Sobre"
     return <h1>Sobre</h1>;
 }
+```
+
+### Router mínimo em 3 ficheiros
+
+```jsx
+// src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App.jsx";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    </React.StrictMode>
+);
+```
+
+```jsx
+// src/App.jsx
+import { Routes, Route, Link } from "react-router-dom";
+
+function Home() {
+    return <h1>Home</h1>;
+}
+
+function Sobre() {
+    return <h1>Sobre</h1>;
+}
+
+function App() {
+    return (
+        <div>
+            <nav>
+                <Link to="/">Home</Link>
+                <Link to="/sobre">Sobre</Link>
+            </nav>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/sobre" element={<Sobre />} />
+            </Routes>
+        </div>
+    );
+}
+
+export default App;
 ```
 
 ### Erros comuns

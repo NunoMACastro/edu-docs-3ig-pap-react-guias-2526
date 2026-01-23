@@ -42,6 +42,14 @@ Exemplo mental: tens um contador. Se fizeres `count = count + 1`, a variável mu
 
 Também é útil lembrar: **props vêm de fora**, **estado vive dentro do componente**.
 
+### Definições essenciais (curtas mas importantes)
+
+-   **Estado (state):** dados internos do componente que mudam ao longo do tempo e provocam um novo render.
+-   **Render:** fase em que o React calcula o JSX que vai aparecer no ecrã.
+-   **Re-render:** novo render provocado por mudança de estado/props.
+-   **Hook (`useState`):** função especial que liga o componente ao estado.
+-   **Handler (callback):** função que é chamada quando um evento acontece (ex.: clique).
+
 ### Sintaxe base (passo a passo)
 
 -   **Importa o hook:** `import { useState } from "react";`
@@ -88,6 +96,24 @@ function ExemploLog() {
 }
 ```
 
+#### Porque o estado parece "atrasado"?
+
+Quando chamas `setState`, o React **agenda** a atualização e volta a renderizar depois. Por isso, o valor do estado **ainda é o antigo** dentro do mesmo handler. Se quiseres observar o valor atualizado, usa um `useEffect` que corre depois do render:
+
+```jsx
+import { useEffect, useState } from "react";
+
+function Exemplo() {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        console.log("Agora é:", count);
+    }, [count]);
+
+    return <button onClick={() => setCount((prev) => prev + 1)}>Somar</button>;
+}
+```
+
 ### Erros comuns
 
 -   **Mudar o estado diretamente:** `count = count + 1` não provoca re-render.
@@ -117,6 +143,8 @@ Se precisares de rever o que e uma funcao callback, ve a secao "Callbacks e flux
 Eventos são a forma de reagir a ações do utilizador: cliques, teclas, mudanças num input, submissão de formulário. Um **handler** é uma função que o React chama quando o evento acontece.
 
 Pensa assim: o JSX "ouve" eventos e, quando acontecem, chama a função que tu escolheste.
+
+**Definição importante:** um handler é sempre **uma função**, não o resultado de uma função. Por isso escrevemos `onClick={handleClick}` e não `onClick={handleClick()}`.
 
 ### Sintaxe base (passo a passo)
 
@@ -170,6 +198,33 @@ function CaixaTexto() {
     );
 }
 ```
+
+### Handlers com parâmetros (ex.: id)
+
+Quando precisas de passar um valor para o handler, usa uma função inline que chama o handler real:
+
+```jsx
+function Lista() {
+    const itens = [{ id: 1, nome: "Ana" }, { id: 2, nome: "Bruno" }];
+
+    function remover(id) {
+        console.log("Remover", id);
+    }
+
+    return (
+        <ul>
+            {itens.map((item) => (
+                <li key={item.id}>
+                    {item.nome}{" "}
+                    <button onClick={() => remover(item.id)}>Remover</button>
+                </li>
+            ))}
+        </ul>
+    );
+}
+```
+
+Repara: `onClick={() => remover(item.id)}` **passa uma função**, que só corre quando o utilizador clica.
 
 ### Erros comuns
 

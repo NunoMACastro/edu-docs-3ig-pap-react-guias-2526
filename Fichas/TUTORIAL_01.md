@@ -946,6 +946,41 @@ function ToggleNote() {
 export default ToggleNote;
 ```
 
+### 13.4) Handlers com parâmetros (mini-exemplo)
+
+Cria `src/documents/ListaMini.jsx`:
+
+```jsx
+const alunos = [
+    { id: 1, nome: "Ana" },
+    { id: 2, nome: "Bruno" },
+];
+
+function ListaMini() {
+    function remover(id) {
+        alert(`Remover aluno ${id}`);
+    }
+
+    return (
+        <ul>
+            {alunos.map((aluno) => (
+                <li key={aluno.id}>
+                    {aluno.nome}{" "}
+                    <button onClick={() => remover(aluno.id)}>Remover</button>
+                </li>
+            ))}
+        </ul>
+    );
+}
+
+export default ListaMini;
+```
+
+Pontos chave:
+
+-   `onClick={() => remover(aluno.id)}` passa **uma função**.
+-   Se escreveres `onClick={remover(aluno.id)}`, a função corre logo no render.
+
 Agora adiciona a quarta secção ao `App.jsx`:
 
 ```jsx
