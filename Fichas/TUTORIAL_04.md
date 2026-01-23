@@ -205,7 +205,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <BrowserRouter>
             <App />
         </BrowserRouter>
-    </React.StrictMode>
+    </React.StrictMode>,
 );
 ```
 
@@ -2563,7 +2563,7 @@ npm run dev
 
 ---
 
-## 18) Checklist final (para entregar)
+## 18) Checklist final
 
 - [ ] React Router instalado e configurado
 - [ ] Rotas `/`, `/pokemon/:id`, `/favoritos`, `*`
