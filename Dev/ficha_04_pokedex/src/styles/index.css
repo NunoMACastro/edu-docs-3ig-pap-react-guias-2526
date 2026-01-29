@@ -1,0 +1,56 @@
+/**
+ * ============================================
+ * ESTILOS GLOBAIS
+ * ============================================
+ *
+ * Descrição: Reset mínimo, tipografia e variáveis globais
+ * que servem de base para toda a Pokédex Explorer.
+ *
+ * CONCEITOS APLICADOS:
+ * - Fundamentos (variáveis CSS e tipografia global)
+ * - Herança visual (font-family padrão e tamanho base)
+ * - Layout global (reset de box-sizing e backgrounds)
+ */
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@400;500;600;700;800&display=swap");
+
+:root {
+    --primary: #ff1c1c;
+    --primary-dark: #cc0000;
+    --secondary: #ffd700;
+    --accent: #3b4cca;
+    --bg-main: #f8f9fa;
+    --bg-surface: #ffffff;
+    --text-dark: #2d3436;
+    --text-muted: #636e72;
+    --border: #dfe6e9;
+    --shadow-soft: 0 18px 40px -28px rgba(45, 52, 54, 0.35);
+    --font-display: "Press Start 2P", sans-serif;
+    --font-body: "Poppins", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    background: var(--bg-main);
+    color: var(--text-dark);
+    min-height: 100vh;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+    border: none;
+    outline: none;
+}

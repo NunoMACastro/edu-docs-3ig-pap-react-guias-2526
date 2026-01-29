@@ -8,6 +8,51 @@ mas **substituímos a navegação por estado** por **rotas reais** com React Rou
 
 ## 0) O que vais construir (igual à Ficha 3, agora com Router)
 
+### Ponto da situação (onde estamos)
+
+- Na Ficha 3 a app já funciona: lista, pesquisa, filtro por tipo, favoritos e detalhe.
+- Mas a navegação para as páginas de Pokémon individual, não é uma URL real: é um “modo” controlado por estado (`currentPage`, `selectedPokemon`).
+
+### O que vamos fazer neste ponto (objetivo)
+
+- Manter tudo o que já existe **igual**, mas trocar a navegação por estado por:
+    - rotas reais (`/`, `/pokemon/:id`, `/favoritos`)
+    - query string para filtros (`?q=...&type=...`)
+    - fallback 404 (`*`)
+
+### Como vamos fazer (passos)
+
+1. Ligar o Router no `main.jsx` (Router mínimo).
+2. Criar um Layout com `Outlet` + navegação (moldura fixa).
+3. Extrair a lista para uma Page (rota `/`).
+4. Migrar detalhes para rota dinâmica (`/pokemon/:id`).
+5. Migrar filtros para a URL (query string).
+6. Criar favoritos e 404.
+
+### Conceitos novos
+
+- **Rota:** “quando a URL é X, mostra o componente Y”. Uma rota é uma regra de mapeamento. É uma correspondência entre URL e componente.
+- **Rota dinâmica:** uma parte da URL é variável (`/pokemon/:id`).
+- **Query string:** pares `chave=valor` depois de `?` (ideal para filtros partilháveis).
+
+### Conceitos adjacentes
+
+- `useParams()` e `useSearchParams()` devolvem valores como **string** (ou `null`).
+  O `useParams()` lê do caminho; o `useSearchParams()` lê da query string. É com estas funções que vamos obter os id's dos Pokemons e quais os filtros a aplicar.
+
+### Propósito do componente/página
+
+- Ainda não criamos nada aqui: estamos a alinhar o “mapa mental” do que vem a seguir.
+
+### Checkpoint
+
+- Consegues explicar, numa frase, a mudança principal?
+    - “Antes eu mudava ecrãs por estado; agora mudo ecrãs pela URL.”
+
+---
+
+### O que vamos fazer...
+
 Uma Pokédex digital com dados reais da **PokéAPI**, agora com rotas reais:
 
 - Lista dos **151 Pokémon (Gen 1)**
@@ -18,7 +63,7 @@ Uma Pokédex digital com dados reais da **PokéAPI**, agora com rotas reais:
 - Query string para partilhar filtros: `?q=...&type=...`
 - Layout com menu e rota 404
 
-### 0.1) Ligações diretas aos 10 temas
+### 0.1) Ligações diretas aos temas dos ficheiros de React (1 ao 10)
 
 1. **Fundamentos e setup** — Vite, estrutura base, `index.html`, `main.jsx`.
 2. **JSX e componentes** — UI dividida em componentes pequenos.
@@ -45,14 +90,38 @@ Uma Pokédex digital com dados reais da **PokéAPI**, agora com rotas reais:
 
 ## 1) Pré‑requisitos
 
-- Ficha 3 concluída e a correr (`pokedex-explorer`)
-- Node.js (18 ou superior)
-- npm
-- VS Code (ou outro editor)
+### Ponto da situação (onde estamos)
+
+- Vais pegar numa app já feita (Ficha 3) e migrar para Router.
+- Se a Ficha 3 não estiver estável, vais misturar bugs antigos com bugs do Router. Por isso certifica-te que a ficha 3 está OK antes de começar.
+
+### O que vamos fazer neste ponto (objetivo)
+
+- Garantir que tens um “ponto de partida limpo” antes de começar a ficha 4.
+
+### Como vamos fazer (passos)
+
+- Confirmar que a Ficha 3 corre (`npm run dev`) e que lista/detalhe/favoritos funcionam.
 
 ---
 
 ## 2) Criar a v2 a partir da v1 (sem recomeçar do zero)
+
+Vamos criar uma cópia do projeto da Ficha 3 para migrar para Router.
+
+- Opção A (mais simples): duplicar a pasta.
+- Opção B (mais profissional): criar uma branch no repositório de GIT.
+- Depois: instalar `react-router-dom` no projeto novo.
+
+```bash
+npm install react-router-dom
+```
+
+### Observações
+
+- Ao duplicares a pasta, pode ficar um `node_modules` antigo. Em caso de dúvidas:
+    - apaga `node_modules` e corre `npm install` novamente.
+- A instalação do Router não “ativa” nada por si — só instala a biblioteca.
 
 ### 2.1) Duplicar a pasta (opção simples)
 
@@ -70,19 +139,31 @@ cd pokedex-v2
 
 ### 2.2) OU criar uma branch (se usares Git)
 
+No terminal da pasta do projeto da Ficha 3:
+
 ```bash
 git checkout -b ficha4-router
 ```
 
 ### 2.3) Instalar o React Router
 
-Entra na pasta do projeto (se ainda não estiveres lá) e instala o React Router:
+Entra na pasta do projeto (se ainda não estiveres lá) e, se ainda não o fizeste, instala o React Router:
 
 ```bash
 npm install react-router-dom
 ```
 
 ### 2.4) Alias `@` (mantém o da Ficha 3)
+
+Na ficha 3 usaste o alias `@` para evitar `../../..` nos imports.
+Basicamente é uma “atalho” para `src/`.
+
+Para usar o alias `@`, precisas de duas coisas:
+
+1. Configuração no `vite.config.js`
+2. Configuração no editor (ex.: `jsconfig.json` para VS Code)
+
+Isso já deve ter sido feito na Ficha 3.
 
 Não mexas no `vite.config.js` — mantém exatamente o da Ficha 3.
 Mantém também o `jsconfig.json` igual ao da Ficha 3 para o VS Code.
@@ -91,28 +172,41 @@ Mantém também o `jsconfig.json` igual ao da Ficha 3 para o VS Code.
 
 - `import App from "@/App.jsx"` funciona sem erros?
 
-### Erros comuns
-
-- Alterar o `vite.config.js` sem necessidade e quebrar os imports.
-- Esquecer o `jsconfig.json` e o editor sublinhar `@/`.
-
-### Como depurar
-
-- Erro típico: `Failed to resolve import "@/..."`.
-- Confirma se o alias `@` está igual ao da Ficha 3.
-
 ---
 
 ## 3) Reaproveitar o que já existe
 
+### Ponto da situação (onde estamos)
+
+- A app já tem componentes, serviços e estilos prontos.
+
+### O que vamos fazer neste ponto (objetivo)
+
+- Definir o que não mexemos nesta migração para a ficha 4.
+
+### Como vamos fazer (passos)
+
+1. Manter componentes e serviços existentes.
+2. Só adicionar os novos ficheiros (Layout, Pages, NotFound).
+3. Ajustar imports apenas quando necessário.
+
+**Nota de organização:**
+
+- Em contexto profissional, separar `pages/` de `components/` faz sentido.
+- Aqui **não** fazemos já essa separação para não criar mais uma mudança estrutural.
+
 Nesta migração, **não voltas a escrever tudo**. Vais **reaproveitar**:
 
-- `SearchBar`, `TypeFilter`, `PokemonCard`, `LoadingSpinner`, `ErrorMessage`
-- `services/pokeApi.js`
-- `typeData.js` (com **cores e gradientes** da Ficha 3)
-- `styles/index.css` e `styles/pokedex.css` **da Ficha 3**
+- Manténs sem reescrever: `SearchBar`, `TypeFilter`, `PokemonCard`, `LoadingSpinner`, `ErrorMessage`
+- Manténs sem reescrever: `services/pokeApi.js`
+- Manténs sem reescrever: `typeData.js` (com **cores e gradientes** da Ficha 3)
+- Manténs sem reescrever: `styles/index.css` e `styles/pokedex.css` **da Ficha 3**
+- Vais **editar**: `PokemonDetailsPage` (para ler `useParams`) e `App.jsx` (para rotas)
+- Vais **criar**: `Layout`, `PokemonListPage`, `FavoritesPage`, `NotFound`
 
-**Nota de organização:** nesta ficha **mantemos a estrutura da Ficha 3**.
+**Nota de organização:**
+
+nesta ficha **mantemos a estrutura da Ficha 3**.
 As novas “páginas” do Router ficam em `components/` para não introduzir uma
 mudança estrutural agora. Em contexto profissional, faz sentido separar
 `pages/` e `data/`, mas isso fica para uma ficha futura.
@@ -120,6 +214,15 @@ mudança estrutural agora. Em contexto profissional, faz sentido separar
 ---
 
 ## 4) Estrutura final (objetivo da ficha)
+
+### O que vamos fazer aqui
+
+- Definir desde já onde cada ficheiro vai viver, para não “andar perdido”.
+
+### Como vamos fazer
+
+- Manter `services/`, `styles/` e componentes reutilizados.
+- Criar “páginas” como componentes (Layout, ListPage, DetailsPage, FavoritesPage, NotFound).
 
 ```
 src/
@@ -146,36 +249,36 @@ src/
 
 ---
 
-## 5) Estilos (mantém os da Ficha 3)
+## 5) Conceitos essenciais antes do Router (revisão rápida)
 
-**Não substituas os estilos.** A Ficha 4 deve ficar com o mesmo visual da Ficha 3.
-Mantém:
+### Ponto da situação
 
-- `src/styles/index.css`
-- `src/styles/pokedex.css`
+- Vais começar a ver novas palavras: `Routes`, `Route`, `Outlet`, `NavLink`…
 
-Se por alguma razão não os tens, copia exatamente os ficheiros da Ficha 3.
+### O que vamos fazer
 
----
+- Criar uma base mínima de conceitos para o resto da ficha não “cair do céu”.
 
-## 5.5) Conceitos essenciais antes do Router (revisão rápida)
+### Como vamos fazer
+
+- Ler com calma esta secção e voltar aqui sempre que algo não fizer sentido.
 
 Antes de entrares nas fases, revê estes conceitos. Esta secção liga a Ficha 3
 à Ficha 4 e evita que os temas “caiam do céu”.
 
-### 5.5.1) O que são rotas
+### 5.1) O que são rotas
 
 Rotas são **caminhos de URL** que mapeiam para componentes.
 Numa SPA (Single Page App), mudar de rota **não recarrega a página**:
 apenas muda o componente que aparece no ecrã.
 
-### 5.5.2) O que é o React Router
+### 5.2) O que é o React Router
 
 O React Router é a biblioteca que **interpreta a URL** e decide
 **que componente renderizar**. Ele também trata da navegação sem reload
 quando usas `Link`/`NavLink`.
 
-### 5.5.3) BrowserRouter, Routes, Route (o “mapa”)
+### 5.3) BrowserRouter, Routes, Route (o “mapa”)
 
 - `BrowserRouter` liga a app ao histórico do browser.
 - `Routes` é o contentor onde declaras as rotas.
@@ -183,15 +286,17 @@ quando usas `Link`/`NavLink`.
 
 Exemplo mental: `Route` é uma regra do mapa; `Routes` é o conjunto de regras.
 
-### 5.5.4) Navegação sem reload (Link, NavLink, useNavigate)
+### 5.4) Navegação sem reload (Link, NavLink, useNavigate)
+
+Regra geral, em React não existe o reload da página. Para navegar sem recarregar, usamos:
 
 - `Link` navega sem recarregar a página.
 - `NavLink` faz o mesmo, mas adiciona estado “ativo” para estilos.
 - `useNavigate` permite navegar **por código** (ex.: clique num card).
 
-### 5.5.4.1) Mini-sandbox do Router (3 ficheiros, sem Pokédex)
+### 5.4.1) Mini-sandbox do Router (3 ficheiros, sem Pokédex)
 
-Se algum aluno estiver perdido, faz este mini-teste isolado antes de continuar:
+Se estiveres perdido, faz este mini-teste isolado antes de continuar. Se já tiveres percebido, podes saltar esta parte.
 
 ```jsx
 // src/main.jsx
@@ -245,17 +350,25 @@ function App() {
 export default App;
 ```
 
-### 5.5.5) Outlet e rotas aninhadas
+### 5.5) Outlet e rotas aninhadas
 
 `Outlet` é o “buraco” onde aparece a rota filha.
 Rotas aninhadas permitem ter **um Layout fixo** (menu/hero) e trocar apenas
 o conteúdo.
 
+Basicamente, o Layout define a estrutura geral fixa, e o `Outlet` é o sítio onde o conteúdo muda dependendo da rota que o user escolhe.
+
 ### 5.5.6) O que são hooks
 
 Hooks são funções do React que “ligam” o componente a estado, efeitos
-ou ao Router. **Regra de ouro:** só podem ser chamados **dentro de componentes**
+ou ao Router. Só podem ser chamados **dentro de componentes**
 e **sempre na mesma ordem**.
+
+Já vimos vários hooks:
+
+- `useState()` cria estado local.
+- `useEffect()` cria efeitos colaterais (fetch, timers…).
+- `useNavigate()`, `useParams()`, `useSearchParams()`, `useLocation()` são hooks do Router.
 
 ### 5.5.7) Hooks do Router usados nesta ficha
 
@@ -280,16 +393,26 @@ A rota `*` é um “apanha tudo”. Se nenhuma rota coincidir, aparece a 404.
 
 - **Dev** é o modo de desenvolvimento local (`npm run dev`): mais avisos e verificações. É normal ver efeitos duplicados.
 - **Prod** é o build final (`npm run build` + `npm run preview`): código otimizado, mais rápido e sem efeitos duplicados do StrictMode. É o código que vai ser colocado no servidor.
-- Se vires comportamento “estranho” em dev (duplicações, logs extra), confirma se acontece também em prod.
 
 **Observações:**
 
-- Nesta ficha **não mudamos UI nem dados**: só mudamos a navegação.
-- Se alguma palavra não fizer sentido, volta a esta secção durante as fases.
+- Nesta ficha **não mudamos UI nem dados**: só mudamos a navegação. Mudamos a forma de navegar, não o que é navegado.
 
 ---
 
 ## 6) Observações do React Router
+
+### Ponto da situação
+
+- A partir daqui vais começar a “mexer no mapa” da aplicação (rotas).
+
+### O que vamos fazer neste ponto
+
+- Organizar o Router em 3 ideias simples:
+    1. Layout + Outlet
+    2. Params vs SearchParams
+    3. 404 com `*`
+- E deixar claro o que vai desaparecer da Ficha 3 (navegação por estado).
 
 Este capítulo organiza o Router em 3 ideias simples (6.1–6.3) e termina
 com uma lista do que vais **substituir/remover** quando chegares à fase certa
@@ -312,7 +435,9 @@ Exemplo curto:
 </Route>
 ```
 
-Micro‑snippet (o `Layout` com `Outlet`):
+Snippet (o `Layout` com `Outlet`):
+
+(Como eu sei que o Guilherme vai perguntar, um snippet é um bloquinho de código reutilizável que podes colar rapidamente no teu editor.)
 
 ```jsx
 import { Outlet } from "react-router-dom";
@@ -327,6 +452,10 @@ function Layout() {
 }
 // Sem <Outlet />, a rota filha nunca aparece.
 ```
+
+> Então, resumindo:
+> -> O Layout é a moldura fixa.
+> -> O Outlet é o sítio onde a página da rota aparece.
 
 **Erros comuns:**
 
@@ -343,6 +472,7 @@ function Layout() {
 
 - Se o menu aparece mas o conteúdo não, confirma o `<Outlet />`.
 - Se a rota filha não aparece, revê se o `path` é relativo.
+- Se o resto da app falha, confirma se o Router está ativo.
 
 ### 6.2) `useParams` vs `useSearchParams` (tudo vem como texto)
 
@@ -351,7 +481,9 @@ function Layout() {
 - `useParams()` lê valores do **caminho**: `/pokemon/:id`.
 - `useSearchParams()` lê valores da **query string**: `?q=pika&type=fire`.
 
-**Regra de ouro:** tudo vem como **string** (ou `null`).
+**Regra:** tudo vem como **string** (ou `null`).
+
+Exemplos:
 
 ```jsx
 const { id } = useParams();
@@ -363,7 +495,7 @@ const searchTerm = params.get("q") ?? ""; // Evita null
 
 **Erros comuns:**
 
-- Comparar `id` (string) com número e não encontrar resultados.
+- Comparar `id` (string) com número e não encontrar resultados. Ou convertes tudo para número e comparas com número, ou comparas tudo como string.
 - Fazer `searchParams.get("q").trim()` quando o valor é `null`.
 - Esquecer que `useSearchParams` **não atualiza** estado local automaticamente.
 
@@ -373,16 +505,18 @@ const searchTerm = params.get("q") ?? ""; // Evita null
 - Normaliza `searchTerm` (de `q`) e `type` com `|| ""` para evitar `null`.
 - Mantém a URL como fonte de verdade dos filtros.
 
+(E novamente, respondendo ao Guilherme, fonte de verdade é uma expressão que significa que a informação mais confiável e oficial vem de um lugar específico — neste caso, a URL.)
+
 ### 6.3) Rota `*` no fim (apanha tudo)
 
 **Observações:**
 
 - A rota `*` é o **fallback**.
-- Se nenhuma rota combinar, ela aparece.
+- Se nenhuma rota chamada combinar com o que está definido na App, ela aparece.
 
 **Erros comuns:**
 
-- Colocar `*` no meio e “comer” todas as rotas seguintes.
+- Colocar `*` no meio e todas as rotas seguintes desaparecem porque nem chegam a ser executadas.
 - Esquecer a rota `*` e ver uma página vazia em caminhos inválidos.
 
 **Boas práticas:**
@@ -390,16 +524,22 @@ const searchTerm = params.get("q") ?? ""; // Evita null
 - Coloca a rota `*` **sempre no fim** da lista de rotas.
 - Usa uma página 404 simples com `Link` para voltar.
 
-**Como depurar:**
+**Como depurar quando estiver a funcionar:**
 
 - Abre `/qualquer-coisa` e confirma que aparece a 404.
 - Se não aparece, revê a ordem das rotas no `Routes`.
 
 ---
 
+Estes 3 capítulos (6.1 a 6.3) são o “mapa mental” do Router. Para já ainda não implementamos nada. Apenas estamos a preparar o terreno.
+
+---
+
 ## 6.4) O que vai ser removido/substituído mais à frente
 
-Na migração para Router, **mais à frente** deixamos de usar navegação por estado.
+Agora vamos abordar o que vamos alterar em relação à ficha 3. Ainda não vamos alterar nada, apenas fazer um mapa mental!!
+
+Na migração para Router, **mais à frente** deixamos de usar navegação por estado da ficha 3.
 Na **Fase 2.5** essa navegação ainda existe (é a ponte), e só depois é que a
 substituímos por rotas reais.
 
@@ -422,11 +562,40 @@ Assim consegues comparar ou voltar atrás sem stress.
 Escolhe **uma** destas opções:
 
 - **Backup rápido:** copia `src/App.jsx` para `src/App.ficha3.jsx`.
-- **Git:** faz commit antes de mexer.
+- **Git:** faz commit antes de mexer e se precisares voltas à branch da Ficha 3.
 
 ---
 
 ## 7) Fase 1 — Router mínimo
+
+Vamos implementar um Router mínimo para garantir que tudo está a funcionar...
+
+### Ponto da situação
+
+- Neste momento o Router pode estar instalado (npm), mas ainda não está “a controlar” a app.
+- Sem Router ativo, tudo o que vem depois (Routes, NavLink, hooks) falha.
+
+### O que vamos fazer neste ponto
+
+- Confirmar o “fio elétrico” do Router:
+    - `BrowserRouter` a envolver a app
+    - `Routes` a renderizar algo simples
+
+### Como vamos fazer (passos)
+
+1. Editar `main.jsx` e garantir `<BrowserRouter>`.
+2. Trocar temporariamente o `App.jsx` por uma versão mínima.
+3. Ver “Router OK” no ecrã.
+
+### Conceitos novos (explicar)
+
+- `BrowserRouter`: dá ao Router acesso à URL e ao histórico do browser. Basicamente funciona como o “motor” do Router.
+- `Routes`: contentor de regras. Ou seja, é onde defines as rotas. Imagina uma caixa com várias regras dentro.
+- `Route`: regra individual. É onde dizes: "para esta URL, mostra este componente".
+
+### Conceitos adjacentes
+
+- Se vires erro `useRoutes() may be used only in the context of a <Router>` → falta `BrowserRouter`.
 
 Objetivo: garantir que o Router está a funcionar **antes** de migrar a UI.
 
@@ -515,6 +684,8 @@ export default App;
 - Manter o `App.jsx` antigo ao lado (duas versões no mesmo ficheiro).
 - Não ter `div#root` no `index.html` e a app não montar.
 
+(Guilherme, montar é uma expressão técnica que significa “iniciar” ou “carregar” a aplicação na página web.)
+
 ### Como depurar
 
 - Se vires ecrã branco, confirma se o `App.jsx` foi mesmo substituído.
@@ -524,19 +695,61 @@ export default App;
 
 - A página mostra “Router OK”?
 
+### 7.3) Voltar ao App da Ficha 3 (antes de avançar)
+
+Agora que confirmaste o Router, **repõe o `App.jsx` original da Ficha 3**.
+A Fase 2.5 assume que toda a lógica (estado, handlers, `currentPage`/`selectedPokemon`) já existe.
+
+Escolhe uma opção:
+
+- Se fizeste backup: copia `src/App.ficha3.jsx` para `src/App.jsx`.
+- Se usas Git: volta ao ficheiro com `git checkout -- src/App.jsx`.
+
+Sem isto, a Fase 2.5 não funciona.
+
 ---
 
 ## 8) Fase 2 — Layout com `Outlet` + `NavLink`
 
+### Ponto da situação
+
+- O Router já funciona minimamente.
+
+### O que vamos fazer neste ponto
+
+- Criar o componente `Layout` (moldura fixa).
+- Usar `<Outlet />` para mostrar a rota filha.
+- Criar navegação com `NavLink`.
+
+### Como vamos fazer (passos)
+
+1. Criar `src/components/Layout.jsx`.
+2. Atualizar `App.jsx` para ter rota pai (`Layout`) e rota filha (`index`). (posteriormente vamos adicionar mais rotas filhas)
+
+### Conceitos novos (explicar)
+
+- `Outlet`: local onde a rota filha aparece. É um componente especial do Router. Não somos nós que o criamos; ele vem do Router.
+- `NavLink`: link que consegue saber se está ativo (para estilo de navegação).
+- Rotas aninhadas: `Route` dentro de `Route`.
+
+### Conceitos adjacentes
+
+- `end` no `NavLink` evita “match por prefixo” (senão o link da lista fica ativo em tudo).
+
+### Propósito do componente
+
+- `Layout` existe para: **hero + navegação + espaço para páginas**.  
+  Não deve ter lógica pesada de dados (isso vem mais tarde e com cuidado).
+
 ### Observações
 
-O `Layout` é a “moldura fixa” e o `<Outlet />` é a “janela” onde a página muda.
-O Layout é a moldura; o `Outlet` é o sítio onde a página da rota aparece.
 Aqui ainda não ligamos dados; só garantimos que a moldura aparece em todas as rotas.
+Nota: nesta fase os contadores ainda são placeholders e o link “Favoritos”
+pode abrir 404. Isto é **esperado** e será resolvido nas Fases 5 e 6.
 
 ### 8.1) `src/components/Layout.jsx`
 
-Cria o ficheiro. Vamos **reutilizar as classes da Ficha 3** para
+Cria o ficheiro. Vamos **reutilizar as classes CSS da Ficha 3** para
 não mexer nos estilos.
 
 ```jsx
@@ -715,9 +928,35 @@ export default App;
 
 ## 8.5) Fase 2.5 — Router sem mexer na lógica
 
+### Ponto da situação
+
+- Tens Router + Layout, mas ainda não migraste a lógica real da app.
+- Se tentares migrar lista + detalhes + filtros tudo de uma vez, vais quebrar tudo.
+
+### O que vamos fazer neste ponto
+
+- Fazer uma “ponte”:
+    - A UI e lógica ficam iguais à Ficha 3.
+    - Só mudas o `return` para ficar “dentro” do Router.
+
+### Como vamos fazer (detalhadamente)
+
+1. **Não mexer** em `useState`, `useEffect`, fetch, favoritos, filtragem.
+2. Mexer **apenas** no bloco do `return`:
+    - envolver com `<Routes>`
+    - usar `<Layout />`
+    - colocar a UI antiga dentro de um `Route index`.
+
+### Conceitos adjacentes
+
+- Nesta fase ainda tens `currentPage` e `selectedPokemon`. Não é “erro”: é transição.
+- O objetivo é garantir que o Router está a renderizar o teu conteúdo antigo.
+
 Objetivo: a app fica **igual à Ficha 3**.  
 Mudança: **só mexemos no `return`**.
 Não substituas o ficheiro todo: troca apenas o bloco do `return`.
+
+Vamos lá...
 
 ### Parte A — Mantém‑se igual (lógica)
 
@@ -727,12 +966,26 @@ Isso inclui a navegação por estado com `currentPage` e `selectedPokemon`.
 
 ### Parte B — O que muda (renderização via Router)
 
+Na Ficha 3, tu controlavas “que página aparece” com estado:
+
+currentPage decidia se mostravas “list” ou “details”
+
+selectedPokemon dizia “qual é o Pokémon selecionado”
+
+Ou seja, a navegação era interna (state-driven).
+
+Na Ficha 4 (Router), queres que a navegação seja decidida pela URL.
+Mas nesta Fase 2.5 tu ainda não vais mudar a lógica (ainda não vais eliminar currentPage nem selectedPokemon).
+Só vais “meter o Router a mandar” no container do render.
+
 O `return` passa a ser controlado pelo Router.  
 Em vez de “mostrar a lista diretamente”, colocamos a lista **inline**
 dentro de um `Route index` (o ecrã principal em `/`).
 Quando estás em `/`, o Router renderiza exatamente esse `index`.
 
-#### Antes (mini trecho do return antigo)
+**inline** = colocar diretamente o conteúdo dentro do JSX, sem criar outro componente.
+
+#### Antes (return antigo)
 
 ```jsx
 return (
@@ -748,26 +1001,85 @@ return (
 
 #### Depois (só o return com Routes + Layout)
 
+De onde vem esse código?
+
+Vem diretamente do return da Ficha 3 (App.jsx), mais concretamente dos dois blocos:
+
+o bloco da lista (controlos + resultados + grelha)
+
+o bloco dos detalhes (<PokemonDetailsPage ... />)
+
 ```jsx
 return (
     <Routes>
-        <Route
-            path="/"
-            element={
-                <Layout
-                    /* se já tens contadores reais no Layout,
-                       passa aqui pokemon e favorites */
-                />
-            }
-        >
+        <Route path="/" element={<Layout />}>
             <Route
                 index
                 element={
                     <>
-                        {/* Aqui metes inline o que antes renderizavas no App */}
-                        {currentPage === "list" && (/* lista + filtros + grid */)}
+                        {currentPage === "list" && (
+                            <>
+                                <section className="pokedex__controls">
+                                    <SearchBar
+                                        value={searchTerm}
+                                        onChange={handleSearchChange}
+                                    />
+                                    <TypeFilter
+                                        selectedType={selectedType}
+                                        onTypeChange={handleTypeChange}
+                                    />
+                                </section>
+
+                                <section className="pokedex__results">
+                                    {loading && <LoadingSpinner />}
+
+                                    {error && (
+                                        <ErrorMessage
+                                            message={error}
+                                            onRetry={handleRetry}
+                                        />
+                                    )}
+
+                                    {!loading &&
+                                        !error &&
+                                        resultsCount === 0 && (
+                                            <p className="pokedex__empty">
+                                                Nenhum Pokémon encontrado.
+                                                Ajusta a pesquisa ou o filtro de
+                                                tipo.
+                                            </p>
+                                        )}
+
+                                    {!loading && !error && resultsCount > 0 && (
+                                        <div className="pokedex__grid">
+                                            {filteredPokemon.map((poke) => (
+                                                <PokemonCard
+                                                    key={poke.id}
+                                                    pokemon={poke}
+                                                    isFavorite={favorites.includes(
+                                                        poke.id,
+                                                    )}
+                                                    onToggleFavorite={
+                                                        toggleFavorite
+                                                    }
+                                                    onClick={handlePokemonClick}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </section>
+                            </>
+                        )}
+
                         {currentPage === "details" && selectedPokemon && (
-                            /* detalhes */
+                            <PokemonDetailsPage
+                                pokemon={selectedPokemon}
+                                isFavorite={favorites.includes(
+                                    selectedPokemon.id,
+                                )}
+                                onToggleFavorite={toggleFavorite}
+                                onBack={handleBackToList}
+                            />
                         )}
                     </>
                 }
@@ -785,6 +1097,19 @@ return (
 ---
 
 ## 9) Ficheiros reutilizados (ajustar, não reescrever)
+
+### Ponto da situação
+
+- Vais ver imports a quebrar porque alguns caminhos mudam (ou porque agora usas alias mais consistentemente).
+
+### O que vamos fazer
+
+- Garantir que os ficheiros reaproveitados continuam iguais, e só mudamos imports quando necessário.
+
+### Como vamos fazer
+
+- Confirmar ficheiro a ficheiro (sem reescrever conteúdo).
+- Ajustar apenas imports para o alias `@`.
 
 Nesta fase confirmas os ficheiros base. Se já os tens da Ficha 3, **mantém**
 e **apenas ajusta** onde indicado.
@@ -870,6 +1195,27 @@ import { getTypeGradient } from "@/components/typeData.js";
 
 ## 10) Fase 3 — Extrair a lista para `PokemonListPage`
 
+### Ponto da situação
+
+- O `App.jsx` está a ficar demasiado pesado: tem estado global + UI + lógica da lista.
+- Quando tudo está no mesmo sítio, é mais difícil perceber responsabilidades.
+
+### O que vamos fazer
+
+- Criar uma **page** (`PokemonListPage`) responsável pela UI da lista.
+- O `App` fica como “cérebro”: dados globais + rotas + favoritos.
+
+### Como vamos fazer
+
+1. Criar `PokemonListPage.jsx` na pasta `components/`.
+2. Passar `pokemon`, `favorites` e handlers como props.
+3. No clique do card, navegar com `useNavigate()` para `/pokemon/:id`.
+
+### Conceitos novos
+
+- **Page component:** componente renderizado diretamente por uma rota.
+- **Props como contrato:** a page só sabe o que lhe é passado (nada “mágico”).
+
 Objetivo: tirar a lógica de lista do `App.jsx` e colocar numa **page**.
 Nesta fase ainda **não usamos query string** (isso vem na Fase 5).
 
@@ -891,8 +1237,7 @@ Antes de usares callbacks pela primeira vez nesta ficha, reve a secao "Callbacks
 
 ### 10.1) Fase A — lista simples
 
-Este bloco **SUBSTITUI** o anterior (se existir).
-Evita ter duas versões da lista ativas ao mesmo tempo.
+Crie o ficheiro `src/components/PokemonListPage.jsx`.
 
 ```jsx
 import { useNavigate } from "react-router-dom";
@@ -1206,6 +1551,26 @@ export default PokemonListPage;
 
 ## 11) `App.jsx` (Fase 3) — dados + favoritos
 
+### Ponto da situação
+
+- A lista já está numa page (`PokemonListPage`).
+- Agora o `App` passa a ser claramente:
+    - estado global (dados, loading, erro, favoritos)
+    - rotas
+
+### O que vamos fazer
+
+- Reorganizar o `App.jsx` para:
+    - carregar dados uma vez
+    - gerir favoritos
+    - expor rotas com `Layout` + `index`
+
+### Como vamos fazer
+
+1. Manter lógica igual (useEffect + localStorage).
+2. Substituir apenas a parte do `return` por rotas.
+3. Passar props para `PokemonListPage`.
+
 Este bloco **SUBSTITUI** o `App.jsx` da fase 2.5.
 Fazemos isto para mover a lista para uma page e deixar o `App` apenas com
 estado global e rotas.
@@ -1348,6 +1713,33 @@ export default App;
 ---
 
 ## 12) Fase 4 — Migrar detalhes para rota dinâmica `/pokemon/:id`
+
+### Ponto da situação
+
+- Antes: o detalhe dependia do estado `selectedPokemon`.
+- Agora: o detalhe deve depender da URL (`/pokemon/:id`).
+
+### O que vamos fazer
+
+- Criar / Editar `PokemonDetailsPage` que lê `id` via `useParams()`.
+- Procurar o Pokémon na lista global (já carregada no `App`).
+- Tratar `loading`/`error` para acesso direto ao link funcionar.
+
+### Como vamos fazer
+
+1. Criar / Editar `PokemonDetailsPage.jsx` com `useParams`, `useNavigate`, `useLocation`.
+2. Em `App.jsx`, adicionar a rota `pokemon/:id`.
+3. Na lista, navegar para `/pokemon/${id}` no clique do card.
+
+### Conceitos novos
+
+- `useParams()` devolve `{ id: "25" }` (string).
+- É obrigatório `Number(id)` para comparar com `pokemon.id` (número).
+
+### Conceitos adjacentes
+
+- Acesso direto: se entrares em `/pokemon/1` antes de o fetch acabar, tens de mostrar loading.
+- Botão “voltar” robusto: `navigate(-1)` pode sair da app; por isso usamos navegação controlada.
 
 ### Observações
 
@@ -1743,6 +2135,34 @@ export default App;
 ---
 
 ## 13) Fase 5 — Migrar filtros para query string
+
+### Ponto da situação
+
+- Até agora, filtros vivem em `useState`. Se fizeres refresh, perdes tudo.
+- Objetivo: filtros serem “partilháveis” e sobreviverem a refresh.
+
+### O que vamos fazer
+
+- Substituir `useState` de filtros por `useSearchParams()`.
+- Guardar:
+    - pesquisa em `q`
+    - tipo em `type`
+
+### Como vamos fazer
+
+1. Ler `q` e `type` da URL com `params.get(...)`.
+2. Quando o input muda, atualizar a URL com `setParams`.
+3. Quando o tipo muda, atualizar a URL com `setParams`.
+4. Ao navegar para detalhe, anexar a query string.
+
+### Conceitos novos
+
+- `useSearchParams` é como um “estado”, mas guardado na URL.
+
+### Conceitos adjacentes
+
+- `params.get("q")` pode devolver `null` → usa `|| ""`.
+- `replace: true` evita “encher o histórico” em cada tecla.
 
 Nesta fase, a URL passa a ser a **fonte de verdade** para `searchTerm` (em `q`)
 e `type`.
@@ -2238,6 +2658,30 @@ export default App;
 ---
 
 ## 14) Fase 6 — FavoritesPage e rota 404
+
+### Ponto da situação
+
+- Já tens lista, detalhes e filtros na URL.
+- Falta fechar a navegação completa:
+    - rota real para favoritos
+    - fallback 404
+
+### O que vamos fazer
+
+- Criar `FavoritesPage` para mostrar apenas favoritos.
+- Criar `NotFound` e a rota `*`.
+
+### Como vamos fazer
+
+1. Implementar `FavoritesPage` com o mesmo grid.
+2. Implementar `NotFound` com `Link`.
+3. No `App`, adicionar:
+    - `path="favoritos"`
+    - `path="*"` no fim.
+
+### Conceitos adjacentes
+
+- A rota `*` tem de ficar no fim, senão “apanha” tudo.
 
 ### Observações
 

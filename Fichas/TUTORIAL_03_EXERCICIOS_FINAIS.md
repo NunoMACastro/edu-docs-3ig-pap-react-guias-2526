@@ -72,11 +72,14 @@ const [sortBy, setSortBy] = useState("id-asc");
 
 **Ordenação depois do filtro (usar isto na grelha):**
 
+O sort recebe o array `filteredPokemon` e cria um novo array ordenado `sortedPokemon`.
+a ordenação depende do valor de `sortBy`.
+Ou seja, o sort recebe um a e b e compara-os conforme o critério selecionado.
 ```jsx
 const sortedPokemon = [...filteredPokemon].sort((a, b) => {
     switch (sortBy) {
         case "id-desc":
-            return b.id - a.id;
+            return b.id - a.id; /
         case "name-asc":
             return a.name.localeCompare(b.name);
         case "name-desc":

@@ -1,0 +1,44 @@
+[
+    {
+        "id": 1,
+        "tema": "JSX na prática",
+        "categoria": "jsx",
+        "tempo": "15 min",
+        "nivel": "essencial"
+    },
+    {
+        "id": 2,
+        "tema": "Props e composição",
+        "categoria": "props",
+        "tempo": "20 min",
+        "nivel": "essencial"
+    },
+    {
+        "id": 3,
+        "tema": "Estado e eventos",
+        "categoria": "estado",
+        "tempo": "25 min",
+        "nivel": "essencial"
+    },
+    {
+        "id": 4,
+        "tema": "Listas e condicionais",
+        "categoria": "listas",
+        "tempo": "20 min",
+        "nivel": "essencial"
+    },
+    {
+        "id": 5,
+        "tema": "Formulários controlados",
+        "categoria": "forms",
+        "tempo": "25 min",
+        "nivel": "essencial"
+    },
+    {
+        "id": 6,
+        "tema": "useEffect e dados",
+        "categoria": "hooks",
+        "tempo": "20 min",
+        "nivel": "essencial"
+    }
+]
