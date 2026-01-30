@@ -294,7 +294,7 @@ Regra geral, em React não existe o reload da página. Para navegar sem recarreg
 - `NavLink` faz o mesmo, mas adiciona estado “ativo” para estilos.
 - `useNavigate` permite navegar **por código** (ex.: clique num card).
 
-### 5.4.1) Mini-sandbox do Router (3 ficheiros, sem Pokédex)
+### 5.4.1) Teste do Router (3 ficheiros, sem Pokédex)
 
 Se estiveres perdido, faz este mini-teste isolado antes de continuar. Se já tiveres percebido, podes saltar esta parte.
 
@@ -665,6 +665,10 @@ import { Routes, Route } from "react-router-dom";
  * - Routes + Route
  */
 function App() {
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return devolve o “mapa” de rotas que o React Router vai usar para decidir o que mostrar.
+    // Programação: usamos <Routes> como contentor e <Route> como regras; cada <Route> tem um path e um element.
+    // Como isto é JSX, estás a devolver uma árvore de elementos (componentes) em vez de HTML direto.
     return (
         <Routes>
             <Route
@@ -775,6 +779,11 @@ import { NavLink, Outlet } from "react-router-dom";
  * @returns {JSX.Element} Layout principal.
  */
 function Layout() {
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return devolve a “moldura” fixa (hero + navegação) e deixa o espaço
+    // para a página da rota ativa aparecer através do <Outlet />.
+    // Programação: usamos <NavLink> para aplicar estado ativo (classe + style inline via isActive)
+    // e garantimos que a rota filha renderiza dentro do layout sem recarregar a página.
     return (
         <div className="pokedex">
             <header className="pokedex__hero">
@@ -887,6 +896,10 @@ import Layout from "@/components/Layout.jsx";
  * - Layout route
  */
 function App() {
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return devolve o “mapa” de rotas que o React Router vai usar para decidir o que mostrar.
+    // Programação: usamos <Routes> como contentor e <Route> como regras; cada <Route> tem um path e um element.
+    // Como isto é JSX, estás a devolver uma árvore de elementos (componentes) em vez de HTML direto.
     return (
         <Routes>
             {/* Rota pai com Layout (moldura fixa). */}
@@ -1010,6 +1023,10 @@ o bloco da lista (controlos + resultados + grelha)
 o bloco dos detalhes (<PokemonDetailsPage ... />)
 
 ```jsx
+// --- EXPLICAÇÃO DO RETURN ---
+// Conceito: este return devolve o “mapa” de rotas que o React Router vai usar para decidir o que mostrar.
+// Programação: usamos <Routes> como contentor e <Route> como regras; cada <Route> tem um path e um element.
+// Como isto é JSX, estás a devolver uma árvore de elementos (componentes) em vez de HTML direto.
 return (
     <Routes>
         <Route path="/" element={<Layout />}>
@@ -1198,12 +1215,25 @@ import { getTypeGradient } from "@/components/typeData.js";
 ### Ponto da situação
 
 - O `App.jsx` está a ficar demasiado pesado: tem estado global + UI + lógica da lista.
+- Regra geral devemos separar responsabilidades:
+    - `App`: estado global + rotas + favoritos
+    - `PokemonListPage`: UI da lista (filtros + grid + estados visuais)
+- Benefícios:
+    - Código mais organizado e fácil de perceber.
+    - Componentes mais focados numa única responsabilidade.
+- Basicamente se um ficheiro está a fazer “tudo ao mesmo tempo”:
+    - É mais difícil de ler.
+    - É mais difícil de testar.
+    - É mais difícil de reutilizar.
+    - É mais difiícil de manter.
 - Quando tudo está no mesmo sítio, é mais difícil perceber responsabilidades.
 
 ### O que vamos fazer
 
 - Criar uma **page** (`PokemonListPage`) responsável pela UI da lista.
 - O `App` fica como “cérebro”: dados globais + rotas + favoritos.
+- A page fica como “rosto”: UI da lista + filtros + grid + estados visuais.
+- Depois, na App, passamos os dados e handlers como props para o componente `PokemonListPage`.
 
 ### Como vamos fazer
 
@@ -1211,13 +1241,9 @@ import { getTypeGradient } from "@/components/typeData.js";
 2. Passar `pokemon`, `favorites` e handlers como props.
 3. No clique do card, navegar com `useNavigate()` para `/pokemon/:id`.
 
-### Conceitos novos
+**Nota:** O `PokemonListPage` vai ser usado na rota `/` (index). O `useNavigate` é um hook do Router que permite navegar programaticamente.
 
-- **Page component:** componente renderizado diretamente por uma rota.
-- **Props como contrato:** a page só sabe o que lhe é passado (nada “mágico”).
-
-Objetivo: tirar a lógica de lista do `App.jsx` e colocar numa **page**.
-Nesta fase ainda **não usamos query string** (isso vem na Fase 5).
+(Sim, eu sei, Guilherme... "programaticamente" é uma palavra técnica que significa "fazer algo através de código, em vez de interação direta do utilizador". Neste caso, significa que o código decide quando e para onde navegar, sem o utilizador clicar num link.)
 
 ### Observações
 
@@ -1237,11 +1263,11 @@ Antes de usares callbacks pela primeira vez nesta ficha, reve a secao "Callbacks
 
 ### 10.1) Fase A — lista simples
 
-Crie o ficheiro `src/components/PokemonListPage.jsx`.
+Cria o ficheiro `src/components/PokemonListPage.jsx`.
 
 ```jsx
 import { useNavigate } from "react-router-dom";
-import PokemonCard from "@/components/PokemonCard.jsx";
+import PokemonCard from "@/components/PokemonCard.jsx"; // reutilizado da Ficha 3
 
 /**
  * ============================================
@@ -1266,9 +1292,13 @@ function PokemonListPage({ pokemon, favorites, onToggleFavorite }) {
     const navigate = useNavigate(); // navegação programática
 
     function handlePokemonClick(pokemonItem) {
-        navigate(`/pokemon/${pokemonItem.id}`);
+        navigate(`/pokemon/${pokemonItem.id}`); // navega para detalhes do Pokémon com o id dado
     }
-
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return mostra a grelha (lista) de Pokémon.
+    // Programação: usamos .map() para transformar cada item do array `pokemon` num <PokemonCard>.
+    // A prop key={poke.id} dá ao React uma chave estável para gerir a lista; favorites.includes(poke.id) decide o estado de favorito.
+    // Passamos callbacks via props (onToggleFavorite/onClick) para o card poder comunicar ações de volta ao “pai”.
     return (
         <section className="pokedex__results">
             <div className="pokedex__grid">
@@ -1325,6 +1355,11 @@ function PokemonListPage({ pokemon, favorites, onToggleFavorite }) {
     function handlePokemonClick(pokemonItem) {
         navigate(`/pokemon/${pokemonItem.id}`);
     }
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return mostra os controlos (pesquisa/filtro) e a grelha de resultados.
+    // Programação: usamos um Fragment (<>) para devolver múltiplas secções sem criar um <div> extra.
+    // Um fragmento é útil quando queres devolver vários elementos irmãos. Por norma, um componente React só pode devolver um único elemento raiz. Ou seja, um único `<div>`, `<section>`, etc. O Fragmento (`<>...</>`) permite contornar essa limitação sem adicionar nós extras ao DOM. O que faz é agrupar os elementos no JSX, mas não cria um elemento real no HTML.
+    // A lista é criada com .map() e os componentes recebem props (value, onChange, selectedType, onTypeChange) para ligar UI a estado.
 
     return (
         <>
@@ -1397,6 +1432,10 @@ function PokemonListPage({ pokemon, favorites, onToggleFavorite }) {
     function handlePokemonClick(pokemonItem) {
         navigate(`/pokemon/${pokemonItem.id}`);
     }
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return mostra os controlos (pesquisa/filtro) e a grelha de resultados.
+    // Programação: usamos um Fragment (<>) para devolver múltiplas secções sem criar um <div> extra.
+    // A lista é criada com .map() e os componentes recebem props (value, onChange, selectedType, onTypeChange) para ligar UI a estado.
 
     return (
         <>
@@ -1488,6 +1527,11 @@ function PokemonListPage({
     function handlePokemonClick(pokemonItem) {
         navigate(`/pokemon/${pokemonItem.id}`);
     }
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: mostramos a área de controlos (pesquisa + filtro) e a área de resultados,
+    // mudando o que aparece conforme loading/erro/vazio.
+    // Programação: usamos Fragment para devolver duas secções irmãs, condicionais com && para
+    // estados visuais e .map() para gerar a grelha de cards com props e key estável.
 
     return (
         <>
@@ -1661,6 +1705,11 @@ function App() {
     }
 
     // A renderização começa no próximo bloco.
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: aqui o App deixa de renderizar a UI diretamente e passa a devolver o
+    // “mapa de rotas” com o Layout como moldura e a lista na rota index (/).
+    // Programação: usamos <Routes>/<Route> para definir as páginas e passamos props
+    // (dados, favoritos e handlers) para o PokemonListPage dentro do element.
     return (
 ```
 
@@ -1819,16 +1868,25 @@ function PokemonDetailsPage({
     const numericId = Number(id);
 
     if (loading) {
+        // --- EXPLICAÇÃO DO RETURN ---
+        // Conceito: enquanto os dados ainda estão a carregar, mostramos feedback ao utilizador.
+        // Programação: fazemos um early return (saída antecipada) para terminar o componente aqui e evitar renderizar JSX dependente de dados.
         return <LoadingSpinner />;
     }
 
     if (error) {
+        // --- EXPLICAÇÃO DO RETURN ---
+        // Conceito: quando há erro no carregamento, mostramos a mensagem e um botão de tentar novamente.
+        // Programação: devolvemos <ErrorMessage .../> e passamos a prop onRetry para o componente conseguir chamar o handler do 'pai'.
         return <ErrorMessage message={error} onRetry={onRetry} />;
     }
 
     const current = pokemon.find((item) => item.id === numericId);
 
     if (!current) {
+        // --- EXPLICAÇÃO DO RETURN ---
+        // Conceito: quando não há dados válidos (ex.: id não existe, ou lista vazia), mostramos um estado vazio claro.
+        // Programação: devolvemos um elemento JSX simples (<p>) e terminamos o componente imediatamente (early return).
         return <p className="pokedex__empty">Pokémon não encontrado.</p>;
     }
 
@@ -1866,6 +1924,11 @@ function PokemonDetailsPage({
     }
 
     // A renderização começa no próximo bloco.
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: renderizamos a página de detalhes com cabeçalho (voltar/favorito),
+    // sidebar com imagem/tipos/medidas e área principal com stats e habilidades.
+    // Programação: usamos .map() para tipos/stats/habilidades, ternário para o rótulo
+    // de favorito e styles inline para a largura das barras de stats.
     return (
 ```
 
@@ -2068,6 +2131,11 @@ function App() {
     }
 
     // A renderização começa no próximo bloco.
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: devolvemos o Router com Layout + duas páginas: lista (index) e detalhe
+    // (rota dinâmica /pokemon/:id), mantendo o estado global no App.
+    // Programação: cada <Route> recebe um element e esse element recebe props necessárias
+    // (dados, loading/erro, favoritos e handlers) para renderizar cada página.
     return (
 ```
 
@@ -2297,6 +2365,11 @@ function PokemonListPage({
     }
 
     // A renderização começa no próximo bloco.
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: mostramos controlos ligados à query string e a lista de resultados,
+    // com estados visuais para loading, erro e vazio.
+    // Programação: Fragment para agrupar secções, condicionais com && para estados,
+    // e .map() para transformar o array filtrado em cards com props e keys.
     return (
 ```
 
@@ -2405,7 +2478,11 @@ function Layout({ pokemon = [], favorites = [], totalCount = POKEMON_LIMIT }) {
     const favoritesTo = queryString
         ? `/favoritos?${queryString}`
         : "/favoritos";
-
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: o Layout mostra o hero com contadores calculados (total, favoritos,
+    // resultados filtrados) e uma navegação que preserva a query string.
+    // Programação: usamos valores derivados (heroTotal/favoritesCount/filteredCount),
+    // <NavLink> com classe/estilos inline para estado ativo e <Outlet /> para a rota filha.
     return (
         <div className="pokedex">
             <header className="pokedex__hero">
@@ -2580,6 +2657,11 @@ function App() {
     }
 
     // A renderização começa no próximo bloco.
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: devolvemos o Router com Layout a receber dados (para contadores e links)
+    // e páginas ligadas às rotas principais (lista e detalhe).
+    // Programação: o Layout é a rota pai; as rotas filhas usam element com props
+    // para renderizar a lista com filtros e o detalhe com base no id da URL.
     return (
 ```
 
@@ -2738,16 +2820,25 @@ function FavoritesPage({
     const [params] = useSearchParams(); // ler query string atual
 
     if (loading) {
+        // --- EXPLICAÇÃO DO RETURN ---
+        // Conceito: enquanto os dados ainda estão a carregar, mostramos feedback ao utilizador.
+        // Programação: fazemos um early return (saída antecipada) para terminar o componente aqui e evitar renderizar JSX dependente de dados.
         return <LoadingSpinner />;
     }
 
     if (error) {
+        // --- EXPLICAÇÃO DO RETURN ---
+        // Conceito: quando há erro no carregamento, mostramos a mensagem e um botão de tentar novamente.
+        // Programação: devolvemos <ErrorMessage .../> e passamos a prop onRetry para o componente conseguir chamar o handler do 'pai'.
         return <ErrorMessage message={error} onRetry={onRetry} />;
     }
 
     const favoritesList = pokemon.filter((poke) => favorites.includes(poke.id));
 
     if (favoritesList.length === 0) {
+        // --- EXPLICAÇÃO DO RETURN ---
+        // Conceito: quando não há dados válidos (ex.: id não existe, ou lista vazia), mostramos um estado vazio claro.
+        // Programação: devolvemos um elemento JSX simples (<p>) e terminamos o componente imediatamente (early return).
         return <p className="pokedex__empty">Ainda não tens favoritos.</p>;
     }
 
@@ -2758,6 +2849,11 @@ function FavoritesPage({
             : `/pokemon/${pokemonItem.id}`;
         navigate(path);
     }
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return mostra a grelha (lista) de Pokémon.
+    // Programação: usamos .map() para transformar cada item do array `pokemon` num <PokemonCard>.
+    // A prop key={poke.id} dá ao React uma chave estável para gerir a lista; favorites.includes(poke.id) decide o estado de favorito.
+    // Passamos callbacks via props (onToggleFavorite/onClick) para o card poder comunicar ações de volta ao “pai”.
 
     return (
         <section className="pokedex__results">
@@ -2801,6 +2897,9 @@ import { Link } from "react-router-dom";
  * @returns {JSX.Element} Página 404.
  */
 function NotFound() {
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: este return mostra o estado 404 e dá um caminho claro para voltar à lista.
+    // Programação: usamos <Link> do Router para navegar sem reload da página.
     return (
         <p className="pokedex__empty">
             Página não encontrada. <Link to="/">Voltar à lista</Link>
@@ -2882,6 +2981,11 @@ function App() {
     }
 
     // A renderização começa no próximo bloco.
+    // --- EXPLICAÇÃO DO RETURN ---
+    // Conceito: no retorno final do App, ligamos todas as páginas (lista, detalhe,
+    // favoritos) e o fallback 404 dentro do Layout.
+    // Programação: cada rota recebe um element com props necessárias e a rota "*"
+    // captura URLs inválidas, devolvendo o componente NotFound.
     return (
 ```
 
