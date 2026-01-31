@@ -74,17 +74,17 @@ npm -v
 
 ## 2) Criar a v3 (cópia da v2)
 
-### Passo prático
+Objetivo: pegar no código final da Ficha 4 e reorganizar para um projeto com duas pastas.
 
-- Faz copy/paste da pasta da Ficha 4.
-- Renomeia para `pokedex-v3`.
+Copia a pasta do projeto da Ficha 4 para uma nova pasta chamada, por exemplo, pokedex-v3.
 
-Depois confirma:
+Dentro de pokedex-v3, cria duas pastas:
 
-```bash
-npm install
-npm run dev
-```
+frontend
+
+backend
+
+Move todo o projeto Vite da Ficha 4 para dentro de frontend/.
 
 ---
 
@@ -93,21 +93,58 @@ npm run dev
 ```txt
 pokedex-v3/
   backend/
+    server.js
+    routes/
+      favorites.routes.js
+    data/
+      favorites.memory.js
     package.json
-    src/
-      app.js
-      server.js
-      routes/
-        favorites.routes.js
   frontend/
     src/
-        context/
+      context/
         PokedexContext.jsx
-        services/
-        pokeApi.js
+      services/
         favoritesApi.js
-        components/
+      pages/
+        HomePage.jsx
+        PokemonDetailsPage.jsx
+        FavoritesPage.jsx
+      components/
         ...
+      App.jsx
+      main.jsx
+    package.json
+    vite.config.js
+```
+
+> Nota: A partir daqui, tudo o que é React/Vite está em frontend/ e tudo o que é Express/API está em backend/.
+
+### Instalação e arranque
+
+- No terminal A (backend):
+
+```bash
+cd backend
+npm init -y
+npm install express cors
+npm install -D nodemon
+```
+
+- No terminal B (frontend):
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+> Nota: Se precisares de andar para trás e para a frente entre as pastas, usa `cd ..` para subir um nível (ou seja andar para trás).
+
+> Exemplo, se estiveres em `pokedex-v3/frontend` e quiseres ir para `pokedex-v3/backend`:
+
+```bash
+cd ..
+cd backend
 ```
 
 ### Porque isto é uma estrutura boa
@@ -229,7 +266,7 @@ React (browser) ──fetch──▶ Express (server) ──▶ responde JSON
 Os métodos HTTP dizem ao servidor **qual é a intenção** do pedido. Não são só nomes — ajudam a manter a API previsível.
 
 - **GET** → _ler dados_  
-  Regra de ouro: **não deve alterar** dados no servidor.  
+  Regra: **não deve alterar** dados no servidor.  
   Normalmente não tem body. Pode ter query string (ex.: `?type=fire`), mesmo que nesta ficha não uses.
 
 - **POST** → _criar/adicionar_  
@@ -1252,8 +1289,6 @@ curl -X DELETE http://localhost:3000/api/favorites/9999
 
 Deve dar `404` e `error.code = "NOT_FOUND"`.
 
-> Este exercício é ouro quando, mais tarde, fores tu a desenhar contratos de API para projetos maiores.
-
 ---
 
 # PARTE B — FRONTEND
@@ -1904,13 +1939,17 @@ Isto é importante porque:
 Se antes tinhas isto:
 
 ```jsx
-{/* Versao antiga: props passadas do App para a page */}
-{/* Props sao valores/funcao passados de pai para filho */}
+{
+    /* Versao antiga: props passadas do App para a page */
+}
+{
+    /* Props sao valores/funcao passados de pai para filho */
+}
 <PokemonListPage
     pokemon={pokemon}
     favorites={favorites}
     onToggleFavorite={toggleFavorite}
-/>
+/>;
 ```
 
 Agora não passas props, e dentro da page fazes:
