@@ -74,11 +74,6 @@ npm -v
 
 ## 2) Criar a v3 (cópia da v2)
 
-### Porque duplicar
-
-Nesta fase estás a aprender arquitetura. É normal partir coisas.
-Duplicar evita perderes uma versão estável.
-
 ### Passo prático
 
 - Faz copy/paste da pasta da Ficha 4.
@@ -104,14 +99,15 @@ pokedex-v3/
       server.js
       routes/
         favorites.routes.js
-  src/
-    context/
-      PokedexContext.jsx
-    services/
-      pokeApi.js
-      favoritesApi.js
-    components/
-    ...
+  frontend/
+    src/
+        context/
+        PokedexContext.jsx
+        services/
+        pokeApi.js
+        favoritesApi.js
+        components/
+        ...
 ```
 
 ### Porque isto é uma estrutura boa
@@ -122,25 +118,181 @@ pokedex-v3/
 
 ---
 
-## 4) Conceitos essenciais (explicação curta mas sólida)
+## 4) Conceitos essenciais
 
 ### 4.1) Cliente ↔ Servidor
 
-O React corre no browser e só consegue guardar dados localmente.
+#### Contexto extra (definições mais detalhadas)
+
+Quando dizemos “cliente” e “servidor”, estamos a falar de **dois programas** (dois processos) a correr em sítios diferentes e a comunicar por rede.
+
+- **Cliente (browser)**: é o programa onde corre a tua app React.  
+  O browser descarrega o teu JavaScript e executa-o no computador/telemóvel do utilizador.  
+  O React é responsável por **renderizar UI**, reagir a eventos (cliques, inputs) e pedir dados ao servidor quando precisa.
+
+- **Servidor (Node.js + Express)**: é um programa a correr (normalmente) noutra máquina, ou no teu PC durante o desenvolvimento.  
+  O servidor está “à escuta” numa **porta** (ex.: 3000) e responde a pedidos.
+
+A comunicação entre os dois é feita por **HTTP (HyperText Transfer Protocol)**.
+
+#### Como é um pedido HTTP (request)?
+
+Um pedido HTTP tem, em termos simples:
+
+- **Método**: GET / POST / DELETE… (o “que queres fazer”)
+- **URL**: o caminho do recurso (ex.: `/api/favorites/7`)
+- **Headers**: metadados (ex.: `Content-Type: application/json`)
+- **Body** (opcional): dados enviados (muito comum em POST)
+
+#### Como é uma resposta HTTP (response)?
+
+A resposta tem:
+
+- **Status code**: 200/404/422… (o “resultado” do pedido)
+- **Headers**
+- **Body**: normalmente JSON com dados ou com informação de erro
+
+#### Exemplo (favoritar um Pokémon)
+
+Imagina que o utilizador clica num ❤️:
+
+1. **React (cliente)** faz um pedido HTTP: `POST /api/favorites` com body `{ "id": 7 }`.
+2. **Express (servidor)** recebe o pedido, valida o `id`, decide se pode adicionar, atualiza a lista e devolve:
+    - status `201`
+    - body `{ "id": 7 }`
+3. **React** recebe a resposta e atualiza o estado (Context) → a UI muda.
+
+Isto é um ciclo básico cliente-servidor.
+
+#### Porque é assíncrono?
+
+No browser, quando fazes `fetch(...)`, o JavaScript **não bloqueia**. Em vez disso:
+
+- o `fetch` devolve logo uma **Promise**
+- mais tarde, quando a resposta chega, a Promise “resolve”
+- com `await`, tu escreves de forma mais “linear”, mas por baixo continua assíncrono
+
+#### Porque é que precisamos de backend?
+
+O React corre no browser, portanto:
+
+- pode guardar coisas localmente (ex.: `localStorage`), mas isso fica **apenas naquele browser**
+- não é uma fonte única e central de dados
+- não é seguro confiar em regras “só no cliente” (mais tarde: auth/permissões)
+
+Quando queres:
+
+- dados partilhados
+- regras centralizadas (validação, duplicados, etc.)
+- uma fonte de verdade “a sério”
+  … precisas de backend.
+
+```txt
+React (browser) ──fetch──▶ Express (server) ──▶ responde JSON
+```
+
+#### Fluxo mental (muito útil para não te perderes)
+
+```txt
+UI (clique) → Context (ação) → Service (fetch) → API (Express)
+→ resposta (status+JSON) → Context (setState) → React (re-render)
+```
+
+---
+
+A arquitetura típica de apps web:
+-> Servidor: Processa pedidos, guarda dados, aplica regras, fornece dados.
+Stack típica: Node.js + Express + Base de Dados.
+-> Cliente: Mostra UI, interage com o utilizador, faz pedidos ao servidor.
+Stack típica: React + React Router + Context API.
+
+Sempre que há comunicação entre cliente e servidor, é via HTTP (HyperText Transfer Protocol).
+Imagina que o utilizador clica num ❤️ para favoritar um Pokémon:
+
+1. O React (cliente) faz um pedido HTTP `POST /api/favorites` ao servidor.
+2. O Express (servidor) recebe o pedido, processa-o, comunica com o controlador correspondente, atualiza os dados e devolve uma resposta HTTP (normalmente em JSON).
+3. O React recebe a resposta e atualiza a UI em conformidade.
+
+Isto é um ciclo básico de comunicação cliente-servidor. E, por norma, é assincrono: o cliente não bloqueia enquanto espera pela resposta do servidor. Do lado do cliente, usas `fetch` ou bibliotecas como Axios para fazer estes pedidos HTTP. E ao fazê-lo, crias uma promessa que será resolvida quando o servidor responder.
+
+Além disso o React corre no browser, o que significa que só consegue guardar dados localmente.
 Quando queres dados partilhados e regras centralizadas, precisas de backend.
 
 ```txt
 React (browser) ──fetch──▶ Express (server) ──▶ responde JSON
 ```
 
-### 4.2) HTTP em 60 segundos
+### 4.2) Métodos HTTP
+
+#### Contexto extra (definições mais detalhadas)
+
+Os métodos HTTP dizem ao servidor **qual é a intenção** do pedido. Não são só nomes — ajudam a manter a API previsível.
+
+- **GET** → _ler dados_  
+  Regra de ouro: **não deve alterar** dados no servidor.  
+  Normalmente não tem body. Pode ter query string (ex.: `?type=fire`), mesmo que nesta ficha não uses.
+
+- **POST** → _criar/adicionar_  
+  Normalmente tem body (JSON).  
+  Quando corre bem, é comum devolver `201 Created`.
+
+- **DELETE** → _remover_  
+  Normalmente identifica o alvo no URL (ex.: `/:id`).  
+  Em APIs simples, não precisas de body.
+
+#### Extra: “idempotência” em linguagem simples
+
+- **Idempotente**: repetir o mesmo pedido deixa o sistema no mesmo estado final.
+    - `DELETE /favorites/7` repetido: a 2ª vez não há nada para remover (muitas APIs devolvem 404).
+- `POST` muitas vezes **não é idempotente**:
+    - `POST {id:7}` repetido: na 2ª vez tens duplicado → 409.
+
+Isto ajuda-te a perceber porque existem erros como `409 Conflict`.
+
+---
+
+Métodos HTTP dizem ao servidor _o que queres fazer_.
+O cliente faz o pedido com um método específico, o servidor interpreta esse método e age em conformidade.
 
 - `GET` → pedir dados (não altera nada)
 - `POST` → criar/ adicionar
 - `DELETE` → remover
 
-### 4.3) Status codes (porque importam)
+### 4.3) Status codes HTTP
 
+#### Contexto extra (definições mais detalhadas)
+
+Os status codes são números que o servidor devolve para o cliente perceber **rapidamente** o resultado:
+
+- **2xx** → sucesso
+- **4xx** → erro do cliente (pedido “mal feito”, inválido, ou não faz sentido)
+- **5xx** → erro do servidor (o pedido podia ser válido, mas o servidor falhou)
+
+Nesta ficha, o mais importante é ter uma lógica estável:
+
+- `200 OK` → correu bem
+- `201 Created` → criaste/adicionaste
+- `400 Bad Request` → erro no URL/params (ex.: `/favorites/abc`)
+- `404 Not Found` → não existe o recurso (ex.: apagar algo que não existe)
+- `409 Conflict` → conflito (duplicado)
+- `422 Unprocessable Entity` → body existe, mas falha validação (ex.: `{}`)
+
+#### Diferença 400 vs 422 (a ideia-chave)
+
+- `400` → problema no **caminho/param** (URL)
+- `422` → problema nos **dados do body** (conteúdo)
+
+#### Nota para o futuro (não é desta ficha)
+
+Mais tarde vais ver:
+
+- `401` (não autenticado)
+- `403` (sem permissão)
+  Aqui ainda não usamos autenticação.
+
+---
+
+Os status codes são números que o servidor envia na resposta HTTP para indicar o resultado do pedido.
 O status diz ao frontend como interpretar a resposta:
 
 - `200` OK → correu bem
@@ -155,7 +307,62 @@ Repara na diferença entre `400` e `422`:
 - `400` → erro no URL (`/favorites/abc`)
 - `422` → erro no body (`{}` ou `{ id: "abc" }`)
 
+Os status codes são essenciais para o frontend tomar decisões. Por exemplo, se o backend responder `409` ao adicionar um favorito, o frontend sabe que esse Pokémon já é favorito e pode mostrar uma mensagem apropriada.
+Se der um `404` ao remover, o frontend pode avisar que o favorito não existe.
+
 ### 4.4) CORS (porque o browser bloqueia)
+
+O CORS (Cross-Origin Resource Sharing) é um mecanismo de segurança do browser que controla como recursos são partilhados entre diferentes origens (domínios/portas).
+
+O CORS existe por causa de uma regra do browser: **Same-Origin Policy**. Ou seja, um site só pode fazer pedidos ao mesmo domínio/porta de onde foi carregado, a não ser que o servidor diga explicitamente que aceita pedidos de outras origens.
+
+#### O que é “origin”?
+
+É:
+
+- protocolo (`http`)
+- hostname (`localhost`)
+- porta (`5173`)
+
+Logo:
+
+- `http://localhost:5173` e `http://localhost:3000` são **origens diferentes**.
+
+E isto faz com que o browser bloqueie pedidos entre elas, o que tornaria a nossa aplicação não funcional (se o frontend não conseguisse falar com o backend).
+É aí que entra o CORS.
+No backend, usamos o middleware `cors(...)` para adicionar os headers corretos que dizem ao browser:
+-> “Sim, eu aceito pedidos vindos desta origem (frontend)”.
+
+#### Porque é que o browser bloqueia?
+
+Porque sem esta regra, um site malicioso poderia tentar ler/usar dados de outro site onde tu estás autenticado.
+
+#### O que é o preflight `OPTIONS`?
+
+Em certos pedidos, o browser faz primeiro um `OPTIONS` automático a perguntar ao servidor:
+
+> “Aceitas este método e estes headers a partir desta origin?”
+
+Isto acontece frequentemente com:
+
+- `POST` com `Content-Type: application/json`
+- `DELETE`
+- headers não simples
+
+O servidor tem de responder com headers como:
+
+- `Access-Control-Allow-Origin`
+- `Access-Control-Allow-Methods`
+- `Access-Control-Allow-Headers`
+
+Nesta ficha, o `cors(...)` trata disso por ti.
+
+#### Debug rápido
+
+- Se `curl` funciona mas o browser falha → suspeita de CORS.
+- No Network, é normal ver `OPTIONS` antes de `POST/DELETE`.
+
+---
 
 Detalhe que aparece muito no mundo real: **preflight**.
 
@@ -174,6 +381,40 @@ Sem CORS, o browser bloqueia pedidos por segurança.
 
 ### 4.5) Contrato de API
 
+#### Contexto extra
+
+Um contrato de API é um **acordo** entre frontend e backend sobre:
+
+- que endpoints existem
+- que métodos usam
+- que dados entram (params/body)
+- que dados saem (JSON)
+- que erros existem (status + shape)
+
+Por exemplo, imagina que temos no frontend a ação de adicionar favorito. Essa ação envia um pedido `POST`ao backend com uma determinada informação (body) e espera uma resposta específica. Isto é a definição básica do contrato.
+É o conjunto de regras e informação que ambos os lados concordam em seguir para cada endpoint.
+
+(Guilherme, um endpoint é uma combinação de URL + método HTTP. Por exemplo, `POST /api/favorites` é um endpoint.)
+
+#### Porque é que isto importa?
+
+Porque evita “adivinhar” e reduz bugs de integração.
+
+Se o backend mudar algo (ex.: deixar de aceitar `{id}` e passar a aceitar `{pokemonId}`), o frontend vai partir.
+Com contrato, tu sabes exatamente o que foi mudado e onde mexer.
+
+#### “Shape” consistente de erro
+
+É muito útil o backend devolver erros sempre no mesmo formato, por exemplo:
+
+```json
+{ "error": { "code": "...", "message": "...", "details": [] } }
+```
+
+Assim o frontend consegue tratar erros de forma uniforme, em vez de ter “ifs” por todo o lado.
+
+---
+
 Definimos exatamente:
 
 - que endpoints existem
@@ -190,12 +431,51 @@ Contrato desta ficha:
 
 ### 4.6) Context API (o porquê)
 
+#### Contexto extra
+
+Context API é uma forma de ter um “canal” interno para partilhar dados **sem passar props por muitos níveis**.
+
+#### O problema: prop drilling
+
+Prop drilling é quando:
+
+Imagina uma página com muitos níveis de componentes (componente dentro de componente dentro de componente).
+Nessa página defines um estado no topo (ex.: `App`), mas quem precisa desse estado é um componente lá em baixo (ex.: `Card`).
+O componente `card` é o bisneto do `App`. Todos os componentes entre eles **não precisam** desse estado.
+No entanto, para chegar ao `card`, tens que passar o estado como props por todos os componentes intermédios.
+
+Isto cria:
+
+- ruído
+- componentes “correio”
+- mais pontos onde podes falhar e mais possibilidades de bugs
+
+#### A solução: Provider + consumo com hook
+
+O Provider é um componente que "envolve" a tua app e cria um canal de dados global que é acessível a qualquer componente filho (ou de um nível mais profundo), sem necessidade de passar props manualmente.
+
+- O **Provider** guarda estado e expõe ações.
+- Os componentes filhos lêem estado/ações com `usePokedex()`.
+
+Pensa no Provider como:
+
+- “o cérebro” da app para dados globais
+- e as pages/componentes como “os olhos e as mãos” (UI)
+
+#### Quando usar Context vs props?
+
+Regra prática para alunos:
+
+- **Props**: comunicação entre componentes próximos (pai→filho direto).
+- **Context**: quando estás a passar props por 3–4 níveis, e os componentes do meio não precisam dos dados.
+
+---
+
 Na Ficha 4, tinhas algo do género:
 
-- `App` tem estado
-- `App` passa para `Layout`
-- `Layout` passa para `Page`
-- `Page` passa para `Card`
+- `App` tem estado `favorites`
+- `App` passa `favorites` e `toggleFavorite` como props para `FavoritesPage` e `PokemonPage`
+- Esses componentes passam para baixo até chegar a `Card`
 
 Isto chama-se **prop drilling**.
 
@@ -210,70 +490,242 @@ Com Context:
 
 ## 5) Criar o backend Express
 
-### 5.0) Mini‑teoria: Express, middleware, CORS e ES Modules
+[Consultar documentação do Node.js e Express](../Node/)
 
-Antes de escrever código, vale a pena perceber _o que_ estamos a montar.
+### 5.0) Mini-teoria: Express, middleware, CORS e ES Modules
 
-#### O que é o Express (em 1 minuto)
+A partir daqui vamos ter dois terminais:
 
-O **Express** é uma biblioteca que te ajuda a criar um servidor HTTP em Node.
+- Terminal A: backend Express (porta 3000 (normalmente))
+- Terminal B: frontend Vite (porta 5173 (normalmente))
 
-- O servidor recebe pedidos (requests) vindos do browser (ou do Postman/curl).
-- O teu código decide _o que responder_ (response), normalmente em **JSON**.
+Ou seja, vamos ter duas aplicações a correr em paralelo.
 
-> Pensa no Express como uma “central de atendimento”: chegam pedidos com um URL e um método (GET/POST/DELETE) e tu defines as regras de resposta.
+---
 
-#### O que é um middleware
+#### O que estamos a construir aqui
 
-Um **middleware** é uma função que corre _no meio do caminho_ entre o pedido entrar e a resposta sair.
+Nesta Parte A, o objetivo é criar uma **API HTTP** (um servidor) que:
 
-No Express, o fluxo é (simplificado):
+- fica a “ouvir” pedidos numa porta (ex.: `3000`)
+- recebe pedidos do frontend (`5173`)
+- responde com **JSON**
+- tem rotas para favoritos (GET/POST/DELETE)
+
+> Pensa nisto como: “em vez do React guardar favoritos só no browser, agora existe um servidor central que diz quais são os favoritos”.
+
+---
+
+#### 1) O que é um servidor HTTP
+
+Um servidor HTTP é um programa que faz basicamente isto:
+
+1. **Abre uma porta** (ex.: 3000) e fica à escuta.
+2. Quando chega um pedido (request), ele lê:
+    - método (GET/POST/DELETE)
+    - caminho/URL (ex.: `/api/favorites/7`)
+    - headers
+    - body (se existir)
+
+3. Decide o que fazer e devolve uma resposta (response):
+    - status code (ex.: 200/404/422)
+    - headers
+    - body (normalmente JSON)
+
+Uma imagem mental útil:
 
 ```txt
-Request ─▶ middleware 1 ─▶ middleware 2 ─▶ rota ─▶ Response
+Cliente (browser) ── request HTTP ─▶ Servidor (Node)
+Cliente (browser) ◀─ response HTTP ── Servidor (Node)
 ```
 
-Exemplos desta ficha:
+---
 
-- `cors(...)`  
-  Mete os headers necessários para o browser aceitar pedidos entre origens diferentes.
-- `express.json()`  
-  Lê o corpo do pedido (body) e converte JSON em `req.body`.
+#### 2) O que é o Express
 
-#### Porque separamos `app.js` e `server.js`
+O Node “puro” até consegue criar servidores (com o módulo `http`), mas é chato e repetitivo.
 
-- `app.js` define **a aplicação** (middlewares + rotas).  
-  Isto é “configuração”.
-- `server.js` faz apenas `app.listen(...)` para **arrancar**.
+O **Express** é uma biblioteca que te dá uma forma simples e organizada de dizer:
 
-Isto é uma prática comum porque:
+- “se vier um GET para este caminho, faz isto”
+- “antes das rotas, corre estas funções”
+- “se o body vier em JSON, interpreta-o”
 
-- facilita testes (podes importar `app` sem abrir portas)
-- mantém o ficheiro de arranque simples e óbvio
+Ou seja: o Express é como um “organizador de tráfego” de requests.
 
-#### CORS em linguagem simples
+No Express, a tua app é uma espécie de **tabela de regras**:
 
-O browser tem uma regra de segurança: por defeito, não deixa um site num domínio/porta “A” fazer pedidos a um servidor “B”.
+- **middlewares** (coisas que correm “no caminho”)
+- **rotas** (handlers finais que ligam URL + método a funções)
+- **controladores** (funções que fazem a lógica)
+
+---
+
+#### 3) Anatomia de um pedido no Express
+
+O Express divide o pedido em dois objetos principais:
+
+- `req` (request) → tudo o que vem do cliente
+- `res` (response) → tudo o que vais enviar de volta
+
+Estes dois objetos vão estar sempre disponíveis nas tuas rotas e em toda a lógica do backend.
+Queres ir buscar dados ao pedido? Estão em `req`.
+Queres enviar uma resposta? Usas `res`.
+
+Por exemplo, colocar algo no `res`:
+
+```js
+res.status(201).json({ id: 7 }); // envia status 201 e JSON { id: 7 } na resposta
+```
+
+Quer o `req` quer o `res` têm várias propriedades/métodos úteis.
+
+Aqui estão os mais importantes:
+
+- `req.params`
+  Vem do URL com `:id`
+  Ex.: rota `DELETE /api/favorites/:id`
+  Pedido `DELETE /api/favorites/7` → `req.params.id === "7"` (atenção: **string**)
+
+- `req.query`
+  Vem da query string
+  Ex.: `/pokemon?type=fire` → `req.query.type === "fire"`
+  (Nesta ficha quase não usas, mas é importante saber que existe)
+
+- `req.body`
+  Vem do corpo do pedido (body) — típico em POST
+  Ex.: `{ "id": 7 }`
+  **Só aparece bem** se tiveres um parser, tipo `express.json()`.
+
+E no lado da resposta:
+
+- `res.status(201)` define o status code
+- `res.json(...)` envia JSON (e mete o header certo)
+
+> Nota: **o Express não “adivinha” body**. Se não tiveres `express.json()`, o `req.body` pode vir `undefined`.
+
+---
+
+#### 4) O que é um middleware (e porque é que a ordem importa)
+
+Um **middleware** é uma função que corre **antes** da rota responder, para preparar o request, validar, adicionar headers, etc.
+
+Fluxo simplificado:
+
+```txt
+Request ─▶ rota ─▶ middleware 1 ─▶ middleware 2 ─▶ rota (handler) ─▶ Response
+```
+
+(O último "middleware" antes da rota, costuma chamar-se de "handler" ou "controlador".)
+
+O detalhe importante: **a ordem dos `app.use(...)` interessa**.
+
+- Se `express.json()` vier depois das rotas, as rotas podem nunca ver `req.body` bem.
+- Se o `cors(...)` vier depois das rotas, o browser pode bloquear antes de tu responderes como queres.
+
+Nesta ficha tens dois middlewares “clássicos”:
+
+- `cors(...)`
+  Serve para o browser aceitar pedidos cross-origin (já explico abaixo).
+
+- `express.json()`
+  Lê o body (quando vem em JSON) e converte para objeto JS em `req.body`.
+
+> **Nota**: O body são os dados que o cliente envia no pedido (muito comum em POST). Eles precisam de ser “interpretados” para poderes usar em JavaScript. Para isso usamos o middleware `express.json()`.
+
+---
+
+#### 5) Porque separamos `app.js` e `server.js` (ou `index.js`)
+
+Isto é uma prática comum e tem uma razão simples:
+
+- **`app.js`** define a aplicação (middlewares + rotas)
+  É “a configuração do motor”.
+
+- **`server.js`** só arranca o servidor (`app.listen(...)`)
+  É “carregar na chave”.
+
+Vantagens reais desta separação:
+
+1. **Leitura mais limpa**: quando queres ver “o que a API faz”, vais ao `app.js`.
+2. **Menos confusão**: o ficheiro de arranque fica curto e óbvio.
+3. **Facilita testes** (mais tarde): podes importar `app` sem abrir portas.
+
+---
+
+#### 6) CORS em linguagem simples (porque é que o problema só aparece no browser)
+
+Como já vimos, browser tem uma regra de segurança chamada **Same-Origin Policy**.
+
+“Origin” é: **protocolo + hostname + porta**.
 
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:3000`
 
-Isto são **origens diferentes** (porta diferente) → o browser bloqueia, a não ser que o backend diga explicitamente que aceita.
+Isto é origin diferente (a porta muda) → por defeito, o browser bloqueia o pedido.
 
-Nesta ficha, fazemos isso com:
+Então como se resolve?
 
-- `cors({ origin: "http://localhost:5173" })`
+O backend tem de dizer explicitamente:
+“eu aceito pedidos vindos desta origin”.
 
-> Nota importante (mundo real): deixar `origin: "*"` é prático para testes, mas é má ideia em produção.
+É isso que o middleware `cors(...)` faz: mete os headers necessários na resposta.
 
-#### ES Modules no Node (`"type": "module"`)
+##### E o tal “preflight OPTIONS”?
 
-Ao meteres `"type": "module"` no `package.json`, o Node passa a aceitar:
+Às vezes o browser faz um pedido automático `OPTIONS` antes do `POST/DELETE`, para perguntar ao servidor se aceita:
 
-- `import ... from ...`
-- `export default ...`
+- este método
+- estes headers
+- a origin
 
-E ganhas consistência com o frontend (que já usa ES Modules).
+Se o servidor responder com os headers certos, o browser deixa passar o pedido “a sério”.
+
+##### Porque é que no curl/Postman funciona e no browser não?
+
+Porque **CORS é uma regra do browser**.
+`curl` e Postman não aplicam Same-Origin Policy, logo não bloqueiam.
+
+---
+
+#### 7) ES Modules no Node (`"type": "module"`) — o que muda na prática
+
+Ao adicionares `"type": "module"` no `package.json`, estás a dizer ao Node:
+
+- “vou escrever este projeto com `import/export`”
+
+Isto traz duas vantagens grandes nesta fase:
+
+1. **Consistência com o frontend** (React já usa ES Modules)
+2. Código mais moderno e alinhado com a forma como vais escrever Node daqui para a frente
+
+Mas há duas regras práticas que apanham alunos:
+
+- Tens de usar `import ... from ...` (não `require`)
+- Muitas vezes tens de incluir a extensão no import (`.js`) em Node ESM, dependendo do caso
+
+> Regra mental: “frontend e backend falam a mesma ‘língua’ de módulos”.
+
+---
+
+#### Mini-checklist mental
+
+Quando o backend “não dá”, pensa por camadas:
+
+1. **O servidor está ligado?**
+    - tens o terminal com `API a correr em http://localhost:3000`?
+
+2. **A porta está correta e livre?**
+    - se der `EADDRINUSE`, já tens algo na 3000.
+
+3. **O `app.js` tem os middlewares antes das rotas?**
+    - `cors(...)` e `express.json()` antes do `app.use("/api/favorites", ...)`.
+
+4. **O Router está ligado ao prefixo certo?**
+    - se ligares `/api/favorites`, então no router usas `/` internamente.
+
+5. **Se falha só no browser, suspeita de CORS.**
+    - se falha também no curl, é bug de rota/código.
 
 ---
 
@@ -300,6 +752,33 @@ No `backend/package.json`, adiciona:
 
 Sem isto, o Node não reconhece `import ... from ...`.
 
+Já que estás a editar o `package.json`, podes também adicionar um script para arrancar o servidor:
+
+```json
+{
+    "scripts": {
+        "start": "node src/server.js"
+    }
+}
+```
+
+Se quiseres recarregar o servidor automaticamente ao mudares código, instala o `nodemon`:
+
+```bash
+npm install --save-dev nodemon
+```
+
+E adiciona outro script:
+
+```json
+{
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "nodemon src/server.js"
+    }
+}
+```
+
 ### 5.3) Criar estrutura `src/`
 
 Cria:
@@ -307,12 +786,33 @@ Cria:
 - `backend/src/app.js`
 - `backend/src/server.js`
 
+(Se os ficheiros já existirem, não fazes nada.)
+
 #### O papel de cada ficheiro
 
 - `app.js` → configura o Express (middlewares + rotas)
 - `server.js` → só arranca o servidor na porta
 
+#### `backend/src/server.js`
+
+Exemplo simples de `server.js`:
+
+```js
+/* backend/src/server.js */
+import app from "./app.js";
+
+const PORT = 3000;
+
+app.listen(PORT, () => {
+    console.log(`API a correr em http://localhost:${PORT}`);
+});
+```
+
+---
+
 #### `backend/src/app.js`
+
+Exemplo de `app.js` com CORS e JSON parser simples:
 
 ```js
 // backend/src/app.js
@@ -341,19 +841,6 @@ O que acontece aqui (em português simples):
 2. `express.json()` permite ler JSON no `req.body`.
 3. `app.use("/api/favorites", ...)` liga o router.
 
-#### `backend/src/server.js`
-
-```js
-/* backend/src/server.js */
-import app from "./app.js";
-
-const PORT = 3000;
-
-app.listen(PORT, () => {
-    console.log(`API a correr em http://localhost:${PORT}`);
-});
-```
-
 ### Checkpoint
 
 Na pasta `backend/`:
@@ -362,13 +849,41 @@ Na pasta `backend/`:
 node src/server.js
 ```
 
+ou
+
+```bash
+npm run dev
+```
+
+ou
+
+```bash
+npm start
+```
+
 Se arrancar, segue.
+
+> Se der erro, confirma:
+>
+> - tens o Node atualizado?
+> - tens `"type": "module"` no `package.json`?
+> - tens o Express e CORS instalados?
 
 ---
 
 ## 6) Rotas de favoritos (`favorites.routes.js`)
 
 ### 6.0) Mini‑teoria: REST, Router, validação e “persistência” em memória
+
+- REST aqui significa: URLs previsíveis por recurso (`favorites`) e métodos a indicar ação.
+- `Router()` organiza a feature num ficheiro próprio.
+- Persistência em memória: dados vivem numa variável; ao reiniciar, perdes tudo.
+
+O `:id` no URL é um **param de rota**:
+
+- `req.params.id` vem sempre como string → tens de validar/converter.
+
+---
 
 Este capítulo é onde se decide o “contrato” entre frontend e backend.
 
@@ -568,6 +1083,19 @@ export default router;
 
 ### 7.0) Mini‑teoria: como testar uma API sem envolver React
 
+#### Contexto extra (definições mais detalhadas)
+
+Se testares primeiro com `curl`:
+
+- isolas o backend
+- evitas debug “às cegas” com dois sistemas ao mesmo tempo
+
+Pista útil:
+
+- se `curl` funciona e o browser não, é quase sempre CORS/porta/origin.
+
+---
+
 Testar o backend primeiro é uma estratégia de engenharia muito usada:
 
 - se a API falhar, sabes que o problema é do backend
@@ -722,6 +1250,17 @@ Se fizeres isto bem:
 
 ### 8.0) Mini‑teoria: `fetch`, `res.ok`, JSON e propagação de erros
 
+#### Contexto extra (definições mais detalhadas)
+
+O `fetch` só falha automaticamente em erros de rede.
+Para 404/422, ele devolve resposta na mesma — por isso é que existe `res.ok`.
+
+Regra:
+
+- `if (!res.ok) ...` → decide o que fazer (lançar erro, mostrar mensagem, etc.).
+
+---
+
 O `fetch` é simples de usar, mas tem dois “truques” importantes.
 
 #### 1) `fetch` _não_ lança erro em HTTP 4xx/5xx
@@ -833,6 +1372,20 @@ O que deves confirmar:
 ## 9) Criar o Context (`PokedexContext.jsx`)
 
 ### 9.0) Mini‑teoria: estado global, Context API, Provider e `usePokedex()`
+
+#### Contexto extra (definições mais detalhadas)
+
+O Provider é onde:
+
+- carregas dados iniciais
+- guardas estado global
+- defines ações que a UI usa
+
+`Promise.all` é importante porque permite carregar:
+
+- PokéAPI e backend em paralelo.
+
+---
 
 Este capítulo é o “coração” do frontend: decide onde vivem os dados e como circulam.
 
@@ -1030,6 +1583,17 @@ Se vires pedidos duplicados, confirma se estás em dev e se é comportamento esp
 
 ## 9.6) Como pensar em dependências (`[]`) sem decorar
 
+### Contexto extra — dependências e closures (explicação curta e prática)
+
+Uma função em JS “apanha” o valor atual das variáveis que usa (closure).
+Se a função usa `favorites`, então precisa de ser atualizada quando `favorites` muda.
+
+Mais tarde, vais aprender a alternativa “update funcional”:
+
+- `setFavorites(prev => ...)`
+  que reduz dependências e evita alguns bugs.
+  Mas aqui o foco é o fluxo geral e a clareza.
+
 Isto é o que costuma confundir mais alunos: “o que meto nas dependências?”
 
 ### Regra 1 — Um efeito depende do que usa
@@ -1139,6 +1703,22 @@ export default App;
 ## 12) Atualizar Layout e Pages para consumirem Context
 
 ### 12.0) Mini‑teoria: migração para Context, re-render e atualizações imutáveis
+
+#### Contexto extra (definições mais detalhadas)
+
+- `setState` → dispara re-render
+- arrays/objetos devem ser atualizados de forma **imutável**
+    - `[...]` e `filter` criam novos arrays (React percebe a mudança)
+
+Arquiteturalmente, a vitória é:
+
+- rotas num sítio
+- dados noutro
+- UI noutro
+
+Isso escala muito melhor.
+
+---
 
 Aqui estás a fazer uma mudança que parece “cosmética” (tirar props), mas que na verdade muda a arquitetura.
 

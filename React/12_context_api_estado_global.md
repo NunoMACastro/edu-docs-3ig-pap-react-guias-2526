@@ -45,7 +45,7 @@
 
 ### 1.1 Situação típica (sem Context)
 
-Imagina que tens um `App` com um utilizador autenticado:
+Imagina que tens uma `App` com um utilizador autenticado:
 
 - `App` sabe quem é o utilizador (`user`)
 - mas quem precisa disso é um componente lá em baixo, por exemplo `Navbar -> Avatar`
@@ -74,7 +74,7 @@ Não é “errado”, mas começa a ficar chato e frágil quando:
 - tens muitas props (user, tema, idioma, permissões, …)
 - mudas a estrutura (reorganizas componentes) e tens de re-passar tudo
 
-A boa notícia: React já tem uma solução oficial para isto.
+No entanto o React já tem uma solução oficial para isto.
 
 ---
 
