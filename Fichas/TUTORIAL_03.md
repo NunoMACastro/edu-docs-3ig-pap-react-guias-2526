@@ -20,6 +20,34 @@ Uma Pokédex digital com dados reais da **PokéAPI**:
 - Página de detalhes (sem router: navegação por estado)
 - Estados de loading, erro e “lista vazia” (renderização condicional)
 
+**Vocabulário rápido**
+
+- **Página (Page)**: componente que representa um “ecrã” da app.
+- **Componente (Component)**: peça reutilizável de UI.
+- **Estado (State)**: dados que mudam e fazem a UI re-renderizar.
+
+**Debug rápido para toda a ficha**
+
+1. Terminal está na pasta certa? (`pwd`)
+2. App está a correr? (`npm run dev`)
+3. Console do browser mostra erros?
+4. Network mostra pedidos ao carregar?
+5. Imports/paths com `@` estão corretos?
+
+**Pontos de paragem**
+
+- **Paragem A**: depois da lista renderizar com dados estáticos.
+- **Paragem B**: depois da pesquisa e filtro funcionarem.
+- **Paragem C**: depois dos favoritos persistirem com `localStorage`.
+- **Paragem D**: depois da página de detalhes funcionar.
+
+**Mapa mental da app**
+
+- Fontes de dados: **PokéAPI** + **localStorage**
+- Estados chave: `pokemon`, `loading`, `error`, `favorites`, `searchTerm`, `selectedType`, `currentPage`, `selectedPokemon`
+- Regras de render: `loading` → spinner, `error` → mensagem, lista vazia → aviso, detalhes → página de detalhes
+- O que dispara re-render: **qualquer `setState`**
+
 ### 0.1) Ligações diretas aos 8 temas
 
 1. **Fundamentos e setup** — Vite, estrutura base do projeto, `index.html`, `main.jsx`.
@@ -39,6 +67,14 @@ Se te perderes, volta aqui. Cada fase termina com um checkpoint rápido.
 - Fase 2 — Layout + estados base (SearchBar/TypeFilter): `src/App.jsx`, `src/components/SearchBar.jsx`, `src/components/TypeFilter.jsx`
 - Fase 3 — Dados externos + loading/erro (PokéAPI): `src/services/pokeApi.js`, `src/App.jsx`, `src/components/LoadingSpinner.jsx`, `src/components/ErrorMessage.jsx`, `src/components/PokemonCard.jsx`
 - Fase 4 — Favoritos + detalhes (navegação por estado): `src/App.jsx`, `src/components/PokemonDetailsPage.jsx`
+
+**Erros comuns cedo**
+
+- Import com caminho errado (ou falta do alias `@`)
+- `useEffect` sem dependências corretas
+- `fetch` sem verificar `response.ok`
+- `localStorage` com key errada ou `JSON.parse` falhar
+- StrictMode em dev pode disparar efeitos 2x (normal)
 
 ---
 
@@ -1316,6 +1352,11 @@ O card tem dois cliques diferentes:
 Como o botão está _dentro_ do card, temos de impedir que o clique do botão “suba” para o card.
 Para isso usamos `event.stopPropagation()`.
 
+**Nota (porque usamos `key` no `map`)**
+
+O `key` ajuda o React a identificar cada item de forma estável.
+Sem `key`, a lista pode re-renderizar de forma errada ou com warnings.
+
 ### 14.2) Prática
 
 Cria `src/components/PokemonCard.jsx`:
@@ -1671,6 +1712,10 @@ Se aparece o título, podes avançar.
 - Vês o texto “Pokédex Explorer” no browser.
 - Não há erros no terminal nem no console do browser.
 
+**Checkpoint visual**
+
+- No ecrã deves ver o título grande e o fundo com o layout base carregado.
+
 ---
 
 ## 17) Fase 2 — Layout base + estados mínimos
@@ -1773,9 +1818,20 @@ export default App;
 - Escreve no input e confirma que o texto aparece no input (está controlado).
 - Clica em tipos e confirma que o botão ativo muda (classe `active`).
 
+**Checkpoint visual**
+
+- No ecrã deves ver a barra de pesquisa e os botões de tipo.
+- Ao clicar num botão, ele fica visualmente “ativo”.
+
 ---
 
 ## 18) Fase 3 — Carregar dados da PokéAPI (fetch + useEffect)
+
+**Notas:**
+
+- `async/await` torna o fluxo do `fetch` mais legível.
+- `response.ok` diz se o status é 2xx (sucesso).
+- No **Network** tab, espera ver um pedido à PokéAPI e uma resposta 200.
 
 Agora vamos buscar dados reais.
 
@@ -2020,6 +2076,11 @@ Nesta fase, os cards já aparecem, mas ainda não fazem nada ao clicar e ainda n
 - Se desligares a net (ou mudares temporariamente a URL no helper), aparece o `ErrorMessage`.
 - A pesquisa por nome e o filtro por tipo já reduzem a lista.
 
+**Checkpoint visual**
+
+- No ecrã deves ver a grelha com vários cards e imagens.
+- Quando escreves no input, a lista reduz de imediato.
+
 ---
 
 ## 19) Fase 4 — Favoritos + navegação para detalhes (versão final)
@@ -2034,12 +2095,22 @@ Agora vamos juntar as últimas peças:
 
 A partir daqui, podes usar a versão final (a que tens no projeto).
 
+**Nota (Imutabilidade no estado)**
+
+Quando atualizas arrays no React, usa sempre `filter` ou `[...]` para criar um novo array.
+Isto garante que o React deteta a mudança e faz re-render.
+
 Notas didáticas (mantém os detalhes que antes estavam nos comentários do código):
 
 - **Promise.all**: vamos buscar a lista base e, para cada Pokémon, pedimos os detalhes; `Promise.all` espera que todas essas promessas terminem antes de atualizar o estado.
 - **async/await + useCallback**: a função de carregamento é assíncrona; se a resposta não for `ok`, lançamos erro e tratamos no `catch`. O `useCallback` evita recriar a função em cada render.
 - **localStorage**: é uma API de armazenamento no browser (chave‑valor). Guardamos favoritos em `"pokemonFavorites"`, com `JSON.stringify` ao guardar e `JSON.parse` ao ler.
 - **Navegação sem router**: ao clicar num card, guardamos o Pokémon em `selectedPokemon` e mudamos `currentPage` para `"details"`. Para voltar, limpamos o estado.
+
+**Ponte para a Ficha 04 (estado vs URL)**
+
+Este tipo de navegação funciona, mas **não cria URLs reais**.
+Na Ficha 04 vais trocar isto por rotas para poderes partilhar links, usar back/forward e fazer refresh sem perder o “estado da página”.
 
 Conceitos aplicados:
 
@@ -2296,6 +2367,11 @@ export default App;
 - Clicar num card abre detalhes; clicar em “Voltar” regressa à lista.
 - O contador de favoritos e o total filtrado mudam corretamente.
 
+**Checkpoint visual**
+
+- Ao clicar num card, vês a página de detalhes com imagem grande e stats.
+- Ao voltar, a lista mantém o estado dos favoritos.
+
 ### 19.4) O que deves conseguir explicar no fim
 
 Se eu te perguntasse na aula, tu devias conseguir explicar:
@@ -2365,6 +2441,15 @@ Depois abre o endereço que o Vite te der.
 - [ ] Clicar num card abre detalhes e o botão “Voltar” funciona
 
 ---
+
+**Perguntas de revisão (5–8)**
+
+1. O que acontece quando o `state` muda?
+2. Para que serve o `useEffect` neste projeto?
+3. Porque é que usamos `response.ok`?
+4. O que é um componente controlado?
+5. Porque `key` é obrigatório no `map`?
+6. Onde guardas os favoritos e porquê?
 
 ## 23) Exercícios de consolidação
 

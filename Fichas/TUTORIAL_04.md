@@ -86,6 +86,36 @@ Uma Pokédex digital com dados reais da **PokéAPI**, agora com rotas reais:
 - Fase 5 — Migrar filtros para query string (`q` e `type`)
 - Fase 6 — FavoritesPage e rota 404 (`*`)
 
+**Vocabulário rápido**
+
+- **Página (Page)**: componente que representa um “ecrã” ligado a uma rota.
+- **Componente (Component)**: peça reutilizável de UI.
+- **Rota (Route)**: regra “URL → componente”.
+
+**Debug rápido para toda a ficha**
+
+1. `BrowserRouter` está no `main.jsx`?
+2. `Outlet` existe no `Layout`?
+3. Console do browser mostra erros?
+4. URL muda quando clicas num `NavLink`?
+5. Os `path` das rotas filhas são **relativos**?
+
+**Pontos de paragem**
+
+- **Paragem A**: Router mínimo ligado (Home/Sobre/Contactos funciona).
+- **Paragem B**: Layout + Outlet funcionam com a lista na rota index.
+- **Paragem C**: Detalhes por URL `/pokemon/:id` funcionam.
+- **Paragem D**: Filtros na URL + favoritos + 404 prontos.
+
+**Tabela rápida — Antes (State) vs Depois (URL)**
+
+| Aspeto       | Ficha 03 (state)                | Ficha 04 (URL)    |
+| ------------ | ------------------------------- | ----------------- |
+| Detalhes     | `currentPage`/`selectedPokemon` | `/pokemon/:id`    |
+| Filtros      | estado local                    | `?q=...&type=...` |
+| Back/Forward | manual                          | nativo do browser |
+| Refresh      | perde “página”                  | mantém rota       |
+
 ---
 
 ## 1) Pré‑requisitos
@@ -249,6 +279,14 @@ src/
 
 ---
 
+**Checklist de migração por ficheiro (antes → depois)**
+
+- `App.jsx`: deixa de ter navegação por estado → passa a ter `Routes`/`Route`.
+- `Layout.jsx`: adiciona `NavLink` + `Outlet`.
+- `PokemonListPage.jsx`: continua a lista, passa a ser **page** da rota `/`.
+- `PokemonDetailsPage.jsx`: lê `useParams()` para saber o `id`.
+- `FavoritesPage.jsx`: filtra favoritos e fica na rota `/favoritos`.
+
 ## 5) Conceitos essenciais antes do Router (revisão rápida)
 
 ### Ponto da situação
@@ -272,6 +310,10 @@ Rotas são **caminhos de URL** que mapeiam para componentes.
 Numa SPA (Single Page App), mudar de rota **não recarrega a página**:
 apenas muda o componente que aparece no ecrã.
 
+**Porquê isto importa?**
+
+Porque permite URLs partilháveis, refresh sem perder a página e navegação nativa (back/forward).
+
 ### 5.2) O que é o React Router
 
 O React Router é a biblioteca que **interpreta a URL** e decide
@@ -293,6 +335,10 @@ Regra geral, em React não existe o reload da página. Para navegar sem recarreg
 - `Link` navega sem recarregar a página.
 - `NavLink` faz o mesmo, mas adiciona estado “ativo” para estilos.
 - `useNavigate` permite navegar **por código** (ex.: clique num card).
+
+**Se estás perdido: mini‑teste opcional**
+
+Se este mini‑teste funcionar, o Router está OK e o problema está na migração da app.
 
 ### 5.4.1) Teste do Router (3 ficheiros, sem Pokédex)
 
@@ -699,6 +745,10 @@ export default App;
 
 - A página mostra “Router OK”?
 
+**Checkpoint visual**
+
+- No ecrã deves ver o título “Router OK” sem erros no console.
+
 ### 7.3) Voltar ao App da Ficha 3 (antes de avançar)
 
 Agora que confirmaste o Router, **repõe o `App.jsx` original da Ficha 3**.
@@ -729,6 +779,10 @@ Sem isto, a Fase 2.5 não funciona.
 
 1. Criar `src/components/Layout.jsx`.
 2. Atualizar `App.jsx` para ter rota pai (`Layout`) e rota filha (`index`). (posteriormente vamos adicionar mais rotas filhas)
+
+**Atenção: `Outlet` é obrigatório**
+
+Sem `<Outlet />`, as rotas filhas não aparecem e vais ver “página vazia”.
 
 ### Conceitos novos (explicar)
 
@@ -937,6 +991,10 @@ export default App;
 - O hero aparece?
 - “Lista” fica ativa apenas em `/`?
 
+**Checkpoint visual**
+
+- No ecrã deves ver o hero e o menu de navegação com o link correto ativo.
+
 ---
 
 ## 8.5) Fase 2.5 — Router sem mexer na lógica
@@ -1110,6 +1168,10 @@ return (
 
 - A app deve estar **igual** à Ficha 3 (mesma UI e comportamento).
 - A diferença é que agora está “dentro de rotas”.
+
+**Checkpoint visual**
+
+- No ecrã deves ver a lista e o detalhe a trocar exatamente como na Ficha 3.
 
 ---
 
@@ -1591,6 +1653,10 @@ export default PokemonListPage;
 - Pesquisa e filtro funcionam?
 - A UI mantém o mesmo visual da Ficha 3?
 
+**Checkpoint visual**
+
+- No ecrã deves ver a grelha a responder à pesquisa e ao filtro.
+
 ---
 
 ## 11) `App.jsx` (Fase 3) — dados + favoritos
@@ -1759,6 +1825,10 @@ export default App;
 
 - A lista aparece com o mesmo visual da Ficha 3?
 
+**Checkpoint visual**
+
+- No ecrã deves ver a lista renderizada dentro do Layout com Router ativo.
+
 ---
 
 ## 12) Fase 4 — Migrar detalhes para rota dinâmica `/pokemon/:id`
@@ -1784,6 +1854,10 @@ export default App;
 
 - `useParams()` devolve `{ id: "25" }` (string).
 - É obrigatório `Number(id)` para comparar com `pokemon.id` (número).
+
+**Erro típico (string vs number)**
+
+Se comparares `"4"` com `4`, dá falso. Converte sempre com `Number(id)` antes de comparar.
 
 ### Conceitos adjacentes
 
@@ -2054,6 +2128,11 @@ export default PokemonDetailsPage;
 - Por isso usamos `navigate({ pathname: "/", search: location.search })`
   para voltar à lista **e** preservar os filtros da URL.
 
+**Teste**
+
+Abre a lista com `?q=pika&type=electric`, entra num detalhe e confirma
+que ao voltar **manténs os mesmos filtros**.
+
 ### 12.2) Atualizar `src/App.jsx` com a rota dinâmica
 
 Este bloco **SUBSTITUI** o `App.jsx` da fase 3.
@@ -2200,6 +2279,10 @@ export default App;
 - Clicar num card abre a rota `/pokemon/:id`?
 - O detalhe mantém o mesmo comportamento da Ficha 3 (incluindo conversões)?
 
+**Checkpoint visual**
+
+- Ao clicar num card, a URL muda para `/pokemon/ID` e vês a página de detalhes.
+
 ---
 
 ## 13) Fase 5 — Migrar filtros para query string
@@ -2243,6 +2326,11 @@ com os mesmos filtros (o detalhe precisa dessa query para regressar corretamente
 
 Quando atualizas o `searchTerm` pelo input, usamos `replace: true` para não
 poluir o histórico a cada tecla.
+
+**Ordem recomendada (para não te perderes)**
+
+1. Garante que **navegação** e **detalhes** funcionam sem query string.
+2. Só depois migra `searchTerm` e `type` para a URL.
 
 **Reutilização:** `SearchBar`, `TypeFilter` e `PokemonCard` mantêm-se iguais;
 apenas muda a origem do estado (URL).
@@ -2737,6 +2825,10 @@ export default App;
 - Filtros continuam após refresh?
 - Os contadores do hero refletem os filtros?
 
+**Checkpoint visual**
+
+- A URL mostra `?q=...&type=...` e a lista fica filtrada.
+
 ---
 
 ## 14) Fase 6 — FavoritesPage e rota 404
@@ -3076,6 +3168,11 @@ export default App;
 - A app mantém o visual da Ficha 3?
 - Favoritos persistem após refresh?
 
+**Checkpoint visual**
+
+- Em `/favoritos`, vês apenas os Pokémon favoritos.
+- Em `/abc`, vês a página 404.
+
 ---
 
 ## 15) Checkpoints rápidos por fase
@@ -3111,6 +3208,17 @@ npm run dev
 
 ---
 
+**Testes manuais mínimos**
+
+1. `/` abre a lista.
+2. Clicar num card abre `/pokemon/:id`.
+3. O botão “Voltar” regressa à lista.
+4. `/favoritos` mostra só favoritos.
+5. `/abc` mostra 404.
+6. `?q=pi` filtra resultados.
+7. `type=fire` filtra por tipo.
+8. Refresh mantém a rota e os filtros.
+
 ## 18) Checklist final
 
 - [ ] React Router instalado e configurado
@@ -3132,6 +3240,14 @@ npm run dev
 - Esquecer `params.get("q") || ""` e lidar com `null`.
 - Guardar `type=all` e depois tratar como tipo real.
 - Colocar a rota `*` no meio e “apanhar” tudo.
+
+**Checklist de depuração do Router (5 passos)**
+
+1. `BrowserRouter` está a envolver o `App`?
+2. O `Layout` tem `<Outlet />`?
+3. A rota filha usa `path` **relativo** (sem `/`)?
+4. `useParams()` está a ser convertido com `Number(id)`?
+5. A rota `*` está **no fim**?
 
 ---
 

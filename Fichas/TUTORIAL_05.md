@@ -49,6 +49,12 @@ O que muda nesta ficha é a **arquitetura**:
 - Ao fazer refresh, continua favorito.
 - Ao reiniciar o backend, volta ao array inicial (porque é memória).
 
+**⚠️ Memória reseta — isto é normal**
+
+Nesta ficha, os favoritos vivem em memória. Ao reiniciar o backend, voltam ao estado inicial.
+
+Numa aplicação real, usarias uma base de dados para guardar favoritos permanentemente.
+
 ### 0.5) Mapa mental
 
 Durante o desenvolvimento, vais ter dois servidores a correr:
@@ -69,6 +75,32 @@ UI (clique) → Context (ação) → Service (fetch) → API (Express)
 2. Só depois ligas o **frontend**.
 
 Se o backend não estiver ligado, o frontend vai falhar com erro de rede.
+
+**Como testar**
+
+- Backend: abre `http://localhost:3000/api/favorites` (deves ver JSON).
+- Frontend: abre `http://localhost:5173` (deves ver a UI).
+
+**Vocabulário rápido**
+
+- **API**: conjunto de endpoints que o frontend chama.
+- **Service**: ficheiro que faz `fetch` para a API.
+- **Provider (Context)**: componente que guarda estado global.
+
+**Debug rápido para toda a ficha**
+
+1. Backend ligado em `http://localhost:3000`?
+2. Frontend ligado em `http://localhost:5173`?
+3. Console mostra erros de CORS?
+4. Network mostra `GET /api/favorites`?
+5. `package.json` do backend tem `"type": "module"`?
+
+**Pontos de paragem**
+
+- **Paragem A**: backend responde ao `GET /api/favorites`.
+- **Paragem B**: frontend abre sem erros de rede.
+- **Paragem C**: Context ligado e páginas consomem `usePokedex()`.
+- **Paragem D**: favoritos persistem via backend.
 
 ---
 
@@ -394,6 +426,11 @@ O CORS (Cross-Origin Resource Sharing) é um mecanismo de segurança do browser 
 
 O CORS existe por causa de uma regra do browser: **Same-Origin Policy**. Ou seja, um site só pode fazer pedidos ao mesmo domínio/porta de onde foi carregado, a não ser que o servidor diga explicitamente que aceita pedidos de outras origens.
 
+**CORS em duas verdades simples**
+
+- CORS é **regra do browser**, não do Node/Express.
+- CORS **não** substitui autenticação nem segurança real.
+
 #### O que é “origin”?
 
 É:
@@ -578,6 +615,14 @@ A partir daqui vamos ter dois terminais:
 - Terminal B: frontend Vite (porta 5173 (normalmente))
 
 Ou seja, vamos ter duas aplicações a correr em paralelo.
+
+**Onde estou? (orientação de pastas)**
+
+- `pwd` → mostra onde estás
+- `ls` → lista o que existe
+- `cd ..` → sobe uma pasta
+
+Regra: vais instalar dependências **em `backend/` e em `frontend/`**.
 
 ---
 
@@ -834,6 +879,12 @@ No `backend/package.json`, adiciona:
 
 Sem isto, o Node não reconhece `import ... from ...`.
 
+**Erro típico (ES Modules)**
+
+- **Erro**: `ReferenceError: require is not defined in ES module scope`
+- **Causa**: falta `"type": "module"`
+- **Solução**: adicionar `"type": "module"` ao `backend/package.json`
+
 Já que estás a editar o `package.json`, podes também adicionar um script para arrancar o servidor:
 
 ```json
@@ -968,6 +1019,10 @@ Se arrancar, segue.
 > - tens o Node atualizado?
 > - tens `"type": "module"` no `package.json`?
 > - tens o Express e CORS instalados?
+
+**Checkpoint visual**
+
+- No terminal do backend, vês: `API a correr em http://localhost:3000`.
 
 ---
 
@@ -1381,6 +1436,26 @@ Se fizeres isto bem:
 
 ---
 
+**Contrato da API**
+
+| Endpoint             | Método | Body          | Resposta      | Status | Erros típicos |
+| -------------------- | ------ | ------------- | ------------- | ------ | ------------- |
+| `/api/favorites`     | GET    | —             | `[1,4,25]`    | 200    | —             |
+| `/api/favorites`     | POST   | `{ "id": 7 }` | `{ "id": 7 }` | 201    | 409, 422      |
+| `/api/favorites/:id` | DELETE | —             | `{ "id": 7 }` | 200    | 400, 404      |
+
+**Exemplo de erro (409 duplicado)**
+
+Se tentares adicionar um favorito já existente, o backend devolve `409`.
+A UI deve mostrar uma mensagem simples (ex.: “Esse Pokémon já é favorito.”).
+
+**Checkpoints operacionais obrigatórios (antes de ligar frontend↔backend)**
+
+1. Backend responde a `GET /api/favorites` → vês JSON `[1,4,25]` no browser/curl.
+2. Frontend abre sem erro de rede.
+3. No Network, vês `GET http://localhost:3000/api/favorites`.
+4. Se aparecer `OPTIONS` antes de `POST/DELETE`, isso é **normal** (preflight).
+
 ## 8) Criar o serviço `favoritesApi.js`
 
 ### 8.0) Mini‑teoria: `fetch`, `res.ok`, JSON e propagação de erros
@@ -1616,6 +1691,11 @@ Um hook como `usePokedex()` dá-te:
 > Nota pedagógica: se `useCallback`/`useMemo` ainda confundirem,
 > começa **sem** essas otimizações (tudo direto com `useState` + `useEffect`),
 > garante que funciona, e só depois volta aqui para “melhorar” com callbacks/memo.
+
+**Context em 2 camadas (conceptual → otimizada)**
+
+- **Conceptual**: `Provider` guarda estado e expõe ações.
+- **Otimizada**: `useCallback` evita recriar funções, `useMemo` estabiliza o `value`.
 
 Cria `src/context/PokedexContext.jsx`:
 
@@ -1873,6 +1953,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 - Se alguma página chamar `usePokedex()` fora do Provider, vais ter erro.
 
+**Checkpoint visual**
+
+- A app abre e continua a mostrar o Layout e a lista, sem crash imediato.
+
 ---
 
 ## 11) `App.jsx` passa a ser só rotas
@@ -2048,6 +2132,10 @@ const { pokemon, favorites, loading, error, toggleFavorite, reload } =
 
 - Nenhuma page recebe props do App.
 - Favoritos continuam a atualizar a UI.
+
+**Checkpoint visual**
+
+- Ao clicar no ❤️, o estado visual do card muda sem recarregar a página.
 
 ---
 
