@@ -49,6 +49,27 @@ O que muda nesta ficha é a **arquitetura**:
 - Ao fazer refresh, continua favorito.
 - Ao reiniciar o backend, volta ao array inicial (porque é memória).
 
+### 0.5) Mapa mental
+
+Durante o desenvolvimento, vais ter dois servidores a correr:
+
+- Frontend (Vite) → `http://localhost:5173`
+- Backend (Express) → `http://localhost:3000`
+
+**Fluxo de dados (sempre o mesmo):**
+
+```
+UI (clique) → Context (ação) → Service (fetch) → API (Express)
+→ resposta (status+JSON) → Context (setState) → UI (re-render)
+```
+
+**Regra:**
+
+1. Ligas o **backend** primeiro.
+2. Só depois ligas o **frontend**.
+
+Se o backend não estiver ligado, o frontend vai falhar com erro de rede.
+
 ---
 
 ## 1) Pré-requisitos e ambiente
@@ -57,6 +78,17 @@ O que muda nesta ficha é a **arquitetura**:
 
 - **Terminal A**: backend Express (porta 3000)
 - **Terminal B**: frontend Vite (porta 5173)
+
+**Ordem recomendada:** primeiro Terminal A (backend), depois Terminal B (frontend).
+
+**Se te perderes nas pastas:**
+
+```bash
+pwd
+ls
+```
+
+Isto diz-te onde estás e o que existe nessa pasta.
 
 ### 1.2) Confirma Node e npm
 
@@ -69,6 +101,7 @@ npm -v
 
 - **Porta ocupada** (`EADDRINUSE`) → tens outro servidor ligado.
 - **Erro de imports** no Node → falta `"type": "module"`.
+    - Erro típico: `ReferenceError: require is not defined in ES module scope`
 
 ---
 
@@ -86,6 +119,9 @@ backend
 
 Move todo o projeto Vite da Ficha 4 para dentro de frontend/.
 
+> Dica rápida: se te perderes no terminal, usa `pwd` para ver onde estás.
+> Para subir uma pasta, usa `cd ..`.
+
 ---
 
 ## 3) Estrutura final esperada
@@ -93,11 +129,13 @@ Move todo o projeto Vite da Ficha 4 para dentro de frontend/.
 ```txt
 pokedex-v3/
   backend/
-    server.js
-    routes/
-      favorites.routes.js
-    data/
-      favorites.memory.js
+    src/
+      server.js
+      app.js
+      routes/
+        favorites.routes.js
+      data/
+        favorites.memory.js
     package.json
   frontend/
     src/
@@ -105,11 +143,12 @@ pokedex-v3/
         PokedexContext.jsx
       services/
         favoritesApi.js
-      pages/
-        HomePage.jsx
+      components/
+        Layout.jsx
+        PokemonListPage.jsx
         PokemonDetailsPage.jsx
         FavoritesPage.jsx
-      components/
+        NotFound.jsx
         ...
       App.jsx
       main.jsx
@@ -117,7 +156,9 @@ pokedex-v3/
     vite.config.js
 ```
 
-> Nota: A partir daqui, tudo o que é React/Vite está em frontend/ e tudo o que é Express/API está em backend/.
+> Nota: A partir daqui, tudo o que é React/Vite está em `frontend/` e tudo o que é Express/API está em `backend/`.
+> Nesta ficha **mantemos as páginas dentro de `components/`**, tal como na Ficha 4, para garantir compatibilidade direta.
+> Se quiseres separar `pages/`, faz isso **no fim** e atualiza os imports/rotas.
 
 ### Instalação e arranque
 
@@ -497,7 +538,7 @@ O Provider é um componente que "envolve" a tua app e cria um canal de dados glo
 Pensa no Provider como:
 
 - “o cérebro” da app para dados globais
-- e as pages/componentes como “os olhos e as mãos” (UI)
+- e as páginas/componentes como “os olhos e as mãos” (UI)
 
 #### Quando usar Context vs props?
 
@@ -937,6 +978,7 @@ Se arrancar, segue.
 - REST aqui significa: URLs previsíveis por recurso (`favorites`) e métodos a indicar ação.
 - `Router()` organiza a feature num ficheiro próprio.
 - Persistência em memória: dados vivem numa variável; ao reiniciar, perdes tudo.
+    - **Isto é esperado** nesta ficha — serve para perceber o fluxo antes de usar BD.
 
 O `:id` no URL é um **param de rota**:
 
@@ -1306,7 +1348,7 @@ Quando estás na dúvida onde meter uma função, usa esta regra:
    Vai para `context/` (ações do Provider).
 
 3. **Só desenha UI e dispara eventos (onClick/onChange)?**  
-   Vai para `components/` ou `pages/` (dependendo se é página ou peça pequena).
+   Vai para `components/` (nesta ficha, as páginas continuam lá, como na Ficha 4).
 
 > Objetivo final: componentes visuais devem ser “parvos”: recebem dados prontos e mostram.  
 > A “inteligência” fica concentrada em services + context.
@@ -1327,8 +1369,9 @@ Quando a app cresce, o objetivo é que cada pasta tenha um papel claro:
   Componentes visuais (cards, botões, layout).  
   Idealmente recebem dados já prontos para mostrar.
 
-- `pages/` (se tiveres)  
-  Páginas do Router: combinam componentes e regras de página.
+- `pages/` (opcional)  
+  Páginas do Router: combinam componentes e regras de página.  
+  **Nesta ficha** mantemos as pages dentro de `components/` para compatibilidade direta com a Ficha 4.
 
 Se fizeres isto bem:
 
@@ -1369,6 +1412,21 @@ Se o servidor responder `404` ou `422`, o `fetch` considera isso “uma resposta
 É para isso que existe:
 
 - `if (!res.ok) ...`
+
+#### Extra útil: ler o `error.code` do backend
+
+Se quiseres mostrar a mensagem do backend (ex.: `DUPLICATE_KEY`), podes ler o JSON
+antes de lançar o erro:
+
+```js
+if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const code = data?.error?.code;
+    throw new Error(code ? `Erro API (${code})` : "Erro API");
+}
+```
+
+Isto ajuda a perceber **porque** falhou (ex.: favorito duplicado).
 
 #### 2) O body (JSON) pode ter informação útil… mesmo em erro
 
@@ -1554,6 +1612,10 @@ Um hook como `usePokedex()` dá-te:
 
 - Guardar estado global.
 - Fornecer ações (toggle, reload).
+
+> Nota pedagógica: se `useCallback`/`useMemo` ainda confundirem,
+> começa **sem** essas otimizações (tudo direto com `useState` + `useEffect`),
+> garante que funciona, e só depois volta aqui para “melhorar” com callbacks/memo.
 
 Cria `src/context/PokedexContext.jsx`:
 
@@ -2052,6 +2114,10 @@ Mesma ideia:
 - ler do Context
 - substituir handlers
 
+> Se a navegação com query string (`location.search`) estiver confusa,
+> começa por navegar só com `navigate("/pokemon/ID")`.
+> Quando tudo estiver a funcionar, volta e adiciona a preservação da query.
+
 Exemplo de assinatura:
 
 ```js
@@ -2099,6 +2165,8 @@ Na raiz do projeto:
 ```bash
 npm run dev
 ```
+
+Se o frontend mostrar erro de rede, confirma primeiro que o backend está ligado.
 
 ---
 
