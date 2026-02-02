@@ -1,4 +1,4 @@
-# Tutorial passo a passo — Pokédex Explorer (Ficha 03) (12.º ano)
+# Tutorial passo a passo - Pokédex Explorer (Ficha 03) (12.º ano)
 
 Este tutorial explica, do início ao fim, como construir a app **pokedex-explorer**.
 É uma ficha pensada para consolidar os **8 temas fundamentais de React** (ficheiros 1–8 da pasta React).
@@ -50,23 +50,23 @@ Uma Pokédex digital com dados reais da **PokéAPI**:
 
 ### 0.1) Ligações diretas aos 8 temas
 
-1. **Fundamentos e setup** — Vite, estrutura base do projeto, `index.html`, `main.jsx`.
-2. **JSX e componentes** — dividir UI em componentes pequenos.
-3. **Props e composição** — passar dados/handlers do `App` para componentes.
-4. **Estado e eventos** — `useState`, handlers, cliques, inputs.
-5. **Listas e condicionais** — `map`, `filter`, `&&`, ternários, estados vazios.
-6. **Formulários controlados** — input com `value` e `onChange`.
-7. **Assíncrono** — `fetch`, `async/await`, `Promise.all`.
-8. **useEffect e dados externos** — carregar da API e guardar/ler do `localStorage`.
+1. **Fundamentos e setup** - Vite, estrutura base do projeto, `index.html`, `main.jsx`.
+2. **JSX e componentes** - dividir UI em componentes pequenos.
+3. **Props e composição** - passar dados/handlers do `App` para componentes.
+4. **Estado e eventos** - `useState`, handlers, cliques, inputs.
+5. **Listas e condicionais** - `map`, `filter`, `&&`, ternários, estados vazios.
+6. **Formulários controlados** - input com `value` e `onChange`.
+7. **Assíncrono** - `fetch`, `async/await`, `Promise.all`.
+8. **useEffect e dados externos** - carregar da API e guardar/ler do `localStorage`.
 
 ### 0.2) Mapa de fases (visão rápida)
 
 Se te perderes, volta aqui. Cada fase termina com um checkpoint rápido.
 
-- Fase 1 — App mínimo (renderização): `src/App.jsx`
-- Fase 2 — Layout + estados base (SearchBar/TypeFilter): `src/App.jsx`, `src/components/SearchBar.jsx`, `src/components/TypeFilter.jsx`
-- Fase 3 — Dados externos + loading/erro (PokéAPI): `src/services/pokeApi.js`, `src/App.jsx`, `src/components/LoadingSpinner.jsx`, `src/components/ErrorMessage.jsx`, `src/components/PokemonCard.jsx`
-- Fase 4 — Favoritos + detalhes (navegação por estado): `src/App.jsx`, `src/components/PokemonDetailsPage.jsx`
+- Fase 1 - App mínimo (renderização): `src/App.jsx`
+- Fase 2 - Layout + estados base (SearchBar/TypeFilter): `src/App.jsx`, `src/components/SearchBar.jsx`, `src/components/TypeFilter.jsx`
+- Fase 3 - Dados externos + loading/erro (PokéAPI): `src/services/pokeApi.js`, `src/App.jsx`, `src/components/LoadingSpinner.jsx`, `src/components/ErrorMessage.jsx`, `src/components/PokemonCard.jsx`
+- Fase 4 - Favoritos + detalhes (navegação por estado): `src/App.jsx`, `src/components/PokemonDetailsPage.jsx`
 
 **Erros comuns cedo**
 
@@ -149,7 +149,7 @@ import App from "@/App.jsx";
 import PokemonCard from "@/components/PokemonCard.jsx";
 ```
 
-O `@` é um **alias** que aponta para a pasta `src/`. Ou seja, se o ficheiro estiver em `src/components/PokemonCard.jsx`, o import fica mais curto e passa a ser `@/components/PokemonCard.jsx`. Claro que neste caso não ganhamos muito, mas imagina se o ficheiro estivesse em `src/components/pokemon/PokemonCard/index.jsx` — o import ficaria enorme! E dependendo de onde estivesses a importar, podias ter de usar `../../../` várias vezes.
+O `@` é um **alias** que aponta para a pasta `src/`. Ou seja, se o ficheiro estiver em `src/components/PokemonCard.jsx`, o import fica mais curto e passa a ser `@/components/PokemonCard.jsx`. Claro que neste caso não ganhamos muito, mas imagina se o ficheiro estivesse em `src/components/pokemon/PokemonCard/index.jsx` - o import ficaria enorme! E dependendo de onde estivesses a importar, podias ter de usar `../../../` várias vezes.
 Um exemplo com ganho real: Vamos importar um ficheiro que está 3 pastas acima do ficheiro atual:
 
 ```js
@@ -274,8 +274,8 @@ Exemplo (não tens de decorar isto, é só para perceber a ideia):
 
 Vamos usar dois ficheiros CSS:
 
-- `src/styles/index.css` — estilos globais (fontes, variáveis, reset)
-- `src/styles/pokedex.css` — estilos específicos da app
+- `src/styles/index.css` - estilos globais (fontes, variáveis, reset)
+- `src/styles/pokedex.css` - estilos específicos da app
 
 Cria e cola o conteúdo tal como está.
 
@@ -974,7 +974,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 ---
 
-# Parte A — Construção da UI por componentes
+# Parte A - Construção da UI por componentes
 
 Agora vamos construir a interface por blocos.
 
@@ -985,7 +985,7 @@ Notas importantes:
 
 ---
 
-## 9) `typeData.js` — Dados e helpers dos tipos
+## 9) `typeData.js` - Dados e helpers dos tipos
 
 ### 9.1) Teoria
 
@@ -1088,7 +1088,7 @@ export const TYPE_SEQUENCE = ["all", ...TYPE_NAMES];
 
 ---
 
-## 10) `LoadingSpinner.jsx` — feedback de carregamento
+## 10) `LoadingSpinner.jsx` - feedback de carregamento
 
 ### 10.1) Teoria
 
@@ -1130,7 +1130,7 @@ export default LoadingSpinner;
 
 ---
 
-## 11) `ErrorMessage.jsx` — mensagem de erro e botão de retry
+## 11) `ErrorMessage.jsx` - mensagem de erro e botão de retry
 
 Antes de usares callbacks pela primeira vez neste tutorial, reve a secao "Callbacks e fluxo de dados" em `React/03_props_e_composicao.md#sec-3`.
 
@@ -1187,7 +1187,7 @@ export default ErrorMessage;
 
 ---
 
-## 12) `SearchBar.jsx` — formulário controlado
+## 12) `SearchBar.jsx` - formulário controlado
 
 ### 12.1) Teoria
 
@@ -1259,7 +1259,7 @@ export default SearchBar;
 
 ---
 
-## 13) `TypeFilter.jsx` — filtros por tipo
+## 13) `TypeFilter.jsx` - filtros por tipo
 
 ### 13.1) Teoria
 
@@ -1338,7 +1338,7 @@ export default TypeFilter;
 
 ---
 
-## 14) `PokemonCard.jsx` — card de um Pokémon
+## 14) `PokemonCard.jsx` - card de um Pokémon
 
 ![App 03](./Images/03/02.png)
 
@@ -1462,7 +1462,7 @@ export default PokemonCard;
 
 ---
 
-## 15) `PokemonDetailsPage.jsx` — página de detalhes
+## 15) `PokemonDetailsPage.jsx` - página de detalhes
 
 ![App 03](./Images/03/03.png)
 
@@ -1650,7 +1650,7 @@ export default PokemonDetailsPage;
 
 ---
 
-# Parte B — App.jsx em fases (muito importante)
+# Parte B - App.jsx em fases (muito importante)
 
 O `App.jsx` é o componente principal.
 É normal ser o ficheiro maior, porque é ele que junta tudo:
@@ -1666,7 +1666,7 @@ Para não ser confuso, vamos construir em **4 fases**.
 
 ---
 
-## 16) Fase 1 — App mínimo (confirmar renderização)
+## 16) Fase 1 - App mínimo (confirmar renderização)
 
 ### 16.1) Teoria (curta)
 
@@ -1718,7 +1718,7 @@ Se aparece o título, podes avançar.
 
 ---
 
-## 17) Fase 2 — Layout base + estados mínimos
+## 17) Fase 2 - Layout base + estados mínimos
 
 ### 17.1) Teoria (curta)
 
@@ -1778,7 +1778,7 @@ function App() {
                 <div>
                     <h1 className="pokedex__hero-title">Pokédex Digital</h1>
                     <p className="pokedex__hero-subtitle">
-                        Nesta fase ainda não há dados — só estamos a testar UI e
+                        Nesta fase ainda não há dados - só estamos a testar UI e
                         estados.
                     </p>
                     <div className="pokedex__hero-stats">
@@ -1825,7 +1825,7 @@ export default App;
 
 ---
 
-## 18) Fase 3 — Carregar dados da PokéAPI (fetch + useEffect)
+## 18) Fase 3 - Carregar dados da PokéAPI (fetch + useEffect)
 
 **Notas:**
 
@@ -1847,7 +1847,7 @@ Vamos fazer 2 passos:
 1. ir buscar a lista de 151 (nome + url)
 2. ir buscar os detalhes de cada um, em paralelo, com `Promise.all`
 
-### 18.2) Prática — criar helper da API
+### 18.2) Prática - criar helper da API
 
 Para manter o `App.jsx` mais limpo (estilo profissional), vamos isolar a lógica de fetch num helper.
 
@@ -1884,7 +1884,7 @@ export async function fetchPokemonList(limit = 151) {
 }
 ```
 
-### 18.3) Prática — App com dados
+### 18.3) Prática - App com dados
 
 Notas didáticas antes do código:
 
@@ -1892,7 +1892,7 @@ Notas didáticas antes do código:
 - O helper usa `Promise.all` para fazer pedidos de detalhe em paralelo.
 - Guardamos uma mensagem “segura” em `error` para mostrar na UI.
 
-**Versão simples (sem `useCallback`)** — útil para quem ainda está a dominar `useEffect`:
+**Versão simples (sem `useCallback`)** - útil para quem ainda está a dominar `useEffect`:
 
 ```jsx
 useEffect(() => {
@@ -2083,7 +2083,7 @@ Nesta fase, os cards já aparecem, mas ainda não fazem nada ao clicar e ainda n
 
 ---
 
-## 19) Fase 4 — Favoritos + navegação para detalhes (versão final)
+## 19) Fase 4 - Favoritos + navegação para detalhes (versão final)
 
 ### 19.1) Teoria (curta)
 
@@ -2125,7 +2125,7 @@ Conceitos aplicados:
 
 Descrição: componente principal da Pokédex Explorer. Reúne cabeçalho, navegação por estados, filtros e renderização de cards com dados reais.
 
-### 19.2) Prática — código final do `App.jsx`
+### 19.2) Prática - código final do `App.jsx`
 
 Substitui o teu `src/App.jsx` por este ficheiro (é o final).
 Lê com calma o código e as notas acima: isto é literalmente a ficha toda num único componente.
@@ -2143,7 +2143,7 @@ import { fetchPokemonList } from "@/services/pokeApi.js";
 const POKEMON_LIMIT = 151;
 
 /**
- * App — componente principal da Pokédex Explorer.
+ * App - componente principal da Pokédex Explorer.
  *
  * @returns {JSX.Element}
  */

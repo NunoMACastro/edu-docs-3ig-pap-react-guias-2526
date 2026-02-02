@@ -1,4 +1,4 @@
-# Tutorial passo a passo — Pokédex v3 com Backend + Context (Ficha 05) (12.º ano)
+# Tutorial passo a passo - Pokédex v3 com Backend + Context (Ficha 05) (12.º ano)
 
 Este tutorial **continua diretamente a Ficha 4**.
 A app mantém o Router, as páginas e a experiência do utilizador.
@@ -22,7 +22,7 @@ O que muda nesta ficha é a **arquitetura**:
 - Lista com pesquisa/filtros.
 - Favoritos guardados no browser.
 
-> Nota: Um SPA é uma Single Page Application — uma app que corre toda no browser, sem recarregar páginas.
+> Nota: Um SPA é uma Single Page Application - uma app que corre toda no browser, sem recarregar páginas.
 
 ### 0.2) Objetivos desta ficha
 
@@ -49,7 +49,7 @@ O que muda nesta ficha é a **arquitetura**:
 - Ao fazer refresh, continua favorito.
 - Ao reiniciar o backend, volta ao array inicial (porque é memória).
 
-**⚠️ Memória reseta — isto é normal**
+**⚠️ Memória reseta - isto é normal**
 
 Nesta ficha, os favoritos vivem em memória. Ao reiniciar o backend, voltam ao estado inicial.
 
@@ -336,7 +336,7 @@ React (browser) ──fetch──▶ Express (server) ──▶ responde JSON
 
 #### Contexto extra (definições mais detalhadas)
 
-Os métodos HTTP dizem ao servidor **qual é a intenção** do pedido. Não são só nomes — ajudam a manter a API previsível.
+Os métodos HTTP dizem ao servidor **qual é a intenção** do pedido. Não são só nomes - ajudam a manter a API previsível.
 
 - **GET** → _ler dados_  
   Regra: **não deve alterar** dados no servidor.  
@@ -540,9 +540,9 @@ Contrato desta ficha:
 
 | Ação          | Método | URL                  | Body          | Resposta      |
 | ------------- | ------ | -------------------- | ------------- | ------------- |
-| Ler favoritos | GET    | `/api/favorites`     | —             | `[1,4,25]`    |
+| Ler favoritos | GET    | `/api/favorites`     | -             | `[1,4,25]`    |
 | Adicionar     | POST   | `/api/favorites`     | `{ "id": 7 }` | `{ "id": 7 }` |
-| Remover       | DELETE | `/api/favorites/:id` | —             | `{ "id": 7 }` |
+| Remover       | DELETE | `/api/favorites/:id` | -             | `{ "id": 7 }` |
 
 ### 4.6) Context API (o porquê)
 
@@ -601,7 +601,7 @@ Com Context:
 
 ---
 
-# PARTE A — BACKEND
+# PARTE A - BACKEND
 
 ## 5) Criar o backend Express
 
@@ -720,7 +720,7 @@ Aqui estão os mais importantes:
   (Nesta ficha quase não usas, mas é importante saber que existe)
 
 - `req.body`
-  Vem do corpo do pedido (body) — típico em POST
+  Vem do corpo do pedido (body) - típico em POST
   Ex.: `{ "id": 7 }`
   **Só aparece bem** se tiveres um parser, tipo `express.json()`.
 
@@ -815,7 +815,7 @@ Porque **CORS é uma regra do browser**.
 
 ---
 
-#### 7) ES Modules no Node (`"type": "module"`) — o que muda na prática
+#### 7) ES Modules no Node (`"type": "module"`) - o que muda na prática
 
 Ao adicionares `"type": "module"` no `package.json`, estás a dizer ao Node:
 
@@ -1033,7 +1033,7 @@ Se arrancar, segue.
 - REST aqui significa: URLs previsíveis por recurso (`favorites`) e métodos a indicar ação.
 - `Router()` organiza a feature num ficheiro próprio.
 - Persistência em memória: dados vivem numa variável; ao reiniciar, perdes tudo.
-    - **Isto é esperado** nesta ficha — serve para perceber o fluxo antes de usar BD.
+    - **Isto é esperado** nesta ficha - serve para perceber o fluxo antes de usar BD.
 
 O `:id` no URL é um **param de rota**:
 
@@ -1054,7 +1054,7 @@ REST, nesta ficha, significa apenas:
     - `POST` para adicionar
     - `DELETE` para remover
 
-Não é “magia” nem um standard único — é uma forma organizada de pensar URLs e ações.
+Não é “magia” nem um standard único - é uma forma organizada de pensar URLs e ações.
 
 #### Porque usamos `Router()` em vez de meter tudo no `app.js`
 
@@ -1100,7 +1100,7 @@ Nesta ficha, validamos:
 - tem de ser inteiro
 - tem de ser > 0
 
-O objetivo não é “ser chato” — é evitar estados impossíveis (ex.: favorito `-3`).
+O objetivo não é “ser chato” - é evitar estados impossíveis (ex.: favorito `-3`).
 
 #### Status codes e consistência de erros
 
@@ -1326,7 +1326,7 @@ cd backend
 node src/server.js
 ```
 
-### Terminal B — testes (curl)
+### Terminal B - testes (curl)
 
 ```bash
 curl http://localhost:3000/api/favorites
@@ -1344,7 +1344,7 @@ curl -X DELETE http://localhost:3000/api/favorites/7
 
 ---
 
-## 7.1) Mini-lab — provocar erros de propósito (para aprender)
+## 7.1) Mini-lab - provocar erros de propósito (para aprender)
 
 Isto é uma das melhores formas de perceber status codes: provocar erros controlados e ver o que o backend devolve.
 
@@ -1388,7 +1388,7 @@ Deve dar `404` e `error.code = "NOT_FOUND"`.
 
 ---
 
-# PARTE B — FRONTEND
+# PARTE B - FRONTEND
 
 ## 7.2) (Extra) Como separar responsabilidades no frontend
 
@@ -1440,9 +1440,9 @@ Se fizeres isto bem:
 
 | Endpoint             | Método | Body          | Resposta      | Status | Erros típicos |
 | -------------------- | ------ | ------------- | ------------- | ------ | ------------- |
-| `/api/favorites`     | GET    | —             | `[1,4,25]`    | 200    | —             |
+| `/api/favorites`     | GET    | -             | `[1,4,25]`    | 200    | -             |
 | `/api/favorites`     | POST   | `{ "id": 7 }` | `{ "id": 7 }` | 201    | 409, 422      |
-| `/api/favorites/:id` | DELETE | —             | `{ "id": 7 }` | 200    | 400, 404      |
+| `/api/favorites/:id` | DELETE | -             | `{ "id": 7 }` | 200    | 400, 404      |
 
 **Exemplo de erro (409 duplicado)**
 
@@ -1463,7 +1463,7 @@ A UI deve mostrar uma mensagem simples (ex.: “Esse Pokémon já é favorito.�
 #### Contexto extra (definições mais detalhadas)
 
 O `fetch` só falha automaticamente em erros de rede.
-Para 404/422, ele devolve resposta na mesma — por isso é que existe `res.ok`.
+Para 404/422, ele devolve resposta na mesma - por isso é que existe `res.ok`.
 
 Regra:
 
@@ -1482,7 +1482,7 @@ O `fetch` só lança erro automaticamente em situações como:
 - servidor desligado
 - timeout (dependendo do ambiente)
 
-Se o servidor responder `404` ou `422`, o `fetch` considera isso “uma resposta válida” — por isso tens de decidir o que fazer.
+Se o servidor responder `404` ou `422`, o `fetch` considera isso “uma resposta válida” - por isso tens de decidir o que fazer.
 
 É para isso que existe:
 
@@ -1865,7 +1865,7 @@ Se vires pedidos duplicados, confirma se estás em dev e se é comportamento esp
 
 ## 9.6) Como pensar em dependências (`[]`) sem decorar
 
-### Contexto extra — dependências e closures (explicação curta e prática)
+### Contexto extra - dependências e closures (explicação curta e prática)
 
 Uma função em JS “apanha” o valor atual das variáveis que usa (closure).
 Se a função usa `favorites`, então precisa de ser atualizada quando `favorites` muda.
@@ -1878,7 +1878,7 @@ Mais tarde, vais aprender a alternativa “update funcional”:
 
 Isto é o que costuma confundir mais alunos: “o que meto nas dependências?”
 
-### Regra 1 — Um efeito depende do que usa
+### Regra 1 - Um efeito depende do que usa
 
 Se dentro do `useEffect` usas uma função/variável que vem de fora, o efeito depende disso.
 
@@ -1897,14 +1897,14 @@ useEffect(() => {
 }, [loadInitialData]); // dependencia: usamos a funcao dentro do efeito
 ```
 
-### Regra 2 — `useCallback` e `useMemo` são para estabilidade (não para “performance” nesta fase)
+### Regra 2 - `useCallback` e `useMemo` são para estabilidade (não para “performance” nesta fase)
 
 Nesta ficha, a razão principal é:
 
 - evitar efeitos a disparar mais do que queres
 - evitar re-renders em cascata por objetos/funções sempre novos
 
-### Regra 3 — Closure (a “fotografia” do estado)
+### Regra 3 - Closure (a “fotografia” do estado)
 
 Em `toggleFavorite`, repara que a função usa `favorites` lá dentro.
 Isso significa que a função “vê” o valor de `favorites` do render atual.
@@ -2228,7 +2228,7 @@ Esta é a página onde normalmente se nota logo se o Context está bem:
 ### e) Componentes pequenos (Cards, Buttons)
 
 Se algum componente pequeno recebia `isFavorite` ou `onToggleFavorite` por props, isso pode continuar igual.
-Não é proibido usar props — o objetivo é evitar passar props por 4 níveis sem necessidade.
+Não é proibido usar props - o objetivo é evitar passar props por 4 níveis sem necessidade.
 
 Regra prática:
 
@@ -2302,7 +2302,7 @@ Não. Isto é exatamente o passo intermédio antes de uma BD:
 - Hoje: `favorites = [...]`
 - Amanhã: `favorites` vem de MongoDB
 
-O frontend não tem de saber onde os dados vivem — ele só fala com a API.
+O frontend não tem de saber onde os dados vivem - ele só fala com a API.
 
 ### “Posso fazer o backend arrancar com `npm start`?”
 

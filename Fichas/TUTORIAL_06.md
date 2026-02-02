@@ -1,299 +1,187 @@
-# Tutorial passo a passo — Pokédex v4 (Ficha 06)
+# Tutorial passo a passo - Pokédex v4 (Ficha 06) (12.º ano)
 
-## MongoDB Atlas + Auth (cookies) + Axios + Paginação + Upload (12.º ano)
+Este tutorial continua diretamente a Ficha 05.
+A app mantém o visual, a navegação e as páginas principais - ou seja, o aluno não começa do zero e não perde o trabalho anterior.
 
-Este tutorial **começa exatamente onde termina a Ficha 5**.
+O foco desta ficha não é criar uma app “maior”. É tornar a mesma app real, com as preocupações que existem fora da sala de aula:
 
-A Ficha 5 tinha:
+- Persistência real: o que guardavas em memória passa para MongoDB Atlas
+- Sessão real: o utilizador passa a ter conta e login:
+- register / login / me / logout
+- JWT guardado em cookie HttpOnly
 
-- Frontend React + Vite com Router
-- Backend Express com favoritos em memória
+Segurança web real:
 
-Nesta Ficha 6, vais evoluir a app com:
+- CORS bem configurado para permitir credenciais
+- CSRF para proteger mutações (POST/DELETE/etc.)
 
-- MongoDB Atlas (persistência dos dados)
-- Autenticação com JWT em cookies HttpOnly
-- Axios central com CSRF automático
-- Paginação server-side
-- Upload de avatar
+Organização profissional no frontend:
 
-Estes conceitos estão explicados na documentação fornecida juntamente com a Ficha 6.  
-No entanto, **antes de começarmos a implementar**, vamos rever cada conceito com definições claras.
+- pages/ para rotas (componentes que representam páginas)
+- components/ para UI reutilizável
+- services/ para centralizar toda a comunicação com a API
 
----
+Integração completa:
 
-# 0) Antes de começares (muito importante)
+- rotas protegidas
+- sessão restaurada ao fazer refresh
+- upload de avatar (exemplo completo de multipart/form-data)
 
-## 0.1) O que **não muda** (vem da Ficha 5)
+> Nesta ficha não estamos a “inventar novas features” ao acaso.
+> Estamos a fazer o que os programadores fazem em projetos reais:
+> refactor, integração, segurança, persistência, e código organizado.
+> No fim, vais ter uma Pokédex fullstack que funciona como uma aplicação real. Espero eu... :D
 
-Tu já tens:
+## 0) O que vais construir e o que muda vs Ficha 05
 
-- Frontend React + Vite com Router (`/`, `/pokemon/:id`, `/favoritos`, `*`)
-- Consumo da PokéAPI (lista/detalhe/pesquisa/filtros)
-- Context API para estado global (pokemon, loading/erro, favoritos)
-- Backend Express com rotas para favoritos (mas ainda em **memória**)
+### O que é
 
-Nesta ficha, **não vais recriar a app**: vais **refatorar** e **expandir** o que já tens.
+A Ficha 06 pega no **código final da Ficha 05** e evolui a app para uma versão com autenticação, persistência em MongoDB, equipas paginadas e perfil com upload de avatar.
 
-(Refatorar = “mudar o código para ficar melhor, sem mudar o que ele faz”.)
+### Teoria
 
----
+1. **Conceitos-chave**
 
-## 0.2) O que vai mudar (objetivos desta ficha)
+- **SPA (Single Page Application)**: a página não recarrega por completo em cada ação; o JavaScript atualiza só partes do ecrã.
+- **Frontend vs Backend**: o frontend trata da interface e experiência do utilizador; o backend trata de regras, segurança e dados.
+- **Contrato de API**: é um acordo fixo sobre endpoints, formatos de pedido e resposta.
+- **Continuidade entre fichas**: não começamos do zero; evoluímos uma base existente sem partir comportamento já validado.
 
-Vamos acrescentar 6 blocos grandes:
+2. **Como funciona**
 
-1. **MongoDB Atlas (persistência)**
-    - O backend liga a uma base de dados real (Atlas)
-    - Favoritos deixam de ser “array em memória” e passam a ser persistentes
+- Numa SPA, quando clicas numa rota, o React Router troca componentes sem fazer novo pedido HTML ao servidor.
+- Quando precisas de dados, o frontend faz pedidos HTTP ao backend (por exemplo `GET /api/favorites`).
+- O backend recebe pedido, valida, consulta dados e devolve resposta com status code e JSON.
+- Se o contrato mudar a meio (ex.: shape da resposta), a UI deixa de interpretar corretamente e “parece que está tudo certo” mas falha em runtime.
 
-2. **Autenticação (register/login/logout)**
-    - JWT guardado num **cookie HttpOnly**
-    - Endpoint `GET /api/auth/me` para a SPA “restaurar sessão” após refresh
+3. **Porque estamos a fazer assim neste projeto**
 
-3. **CSRF mínimo (para cookies)**
-    - Cookie `csrfToken` (não HttpOnly) + header `X-CSRF-Token` em requests mutáveis
-    - Serve para perceberes o problema real do CSRF em SPAs com cookies
+- Esta secção existe para fixar que a Ficha 06 é evolução da Ficha 05.
+- Mantemos os contratos estáveis para poderes focar nas novidades (auth, Mongo, CSRF, upload) sem debugging desnecessário.
+- A separação clara frontend/backend evita misturar responsabilidades e facilita testes por camada.
 
-4. **Axios**
-    - Deixas de ter `fetch` espalhado pela app
-    - Cria-se um `apiClient` central com `baseURL` + `withCredentials` + CSRF header automático
+4. **Erros comuns e sintomas**
 
-5. **Paginação + pesquisa (server-side)**
-    - Criar recurso **Equipas (Teams)** por utilizador
-    - Listar equipas com `?page=1&limit=10&q=...`
+- Mudar endpoint sem atualizar service -> botões deixam de funcionar com erro 404/405.
+- Alterar shape da resposta sem querer -> `undefined` no frontend quando tenta ler dados.
+- “Funciona no Postman, não funciona na app” -> chamada da SPA vai para URL diferente da esperada.
+- Recomeçar projeto em vez de evoluir -> perdes compatibilidade e ficas com versões paralelas.
 
-6. **Upload**
-    - Upload de avatar no perfil e servir como ficheiro estático (`/uploads/...`)
+5. **Boas práticas e segurança**
 
-> Se sentires que não há tempo, o “core obrigatório” é:  
-> **Auth + Mongo + Axios + Favoritos persistentes + Equipas paginadas**  
-> Upload e testes podem ficar como extra.
+- Contratos estáveis reduzem risco de regressões silenciosas.
+- Separar camadas ajuda a limitar impacto de erros de segurança.
+- Manter nomenclatura consistente de rotas e pastas reduz enganos humanos.
 
----
+### Porque fazemos isto
 
-## 0.3) Regras desta ficha (para não partir o projeto)
+Na Ficha 05 tinhas favoritos em memória e frontend/backend já separados. Agora vais fechar o ciclo real de uma SPA fullstack:
 
-1. **Cria um commit de “base” antes de mexer**
+- sessão com cookies HttpOnly
+- proteção CSRF para mutações
+- dados por utilizador na base de dados
+- frontend organizado por responsabilidade (`pages` vs `components`)
 
-```bash
-git status
-git add -A
-git commit -m "Ficha 5: estado final (base para Ficha 6)"
-```
+### Contratos obrigatórios desta ficha
 
-2. **Trabalha numa branch** (ou com uma cópia do projeto)
+#### Favorites (compatível com Ficha 05)
 
-```bash
-git checkout -b ficha-06
-```
+| Método | Endpoint             | Body               | Resposta           |
+| ------ | -------------------- | ------------------ | ------------------ |
+| GET    | `/api/favorites`     | -                  | `number[]`         |
+| POST   | `/api/favorites`     | `{ "id": number }` | `{ "id": number }` |
+| DELETE | `/api/favorites/:id` | -                  | `{ "id": number }` |
 
-3. **Faz checkpoints**  
-   Depois de cada “Paragem” (A, B, C…), faz commit. Se algo correr mal, voltas atrás.
+> Não uses variantes alternativas. Este contrato é único em toda a Ficha 06.
 
----
+### Checkpoint 0
 
-## 0.4) Paragens (checkpoints)
-
-- **Paragem A** — Confirmar que Ficha 5 corre (frontend+backend)
-- **Paragem B** — Migrar páginas para `src/pages/` (checkpoint de compatibilidade)
-- **Paragem C** — Backend liga ao Atlas + `GET /api/health` OK
-- **Paragem D** — Register/Login/Me com cookies OK
-- **Paragem E** — Favoritos por utilizador em MongoDB OK
-- **Paragem F** — Axios no frontend (com cookies + CSRF) OK
-- **Paragem G** — Equipas paginadas + pesquisa OK
-- **Paragem H** — Upload de avatar OK (extra)
-- **Paragem I** — Tooling/testes (extra)
+- O projeto da Ficha 05 arranca em duas janelas:
+    - `backend/` com `npm run dev`
+    - `frontend/` com `npm run dev`
+- A rota `GET http://localhost:3000/api/favorites` ainda responde (estado base da Ficha 05).
 
 ---
 
-# 1) Conceitos essenciais (definições antes de usar)
+## 1) Pré-requisitos e estrutura final (backend + frontend)
 
-> Objetivo desta secção: quando mais tarde aparecer “JWT”, “CSRF”, “paginação”, etc., tu já sabes exatamente o que é e **para que serve**.
+Antes de mudar código, fixamos a estrutura final alvo para evitar imports partidos e passos fora de ordem.
 
-## 1.1) Variáveis de ambiente e ficheiros `.env`
+### Teoria
 
-**Variáveis de ambiente** são valores “de configuração” que mudam de computador para computador (ou de dev para produção), por exemplo:
+1. **Conceitos-chave**
 
-- porta do servidor (`PORT`)
-- URL do frontend (`CLIENT_ORIGIN`)
-- connection string do MongoDB (`MONGODB_URI`)
-- segredos (`JWT_SECRET`)
+- **Estrutura de projeto**: organização física dos ficheiros para refletir responsabilidades.
+- **`pages` vs `components`**: `pages` são ecrãs ligados ao router; `components` são peças reutilizáveis.
+- **`services` layer**: funções de acesso a API, para não espalhar requests pelos componentes.
+- **`.env`, `.env.example`, `.gitignore`**: configuração local, exemplo versionado e proteção de segredos.
 
-O ficheiro `.env` é só uma forma prática de definir estas variáveis em desenvolvimento.
+2. **Como funciona “por baixo”**
 
-**Regra de ouro:** `.env` **não vai para o Git** (tem segredos).  
-O que vai para o Git é um `.env.example` com valores de exemplo.
+- O bundler (Vite) resolve imports com base em paths e alias (`@`).
+- Se moveres ficheiros sem atualizar imports, o build falha com “module not found”.
+- `.env` é lido em runtime/build conforme a ferramenta; `.env.example` serve de checklist de variáveis.
+- `gitignore` impede segredos e artefactos locais de entrarem no repositório.
 
----
+3. **Porque estamos a fazer assim neste projeto**
 
-## 1.2) MongoDB Atlas e “connection string”
+- O projeto vai crescer com auth, equipas e perfil; sem estrutura clara, a manutenção fica caótica.
+- A separação `backend/` e `frontend/` torna comando, dependência e debug muito mais previsíveis.
+- O refactor `pages/components` prepara terreno para rotas protegidas e layout composto.
 
-**MongoDB Atlas** é a versão “cloud” do MongoDB (base de dados alojada online).
+4. **Erros comuns e sintomas**
 
-A **connection string** é o “endereço + credenciais” para o backend se ligar à base de dados:
+- Import quebrado após `mv` -> erro no Vite ao arrancar.
+- `@` não configurado -> imports absolutos deixam de resolver.
+- `.env` com segredo no Git -> risco de exposição acidental.
+- ficheiro em `components/` tratado como rota -> acoplamento desnecessário e confusão.
 
-- cluster/host
-- username/password
-- base de dados
-- opções (retryWrites, etc.)
+5. **Boas práticas e segurança**
 
-No nosso projeto, esta string vive no `.env` como `MONGODB_URI`.
+- Usa naming previsível (`*.routes.js`, `*Api.js`, `*Page.jsx`).
+- Mantém `pages` focadas em composição de ecrã e fluxo; lógica de API nos `services`.
+- Nunca versionar credenciais reais; usar sempre `.env.example` como contrato de configuração.
 
----
-
-## 1.3) Mongoose (ODM)
-
-O **Mongoose** é uma biblioteca que ajuda o Node.js a trabalhar com MongoDB.
-
-Ele dá-te:
-
-- **Schemas**: descrevem como é um documento (campos, tipos, validações)
-- **Models**: permitem criar, ler, atualizar e apagar (CRUD) com métodos simples
-- validação e transformação (`toJSON`, `timestamps`, etc.)
-
----
-
-## 1.4) Hash de passwords (bcrypt)
-
-Nunca guardamos passwords em texto simples.
-
-Em vez disso:
-
-1. fazemos **hash** da password (com `bcrypt`)
-2. guardamos o hash na base de dados
-3. no login, comparamos “password do utilizador” vs “hash guardado”
-
-Isto protege os utilizadores caso a base de dados seja roubada.
-
----
-
-## 1.5) JWT (JSON Web Token)
-
-Um **JWT** é um “token assinado” que representa uma sessão/autenticação.
-
-- “Assinado” significa que o servidor consegue verificar se foi ele que o criou.
-- Normalmente guarda um identificador (`userId`) e uma data de expiração.
-
-Neste projeto:
-
-- o backend cria o JWT no login/registo
-- o frontend **não guarda** o token manualmente
-- o token vai num cookie
-
----
-
-## 1.6) Cookies HttpOnly
-
-Um **cookie HttpOnly**:
-
-- é guardado pelo browser
-- é enviado automaticamente em pedidos para o backend
-- **não pode ser lido por JavaScript** (logo é mais difícil roubar com XSS)
-
-Por isso é mais seguro do que guardar tokens em `localStorage`.
-
----
-
-## 1.7) CORS (Cross-Origin Resource Sharing)
-
-O frontend (`http://localhost:5173`) e o backend (`http://localhost:3000`) são **origens diferentes**.
-
-Sem CORS, o browser bloqueia pedidos por segurança.
-
-No backend, configuramos CORS para:
-
-- aceitar pedidos do frontend (`origin`)
-- permitir cookies (`credentials: true`)
-
----
-
-## 1.8) CSRF (Cross-Site Request Forgery)
-
-Com cookies, o browser envia-os automaticamente.
-
-**CSRF** é quando um site malicioso tenta “forçar” o teu browser a fazer um pedido ao nosso backend, aproveitando o facto de já estares autenticado.
-
-Solução mínima (didática) nesta ficha:
-
-- o backend cria um `csrfToken` num cookie **não HttpOnly**
-- o frontend lê esse cookie e manda o valor num header `X-CSRF-Token`
-- o backend só aceita POST/PUT/PATCH/DELETE se cookie e header coincidirem
-
-Nota: isto é um “CSRF mínimo” para perceber o conceito. Em produção pode haver estratégias mais completas.
-
----
-
-## 1.9) Axios e Interceptors
-
-**Axios** é uma alternativa ao `fetch` para fazer pedidos HTTP.
-
-Vantagens:
-
-- `baseURL` central
-- `withCredentials` para cookies
-- interceptors (código que corre automaticamente antes de cada request)
-
-Nesta ficha, usamos interceptor para:
-
-- detetar requests mutáveis (POST/PUT/PATCH/DELETE)
-- adicionar automaticamente o header CSRF
-
----
-
-## 1.10) Paginação server-side
-
-Paginação server-side significa que **o backend devolve só uma parte** dos dados de cada vez.
-
-Parâmetros típicos:
-
-- `page` (página atual)
-- `limit` (quantos itens por página)
-- `q` (pesquisa)
-
-Resposta típica:
-
-- `items`: itens desta página
-- `page`, `limit`
-- `total`: total de itens na BD
-
-Isto é essencial quando tens muitos dados.
-
----
-
-## 1.11) Upload (multipart/form-data) e ficheiros estáticos
-
-Quando envias ficheiros (imagens), não usas JSON: usas **multipart/form-data**.
-
-No backend usamos `multer` para:
-
-- receber o ficheiro
-- guardar em disco (`uploads/`)
-- devolver um URL para o frontend (`/uploads/nome-do-ficheiro.png`)
-
-Depois o backend serve essa pasta como “ficheiros estáticos”.
-
----
-
-# 2) Estrutura final esperada (ver antes de implementar)
-
-> Isto é para tu teres uma “bússola”: sabes para onde estás a ir e evitas criar ficheiros repetidos ou espalhados.
-
-## 2.1) Backend (estrutura final)
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - separação saudável
 
 ```txt
+pages/LoginPage.jsx -> usa authApi.login()
+components/LoginForm.jsx -> só UI e eventos
+services/authApi.js -> chamadas HTTP
+```
+
+> Exemplo isolado - anti-padrão
+
+```txt
+PokemonCard.jsx faz fetch direto ao backend e também decide rotas
+(isto mistura UI, rede e navegação no mesmo ponto)
+```
+
+### Porque fazemos isto
+
+Se o aluno sabe o “mapa final” desde o início, não se perde a meio da migração.
+
+### Estrutura final esperada
+
+```text
 backend/
-  .env                  (local, não vai para Git)
-  .env.example          (exemplo, vai para Git)
+  .env
+  .env.example
+  package.json
+  uploads/
+    .gitkeep
   src/
+    app.js
+    server.js
     db/
       connect.js
-    models/
-      User.js
-      Team.js
     middlewares/
       requireAuth.js
       requireCsrf.js
+    models/
+      User.js
+      Team.js
     routes/
       auth.routes.js
       favorites.routes.js
@@ -302,424 +190,295 @@ backend/
     utils/
       cookies.js
       csrf.js
-    app.js
-    server.js
-  uploads/              (fica no disco; em dev vai no gitignore)
-  package.json
-```
 
-## 2.2) Frontend (estrutura final)
-
-```txt
 frontend/
   .env
   .env.example
+  package.json
   src/
-    components/
-      ProtectedRoute.jsx
+    App.jsx
+    main.jsx
     context/
       PokedexContext.jsx
     pages/
-      LoginPage.jsx
-      RegisterPage.jsx
-      ProfilePage.jsx
-      TeamsPage.jsx
-      FavoritesPage.jsx
+      PokemonListPage.jsx      (Home)
+      PokemonDetailsPage.jsx   (Details)
+      FavoritesPage.jsx        (Favoritos)
+      TeamsPage.jsx            (Equipas)
+      ProfilePage.jsx          (Perfil)
+      LoginPage.jsx            (Login)
+      RegisterPage.jsx         (Registo)
+      NotFound.jsx             (NotFound)
+    components/
+      Layout.jsx
+      ProtectedRoute.jsx
+      PokemonCard.jsx
+      SearchBar.jsx
+      TypeFilter.jsx
+      LoadingSpinner.jsx
+      ErrorMessage.jsx
+      typeData.js
     services/
       apiClient.js
       authApi.js
       favoritesApi.js
       teamsApi.js
       usersApi.js
-    App.jsx
-    main.jsx
-  package.json
+      pokeApi.js
 ```
 
-## 2.3) Estrutura alvo (depois do patch da Ficha 6)
+### Checkpoint 1
 
-Isto é **onde cada coisa vai ficar** (com foco nos ficheiros novos):
-
-```txt
-pokedex-v3/
-  backend/
-    .env                (novo, NÃO vai para git)
-    .env.example        (novo, vai para git)
-    uploads/            (novo, opcional - upload de avatar)
-    src/
-      db/
-        connect.js      (novo)
-      models/
-        User.js         (novo)
-        Team.js         (novo)
-      middlewares/
-        requireAuth.js  (novo)
-        requireCsrf.js  (novo)
-      utils/
-        cookies.js      (novo)
-        csrf.js         (novo)
-      routes/
-        auth.routes.js      (novo)
-        favorites.routes.js (ALTERAR - passa a Mongo+Auth, mas contrato igual à Ficha 5)
-        teams.routes.js     (novo)
-        users.routes.js     (novo, opcional - upload)
-      app.js            (ALTERAR)
-      server.js         (ALTERAR)
-  frontend/
-    .env                (novo, NÃO vai para git)
-    src/
-      services/
-        apiClient.js     (novo)
-        favoritesApi.js  (ALTERAR - passa a axios, mesma assinatura)
-        authApi.js       (novo)
-        teamsApi.js      (novo)
-        usersApi.js      (novo, opcional)
-      context/
-        PokedexContext.jsx (ALTERAR - boot auth + favoritos por user)
-      components/
-        Layout.jsx
-        ProtectedRoute.jsx (novo)
-        ... (componentes pequenos)
-      pages/
-        PokemonListPage.jsx     (já migrado na Paragem B)
-        PokemonDetailsPage.jsx  (já migrado)
-        FavoritesPage.jsx       (já migrado)
-        NotFound.jsx            (já migrado)
-        LoginPage.jsx           (novo)
-        RegisterPage.jsx        (novo)
-        ProfilePage.jsx         (novo)
-        TeamsPage.jsx           (novo)
-      App.jsx              (ALTERAR - novas rotas + protected routes)
-```
+- Tens as pastas `backend/` e `frontend/` na raiz do projeto.
+- O alias `@` continua ativo no frontend (confirmar em `frontend/vite.config.js`).
 
 ---
 
-# 3) Paragem A — confirma que a Ficha 5 está mesmo estável
+## 2) Backend: setup, env e ligação MongoDB Atlas
 
-## 3.1) Backend
+### O que é
 
-```bash
-cd backend
-npm install
-node src/server.js
-```
+Vamos preparar o backend para usar MongoDB Atlas e configuração por variáveis de ambiente.
 
-Confirma no browser:
+### Teoria
 
-- `http://localhost:3000/api/favorites` devolve JSON (do sistema “em memória”)
+1. **Conceitos-chave**
 
-## 3.2) Frontend
+- **Bootstrap do servidor**: sequência de arranque antes de aceitar pedidos.
+- **Fail fast**: se configuração crítica falhar, o processo termina cedo e com erro claro.
+- **MongoDB Atlas**: base de dados gerida na cloud.
+- **Mongoose**: camada ODM para mapear documentos Mongo em objetos JavaScript.
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+2. **Como funciona “por baixo”**
 
-Confirma:
+- `server.js` carrega variáveis de ambiente, liga à base de dados e só depois abre a porta.
+- Se `MONGODB_URI` estiver em falta/inválida, `mongoose.connect` rejeita e o processo deve parar.
+- Atlas exige credenciais corretas e origem/IP autorizado; falhas aqui parecem “backend caiu sem motivo”.
+- No MongoDB, guardas documentos em coleções; não há tabelas/joins clássicos como num SQL tradicional.
 
-- consegues navegar
-- consegues marcar favoritos
-- refresh mantém favoritos **enquanto o backend estiver ligado**
+3. **Porque estamos a fazer assim neste projeto**
 
-Se isto falhar: não avances. Corrige já aqui.
+- Precisas de persistência real: sem Mongo, favoritos/equipas desaparecem ao reiniciar.
+- Configuração por `.env` evita hardcode de segredos no código.
+- Arranque controlado simplifica diagnóstico: se o servidor sobe, tens uma base mínima de confiança.
 
-## 3.3) Paragem B — migrar páginas para `src/pages/` (OBRIGATÓRIA)
+4. **Erros comuns e sintomas**
 
-### 3.3.1) Criar pasta `pages/`
+- Backend arranca e fecha logo -> connection string inválida.
+- `MongoServerError: bad auth` -> utilizador/password Atlas errados.
+- Timeout de ligação -> IP não autorizado ou rede bloqueada.
+- `MONGODB_URI em falta` -> variável mal escrita no `.env`.
 
-Cria:
+5. **Boas práticas e segurança**
 
-```txt
-frontend/src/pages/
-```
+- Tratar falhas de arranque como críticas (não ignorar erro de DB).
+- Nunca expor `MONGODB_URI` com credenciais reais em screenshots ou commits.
+- Usar `NODE_ENV` para separar comportamentos dev/prod quando necessário.
 
-### 3.3.2) Mover (cut/paste) apenas as “pages” (as usadas nas rotas)
-
-Move estes ficheiros **de** `frontend/src/components/` **para** `frontend/src/pages/`:
-
-- `PokemonListPage.jsx`
-- `PokemonDetailsPage.jsx`
-- `FavoritesPage.jsx`
-- `NotFound.jsx`
-
-Ou seja, no fim ficas com:
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - ordem certa
 
 ```txt
-frontend/src/
-  components/
-    Layout.jsx
-    ... (componentes “pequenos”)
-  pages/
-    PokemonListPage.jsx
-    PokemonDetailsPage.jsx
-    FavoritesPage.jsx
-    NotFound.jsx
+1) Carregar .env
+2) Ligar ao Mongo
+3) app.listen(...)
 ```
 
-### 3.3.3) Atualizar imports no `frontend/src/App.jsx`
+> Exemplo isolado - ordem errada
 
-No `App.jsx`, atualiza os imports destas 4 páginas para apontarem para `pages/`:
-
-- Antes (exemplo típico):
-    - `import PokemonListPage from "@/components/PokemonListPage.jsx";`
-- Depois:
-    - `import PokemonListPage from "@/pages/PokemonListPage.jsx";`
-
-**Dica rápida:** faz “Find All References” (VS Code) e substitui onde for preciso.
-
-### 3.3.4) Garantir que os imports dentro das páginas não quebram
-
-Quando mudas uma página de pasta, **imports relativos** podem partir.
-
-- Se tens imports do tipo `./PokemonCard.jsx` dentro de uma page, isso pode falhar depois de mover.
-- O ideal é usares o alias `@/` (se já o tens no projeto).
-
-Exemplos:
-
-- Antes (relativo): `import PokemonCard from "./PokemonCard.jsx";`
-- Depois (alias): `import PokemonCard from "@/components/PokemonCard.jsx";`
-
-### 3.3.5) Checkpoint (commit)
-
-```bash
-git add -A
-git commit -m "Paragem B: migrar pages de components para pages"
+```txt
+1) app.listen(...)
+2) Só depois tentar Mongo
+Resultado: app parece “up”, mas endpoints que dependem de DB falham.
 ```
 
----
+### Porque fazemos isto
 
-# 4) Configuração (.env) — Sim, faz sentido e é o correto
+Sem base de dados e sem `.env`, as próximas secções (auth, equipas, favoritos por utilizador) não conseguem funcionar de forma estável.
 
-## 4.1) Backend — criar `.env` e `.env.example`
+### 2.1) Instalar dependências
 
-Cria `backend/.env` (não vai para o Git):
+No `backend/`:
 
 ```bash
+npm install cors mongoose dotenv bcrypt jsonwebtoken cookie-parser multer
+npm install -D nodemon
+```
+
+### 2.2) Criar `.env` e `.env.example`
+
+`backend/.env`:
+
+```env
 PORT=3000
+NODE_ENV=development
 CLIENT_ORIGIN=http://localhost:5173
-
 MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?retryWrites=true&w=majority
-
-JWT_SECRET=uma_chave_grande_e_dificil_de_adivinhar
-JWT_EXPIRES_IN=7d
-
-COOKIE_SECURE=false
+JWT_SECRET=troca_isto_por_um_seguro
 ```
 
-Cria `backend/.env.example` (vai para o Git, sem segredos reais):
+`backend/.env.example`:
 
-```bash
+```env
 PORT=3000
+NODE_ENV=development
 CLIENT_ORIGIN=http://localhost:5173
-
 MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?retryWrites=true&w=majority
-
-JWT_SECRET=CHANGE_ME
-JWT_EXPIRES_IN=7d
-
-COOKIE_SECURE=false
+JWT_SECRET=define_um_valor_seguro
 ```
 
-### Atualiza `.gitignore` do backend
-
-Confirma que tens algo assim em `backend/.gitignore`:
+`backend/.gitignore` (garante estas entradas):
 
 ```gitignore
+node_modules
 .env
-uploads/
+uploads/*
+!uploads/.gitkeep
 ```
 
-> Nota: em produção, `COOKIE_SECURE=true` e tens de usar HTTPS, senão cookies `secure` não funcionam.
+### 2.3) Ligar ao MongoDB
 
----
-
-## 4.2) Frontend — `.env` e `.env.example`
-
-Cria `frontend/.env`:
-
-```bash
-VITE_API_URL=http://localhost:3000
-```
-
-Cria `frontend/.env.example`:
-
-```bash
-VITE_API_URL=http://localhost:3000
-```
-
----
-
-## 4.3) Patch de Compatibilidade
-
-### 4.3.1) Migração controlada + MongoDB Atlas + Auth + Axios (sem “recomeçar” o projeto)
-
-Nesta ficha, vamos fazer uma **migração controlada** do que já tens (Ficha 5) para o que vais precisar (Ficha 6).
-Profissionalmente, separamos os componentes em React consoante a sua função (páginas, componentes pequenos, etc.).
-
-Na ficha anterior, todas as páginas estavam em `src/components/`, o que não é ideal.
-Nesta ficha, vamos mover as páginas para `src/pages/` (Paragem B), para depois poderes criar novas páginas (Login, Register, Profile, Teams) sem confusão.
-
-Para fazer esta migração precisamos de:
-
-1. Criar a pasta `src/pages/`
-2. Mover as páginas existentes para lá
-3. Atualizar os imports no `App.jsx`
-4. Garantir que os imports dentro das páginas não quebram
-5. Fazer commit (checkpoint)
-
-### 4.3.2) Ponto de partida (estrutura da Ficha 5)
-
-A Ficha 5 termina com esta estrutura base:
-
-```txt
-pokedex-v3/
-  backend/
-    src/
-      server.js
-      app.js
-      routes/
-        favorites.routes.js
-      data/
-        favorites.memory.js
-    package.json
-  frontend/
-    src/
-      context/
-        PokedexContext.jsx
-      services/
-        favoritesApi.js
-      components/
-        Layout.jsx
-        PokemonListPage.jsx
-        PokemonDetailsPage.jsx
-        FavoritesPage.jsx
-        NotFound.jsx
-        ...
-      App.jsx
-      main.jsx
-    package.json
-    vite.config.js
-```
-
----
-
-# 5) BACKEND — Mongo + Auth + CSRF + Favoritos + Teams + Upload
-
-> Regra de ouro: primeiro garantimos o backend sólido, depois ligamos o frontend com Axios.
-
----
-
-## 5.0) Patch de Compatibilidade (backend: mapa rápido)
-
-### 5.0.1) Criar `backend/.env` e `backend/.env.example`
-
-**Caminhos:**
-
-- `backend/.env` (local, não versionar)
-- `backend/.env.example` (exemplo para o repo)
-
-Conteúdo sugerido:
-
-```bash
-PORT=3000
-CLIENT_ORIGIN=http://localhost:5173
-
-MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?retryWrites=true&w=majority
-
-JWT_SECRET=uma_chave_grande_e_dificil_de_adivinhar
-JWT_EXPIRES_IN=7d
-
-COOKIE_SECURE=false
-```
-
-E no `.gitignore` do backend, adiciona:
-
-- `.env`
-- `uploads/`
-
-### 5.0.2) Criar `backend/src/db/connect.js`
-
-**Caminho:** `backend/src/db/connect.js`
+`backend/src/db/connect.js`:
 
 ```js
-/**
- * @file connect.js
- * @description Liga o backend ao MongoDB via Mongoose.
- */
-
 import mongoose from "mongoose";
 
-/**
- * Liga ao MongoDB Atlas.
- *
- * @param {string} mongoUri - Connection string do MongoDB (Atlas).
- * @returns {Promise<void>}
- */
-export async function connectToMongo(mongoUri) {
-    if (!mongoUri) {
-        throw new Error("MONGODB_URI em falta no .env");
+export async function connectToMongo() {
+    const uri = process.env.MONGODB_URI;
+
+    if (!uri) {
+        throw new Error("MONGODB_URI em falta no backend/.env");
     }
 
-    await mongoose.connect(mongoUri);
-    console.log("[mongo] Ligação estabelecida com sucesso");
+    await mongoose.connect(uri);
+    console.log("[mongo] ligado com sucesso");
 }
 ```
 
-### 5.0.3) Alterar `backend/src/server.js`
-
-**Caminho:** `backend/src/server.js`
-
-Objetivo: ler `.env`, ligar ao Mongo e só depois arrancar o servidor.
-
-**Substitui o conteúdo do ficheiro por:**
+`backend/src/server.js`:
 
 ```js
-/**
- * @file server.js
- * @description Entry point do backend.
- * Ordem correta:
- * 1) Ler variáveis ambiente (.env)
- * 2) Ligar ao MongoDB
- * 3) Só depois arrancar o Express
- */
-
 import "dotenv/config";
 import app from "./app.js";
 import { connectToMongo } from "./db/connect.js";
 
-const PORT = Number.parseInt(process.env.PORT ?? "3000", 10);
+const port = Number(process.env.PORT ?? 3000);
 
-async function start() {
-    await connectToMongo(process.env.MONGODB_URI);
+async function bootstrap() {
+    await connectToMongo();
 
-    app.listen(PORT, () => {
-        console.log(`[api] Backend a correr em http://localhost:${PORT}`);
+    app.listen(port, () => {
+        console.log(`[server] http://localhost:${port}`);
     });
 }
 
-start().catch((err) => {
-    console.error("[api] Falha ao arrancar:", err);
+bootstrap().catch((err) => {
+    console.error("[fatal] falha ao arrancar", err);
     process.exit(1);
 });
 ```
 
-### 5.0.4) Criar modelos
+### Checkpoint 2
 
-#### 5.0.4.1) `backend/src/models/User.js`
+- `npm run dev` no backend arranca sem erro de `MONGODB_URI`.
+- Se o Atlas estiver mal configurado, o backend falha no arranque (comportamento correto: fail fast).
 
-**Caminho:** `backend/src/models/User.js`
+### Erros comuns (env + Mongo)
+
+- `MONGO_URI` em vez de `MONGODB_URI`.
+- IP não autorizado no Atlas (Network Access).
+- User/password errados na connection string.
+- Falta de `dotenv/config` no `server.js`.
+
+---
+
+## 3) Backend: auth (register/login/logout), cookies, CSRF e CORS
+
+### O que é
+
+Nesta secção criamos sessão com JWT em cookie HttpOnly e proteção CSRF nas mutações.
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **Autenticação**: provar quem és (login).
+- **Autorização**: decidir o que podes fazer (acesso a recursos).
+- **JWT**: token assinado, não encriptado; contém claims (ex.: `userId`, expiração).
+- **Cookie HttpOnly**: cookie que JavaScript não consegue ler, mas o browser envia automaticamente.
+- **CORS**: política de origens para pedidos entre frontend e backend em hosts/portas diferentes.
+- **CSRF**: ataque que explora o envio automático de cookies em pedidos mutáveis.
+
+2. **Como funciona “por baixo”**
+
+- No login/register, o backend cria JWT e envia em `Set-Cookie`.
+- Em pedidos seguintes, o browser anexa o cookie automaticamente ao backend dessa origem.
+- `requireAuth` lê cookie e faz `jwt.verify`; se falhar, devolve 401.
+- Para CSRF, usa-se **double submit cookie pattern**: backend envia `csrfToken` (não HttpOnly), frontend lê e manda no header `X-CSRF-Token`; backend compara cookie/header.
+- Métodos seguros (`GET/HEAD/OPTIONS`) não alteram estado e passam sem token CSRF.
+- Preflight `OPTIONS` acontece antes de algumas mutações cross-origin e precisa de CORS coerente.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- Cookies HttpOnly reduzem impacto de XSS (token não fica exposto ao JavaScript da página).
+- Como cookies são automáticos, precisas de proteção CSRF explícita nas mutações.
+- `auth/me` permite restaurar sessão após refresh sem guardar token manualmente.
+- Guard global de CSRF após `/api/auth` simplifica proteção de recursos restantes.
+
+4. **Erros comuns e sintomas**
+
+- Login 200 mas sessão não persiste -> faltou `withCredentials` no cliente.
+- Erro CORS no browser sem status útil -> `origin`/`credentials` mal configurados.
+- 403 em POST/DELETE -> header `X-CSRF-Token` ausente ou diferente do cookie.
+- 401 em rota protegida com cookie presente -> JWT expirado/inválido ou `JWT_SECRET` mudou.
+- Logout “não limpa” -> opções de `clearCookie` não compatíveis com cookie original.
+
+5. **Boas práticas e segurança**
+
+- Não usar `origin: *` com credenciais.
+- Distinguir claramente 401 (não autenticado) de 403 (proibido/CSRF inválido).
+- `SameSite` e `Secure` devem ser ajustados ao ambiente (dev/prod).
+- Não guardar password nem token em logs.
+- Tratar `JWT_SECRET` como segredo sensível.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - cartão de acesso
+
+```txt
+Cookie token = cartão de acesso que o browser apresenta sozinho.
+Header CSRF = palavra-passe curta pedida em ações sensíveis.
+```
+
+> Exemplo isolado - leitura de status
+
+```txt
+401 -> sessão em falta/inválida
+403 -> sessão pode existir, mas proteção CSRF falhou
+```
+
+### Porque fazemos isto
+
+Com cookies, o browser envia credenciais automaticamente. Isso pede duas coisas obrigatórias:
+
+1. CORS com `credentials: true`
+2. proteção CSRF para `POST/PUT/PATCH/DELETE`
+
+### 3.1) Modelo User
+
+`backend/src/models/User.js`:
 
 ```js
-/**
- * @file User.js
- * @description Modelo User (com favoritos dentro do user).
- */
-
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
+        username: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 3,
+            maxlength: 30,
+        },
         email: {
             type: String,
             required: true,
@@ -727,1243 +486,206 @@ const userSchema = new mongoose.Schema(
             lowercase: true,
             trim: true,
         },
-        passwordHash: { type: String, required: true },
-        displayName: { type: String, required: true, trim: true },
-        avatarUrl: { type: String, default: "" },
-        favorites: { type: [Number], default: [] },
-    },
-    { timestamps: true },
-);
-
-userSchema.set("toJSON", {
-    transform(_doc, ret) {
-        delete ret.passwordHash;
-        return ret;
-    },
-});
-
-export const User = mongoose.model("User", userSchema);
-```
-
-#### 5.0.4.2) `backend/src/models/Team.js`
-
-**Caminho:** `backend/src/models/Team.js`
-
-```js
-/**
- * @file Team.js
- * @description Modelo Team (equipas do utilizador).
- */
-
-import mongoose from "mongoose";
-
-const teamSchema = new mongoose.Schema(
-    {
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            index: true,
-            ref: "User",
-        },
-        name: { type: String, required: true, trim: true },
-        pokemonIds: {
-            type: [Number],
-            default: [],
-            validate: {
-                validator(value) {
-                    return Array.isArray(value) && value.length <= 6;
-                },
-                message: "Uma equipa pode ter no máximo 6 Pokémon",
-            },
-        },
-    },
-    { timestamps: true },
-);
-
-export const Team = mongoose.model("Team", teamSchema);
-```
-
-### 5.0.5) Criar utils + middlewares
-
-#### 5.0.5.1) `backend/src/utils/cookies.js`
-
-**Caminho:** `backend/src/utils/cookies.js`
-
-```js
-/**
- * @file cookies.js
- * @description Opções de cookies (dev vs prod).
- */
-
-function isSecureCookie() {
-    return process.env.COOKIE_SECURE === "true";
-}
-
-/**
- * Cookie de autenticação: HttpOnly.
- *
- * @returns {import("express").CookieOptions}
- */
-export function authCookieOptions() {
-    return {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isSecureCookie(),
-        path: "/",
-    };
-}
-
-/**
- * Cookie CSRF: não HttpOnly (frontend precisa ler).
- *
- * @returns {import("express").CookieOptions}
- */
-export function csrfCookieOptions() {
-    return {
-        httpOnly: false,
-        sameSite: "lax",
-        secure: isSecureCookie(),
-        path: "/",
-    };
-}
-```
-
-#### 5.0.5.2) `backend/src/utils/csrf.js`
-
-**Caminho:** `backend/src/utils/csrf.js`
-
-```js
-/**
- * @file csrf.js
- * @description Gera tokens CSRF simples.
- */
-
-import crypto from "crypto";
-
-/** @returns {string} */
-export function createCsrfToken() {
-    return crypto.randomBytes(24).toString("hex");
-}
-```
-
-#### 5.0.5.3) `backend/src/middlewares/requireCsrf.js`
-
-**Caminho:** `backend/src/middlewares/requireCsrf.js`
-
-```js
-/**
- * @file requireCsrf.js
- * @description CSRF mínimo para pedidos mutáveis.
- *
- * Regra:
- * - POST/PUT/PATCH/DELETE exigem:
- *   - cookie csrfToken
- *   - header x-csrf-token
- *   - e ambos iguais
- *
- * Importante:
- * - NÃO aplicamos CSRF a /api/auth/login e /api/auth/register,
- *   porque o utilizador ainda não tem csrfToken definido.
- */
-
-const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-
-/**
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
- */
-export function requireCsrf(req, res, next) {
-    if (!MUTATING.has(req.method)) return next();
-
-    const url = req.originalUrl ?? "";
-    const isAuthLoginOrRegister =
-        req.method === "POST" &&
-        (url.startsWith("/api/auth/login") ||
-            url.startsWith("/api/auth/register"));
-
-    if (isAuthLoginOrRegister) return next();
-
-    const csrfCookie = req.cookies?.csrfToken;
-    const csrfHeader = req.headers["x-csrf-token"];
-
-    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
-        return res
-            .status(403)
-            .json({ error: "CSRF token em falta ou inválido" });
-    }
-
-    return next();
-}
-```
-
-#### 5.0.5.4) `backend/src/middlewares/requireAuth.js`
-
-**Caminho:** `backend/src/middlewares/requireAuth.js`
-
-```js
-/**
- * @file requireAuth.js
- * @description Protege endpoints: exige cookie JWT válido.
- */
-
-import jwt from "jsonwebtoken";
-
-/**
- * @param {import("express").Request & { user?: { userId: string } }} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
- */
-export function requireAuth(req, res, next) {
-    const token = req.cookies?.token;
-    if (!token) return res.status(401).json({ error: "Não autenticado" });
-
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = { userId: payload.userId };
-        return next();
-    } catch {
-        return res.status(401).json({ error: "Token inválido ou expirado" });
-    }
-}
-```
-
-### 5.0.6) Criar rotas novas (e dizer onde as ligar)
-
-#### 5.0.6.1) `backend/src/routes/auth.routes.js`
-
-**Caminho:** `backend/src/routes/auth.routes.js`
-
-```js
-/**
- * @file auth.routes.js
- * @description Autenticação:
- * - POST /api/auth/register
- * - POST /api/auth/login
- * - POST /api/auth/logout
- * - GET  /api/auth/me
- *
- * Segurança:
- * - bcrypt para passwordHash
- * - JWT em cookie HttpOnly
- * - rate limiting no login (evita brute force “fácil”)
- */
-
-import express from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import rateLimit from "express-rate-limit";
-import { User } from "../models/User.js";
-import { authCookieOptions, csrfCookieOptions } from "../utils/cookies.js";
-import { createCsrfToken } from "../utils/csrf.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
-
-const router = express.Router();
-
-const loginLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 10,
-});
-
-/**
- * Assina um JWT.
- *
- * @param {string} userId
- * @returns {string}
- */
-function signToken(userId) {
-    if (!process.env.JWT_SECRET) {
-        // Fail fast: sem secret não há JWT seguro.
-        throw new Error("JWT_SECRET em falta no .env");
-    }
-
-    return jwt.sign({ userId }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
-    });
-}
-
-/**
- * Validação mínima de email.
- * (Em produção usarias validação mais completa.)
- *
- * @param {string} email
- * @returns {boolean}
- */
-function isValidEmail(email) {
-    return (
-        typeof email === "string" && email.includes("@") && email.includes(".")
-    );
-}
-
-router.post("/register", async (req, res) => {
-    const { email, password, displayName } = req.body ?? {};
-
-    if (!isValidEmail(email) || !password || !displayName) {
-        return res
-            .status(422)
-            .json({ error: "email, password e displayName são obrigatórios" });
-    }
-
-    if (String(password).length < 8) {
-        return res
-            .status(422)
-            .json({ error: "password deve ter pelo menos 8 chars" });
-    }
-
-    const existing = await User.findOne({ email: String(email).toLowerCase() });
-    if (existing) return res.status(409).json({ error: "Email já registado" });
-
-    const passwordHash = await bcrypt.hash(String(password), 10);
-
-    const user = await User.create({
-        email,
-        passwordHash,
-        displayName,
-    });
-
-    const token = signToken(user.id);
-    const csrfToken = createCsrfToken();
-
-    res.cookie("token", token, authCookieOptions());
-    res.cookie("csrfToken", csrfToken, csrfCookieOptions());
-
-    return res.status(201).json({ user: user.toJSON() });
-});
-
-router.post("/login", loginLimiter, async (req, res) => {
-    const { email, password } = req.body ?? {};
-
-    if (!isValidEmail(email) || !password) {
-        return res
-            .status(422)
-            .json({ error: "email e password são obrigatórios" });
-    }
-
-    const user = await User.findOne({ email: String(email).toLowerCase() });
-    if (!user) return res.status(401).json({ error: "Credenciais inválidas" });
-
-    const ok = await bcrypt.compare(String(password), user.passwordHash);
-    if (!ok) return res.status(401).json({ error: "Credenciais inválidas" });
-
-    const token = signToken(user.id);
-    const csrfToken = createCsrfToken();
-
-    res.cookie("token", token, authCookieOptions());
-    res.cookie("csrfToken", csrfToken, csrfCookieOptions());
-
-    return res.json({ user: user.toJSON() });
-});
-
-/**
- * Logout.
- * Nota pedagógica:
- * - CSRF no logout é opcional (CSRF logout é “nuisance”).
- * - Se quiseres, podes exigir CSRF aqui também.
- */
-router.post("/logout", (_req, res) => {
-    res.clearCookie("token", { path: "/" });
-    res.clearCookie("csrfToken", { path: "/" });
-    return res.status(204).send();
-});
-
-router.get("/me", requireAuth, async (req, res) => {
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    return res.json({ user: user.toJSON() });
-});
-
-export default router;
-```
-
-#### 5.0.6.2) `backend/src/routes/teams.routes.js`
-
-**Caminho:** `backend/src/routes/teams.routes.js`
-
-```js
-/**
- * @file teams.routes.js
- * @description Equipas do utilizador autenticado.
- *
- * Treina:
- * - GET com paginação e pesquisa
- * - POST para criar
- * - DELETE com ownership
- */
-
-import express from "express";
-import mongoose from "mongoose";
-import { Team } from "../models/Team.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
-
-const router = express.Router();
-
-/**
- * Lê e valida query params de listagem.
- *
- * @param {import("express").Request} req
- * @returns {{ page: number, limit: number, q: string }}
- */
-function readListQuery(req) {
-    const page = Math.max(1, Number.parseInt(req.query.page ?? "1", 10) || 1);
-    const limit = Math.max(
-        1,
-        Number.parseInt(req.query.limit ?? "10", 10) || 10,
-    );
-    const q = String(req.query.q ?? "").trim();
-    return { page, limit, q };
-}
-
-/**
- * Normaliza lista de IDs de Pokémon.
- *
- * @param {unknown} value
- * @returns {number[]}
- */
-function normalizePokemonIds(value) {
-    if (!Array.isArray(value)) return [];
-
-    return value
-        .map((n) => Number.parseInt(n, 10))
-        .filter((n) => Number.isFinite(n) && n > 0);
-}
-
-router.get("/", requireAuth, async (req, res) => {
-    const { page, limit, q } = readListQuery(req);
-
-    const filter = {
-        userId: req.user.userId,
-        ...(q ? { name: { $regex: q, $options: "i" } } : {}),
-    };
-
-    const total = await Team.countDocuments(filter);
-
-    const items = await Team.find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
-
-    return res.json({ items, page, limit, total });
-});
-
-router.post("/", requireAuth, async (req, res) => {
-    const { name, pokemonIds } = req.body ?? {};
-
-    if (!name || String(name).trim().length < 2) {
-        return res
-            .status(422)
-            .json({ error: "name é obrigatório (mínimo 2 chars)" });
-    }
-
-    const safeIds = normalizePokemonIds(pokemonIds);
-
-    if (safeIds.length > 6) {
-        return res.status(422).json({ error: "Máximo 6 Pokémon por equipa" });
-    }
-
-    const team = await Team.create({
-        userId: req.user.userId,
-        name: String(name).trim(),
-        pokemonIds: safeIds,
-    });
-
-    return res.status(201).json({ team });
-});
-
-router.delete("/:id", requireAuth, async (req, res) => {
-    const id = req.params.id;
-
-    // Evita CastError do Mongoose para IDs inválidos
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(422).json({ error: "id inválido" });
-    }
-
-    const deleted = await Team.findOneAndDelete({
-        _id: id,
-        userId: req.user.userId,
-    });
-
-    if (!deleted)
-        return res.status(404).json({ error: "Equipa não encontrada" });
-
-    return res.status(204).send();
-});
-
-export default router;
-```
-
-#### 5.0.6.3) `backend/src/routes/users.routes.js` (opcional upload)
-
-**Caminho:** `backend/src/routes/users.routes.js`
-
-```js
-/**
- * @file users.routes.js
- * @description Perfil do utilizador (me) + upload de avatar.
- *
- * Upload:
- * - multipart/form-data
- * - campo "avatar"
- * - guardamos no disco (uploads/)
- * - guardamos o URL no User.avatarUrl
- */
-
-import express from "express";
-import path from "path";
-import multer from "multer";
-import { fileURLToPath } from "url";
-import { requireAuth } from "../middlewares/requireAuth.js";
-import { User } from "../models/User.js";
-
-const router = express.Router();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// uploads/ está na raiz do backend
-const uploadDir = path.join(__dirname, "..", "..", "uploads");
-
-/**
- * Storage do multer:
- * - destination: pasta uploads/
- * - filename: timestamp + nome "safe"
- */
-const storage = multer.diskStorage({
-    destination(_req, _file, cb) {
-        cb(null, uploadDir);
-    },
-    filename(_req, file, cb) {
-        // Segurança básica: remove espaços e reduz risco de path injection
-        const safeName = file.originalname
-            .replaceAll(" ", "_")
-            .replaceAll("..", ".");
-        cb(null, `${Date.now()}__${safeName}`);
-    },
-});
-
-/**
- * Aceitar apenas imagens.
- *
- * @param {import("express").Request} _req
- * @param {Express.Multer.File} file
- * @param {(error: Error|null, acceptFile: boolean) => void} cb
- */
-function imageFilter(_req, file, cb) {
-    const ok = file.mimetype.startsWith("image/");
-    cb(ok ? null : new Error("Só imagens"), ok);
-}
-
-const upload = multer({
-    storage,
-    fileFilter: imageFilter,
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-});
-
-router.get("/me", requireAuth, async (req, res) => {
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    return res.json({ user: user.toJSON() });
-});
-
-router.post(
-    "/me/avatar",
-    requireAuth,
-    upload.single("avatar"),
-    async (req, res) => {
-        if (!req.file)
-            return res.status(422).json({ error: "Ficheiro em falta" });
-
-        const user = await User.findById(req.user.userId);
-        if (!user)
-            return res.status(404).json({ error: "Utilizador não encontrado" });
-
-        user.avatarUrl = `/uploads/${req.file.filename}`;
-        await user.save();
-
-        return res.json({ user: user.toJSON() });
-    },
-);
-
-export default router;
-```
-
-### 5.0.7) ALTERAR `backend/src/routes/favorites.routes.js` (patch compatível)
-
-**Caminho:** `backend/src/routes/favorites.routes.js`
-
-Objetivo:
-
-- Passar para Mongo + por user autenticado
-- **Sem mudar o contrato da Ficha 5**:
-    - `GET` devolve array
-    - `POST` devolve `{ id }`
-    - `DELETE` devolve `{ id }`
-
-Substitui o conteúdo por este patch:
-
-```js
-/**
- * @file favorites.routes.js
- * @description Favoritos por utilizador autenticado (Mongo),
- * mantendo o contrato da Ficha 5:
- * - GET /api/favorites -> number[]
- * - POST /api/favorites { id } -> { id }
- * - DELETE /api/favorites/:id -> { id }
- */
-
-import express from "express";
-import { requireAuth } from "../middlewares/requireAuth.js";
-import { User } from "../models/User.js";
-
-const router = express.Router();
-
-function parseId(value) {
-    const n = Number.parseInt(String(value), 10);
-    return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-router.get("/", requireAuth, async (req, res) => {
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-    return res.status(200).json(user.favorites);
-});
-
-router.post("/", requireAuth, async (req, res) => {
-    const numericId = parseId(req.body?.id);
-    if (!numericId)
-        return res.status(422).json({ error: "Id obrigatorio e numerico" });
-
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    if (user.favorites.includes(numericId)) {
-        return res.status(409).json({ error: "Pokemon ja e favorito" });
-    }
-
-    user.favorites.push(numericId);
-    await user.save();
-
-    return res.status(201).json({ id: numericId });
-});
-
-router.delete("/:id", requireAuth, async (req, res) => {
-    const numericId = parseId(req.params.id);
-    if (!numericId) return res.status(400).json({ error: "Id invalido" });
-
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    if (!user.favorites.includes(numericId)) {
-        return res.status(404).json({ error: "Favorito nao encontrado" });
-    }
-
-    user.favorites = user.favorites.filter((x) => x !== numericId);
-    await user.save();
-
-    return res.status(200).json({ id: numericId });
-});
-
-export default router;
-```
-
-### 5.0.8) ALTERAR `backend/src/app.js` (onde ligar tudo)
-
-**Caminho:** `backend/src/app.js`
-
-O teu `app.js` da Ficha 5 já tem:
-
-- `cors(...)`
-- `express.json()`
-- `app.use("/api/favorites", ...)`
-
-Na Ficha 6, altera para:
-
-- `credentials: true` no CORS
-- `cookie-parser`
-- `requireCsrf` antes das rotas mutáveis
-- novas rotas `/api/auth`, `/api/teams`, `/api/users`
-- (opcional) `app.use("/uploads", express.static("uploads"))`
-
-### Conteúdo completo recomendado (substitui o ficheiro todo)
-
-```js
-/**
- * @file app.js
- * @description Config do Express: middlewares + rotas.
- *
- * Ordem importante:
- * - cors com credentials
- * - json + cookieParser
- * - static (uploads)
- * - CSRF middleware
- * - routes
- */
-
-import express from "express";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-
-import { requireCsrf } from "./middlewares/requireCsrf.js";
-
-import authRoutes from "./routes/auth.routes.js";
-import favoritesRoutes from "./routes/favorites.routes.js";
-import teamsRoutes from "./routes/teams.routes.js";
-import usersRoutes from "./routes/users.routes.js";
-
-const app = express();
-
-app.use(
-    cors({
-        origin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
-        credentials: true,
-        allowedHeaders: ["Content-Type", "X-CSRF-Token"],
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    }),
-);
-
-app.use(express.json());
-app.use(cookieParser());
-
-// Uploads públicos (dev):
-app.use("/uploads", express.static("uploads"));
-
-// CSRF mínimo (antes de routes que mudam dados):
-app.use(requireCsrf);
-
-app.use("/api/auth", authRoutes);
-app.use("/api/favorites", favoritesRoutes);
-app.use("/api/teams", teamsRoutes);
-app.use("/api/users", usersRoutes);
-
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
-
-export default app;
-```
-
----
-
-## 5.1) Dependências novas (backend)
-
-Em `backend/`:
-
-```bash
-npm install mongoose dotenv cookie-parser jsonwebtoken bcrypt
-npm install multer
-npm install express-rate-limit
-npm install cors
-```
-
-Opcional (recomendado, para dev):
-
-```bash
-npm install -D nodemon
-```
-
-Se usares `nodemon`, sugere-se este script no `backend/package.json`:
-
-```json
-{
-    "scripts": {
-        "dev": "nodemon src/server.js",
-        "start": "node src/server.js"
-    }
-}
-```
-
----
-
-## 5.2) MongoDB Atlas — criar cluster (resumo prático)
-
-No MongoDB Atlas:
-
-1. Criar cluster (free tier serve)
-2. Criar Database User (username/password)
-3. Network Access:
-    - Em dev/sala: pode ser “Allow from anywhere (0.0.0.0/0)”
-    - Em produção isto é má prática (tens de restringir IPs)
-
----
-
-## 5.3) Ligar ao MongoDB antes de aceitar pedidos
-
-### 5.3.1) Criar `src/db/connect.js`
-
-Cria `backend/src/db/connect.js`:
-
-```js
-/**
- * @file connect.js
- * @description Liga o backend ao MongoDB via Mongoose.
- *
- * Ideia-chave:
- * - O servidor NÃO deve começar a aceitar pedidos sem a BD estar pronta.
- * - Se a BD falhar, é melhor falhar cedo (fail fast).
- */
-
-import mongoose from "mongoose";
-
-/**
- * Liga ao MongoDB Atlas.
- *
- * @param {string} mongoUri - Connection string do MongoDB (Atlas).
- * @returns {Promise<void>}
- * @throws {Error} Se a connection string estiver em falta ou se a ligação falhar.
- */
-export async function connectToMongo(mongoUri) {
-    if (!mongoUri) {
-        throw new Error("MONGODB_URI em falta no .env");
-    }
-
-    await mongoose.connect(mongoUri);
-
-    console.log("[mongo] Ligação estabelecida com sucesso");
-}
-```
-
----
-
-## 5.4) Modelos (Mongoose): `User` e `Team`
-
-### 5.4.1) Criar `src/models/User.js`
-
-Cria `backend/src/models/User.js`:
-
-```js
-/**
- * @file User.js
- * @description Modelo User.
- *
- * Segurança:
- * - Guardamos password como hash (bcrypt) -> passwordHash
- * - Nunca enviamos passwordHash para o frontend (toJSON transform)
- */
-
-import mongoose from "mongoose";
-
-const userSchema = new mongoose.Schema(
-    {
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-        },
-
         passwordHash: {
             type: String,
             required: true,
         },
-
-        displayName: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-
-        avatarUrl: {
-            type: String,
-            default: "",
-        },
-
-        /**
-         * Favoritos simples: IDs numéricos dos Pokémon.
-         * Opção A (desta ficha): guardar dentro do User.
-         */
         favorites: {
             type: [Number],
             default: [],
         },
-    },
-    { timestamps: true },
-);
-
-userSchema.set("toJSON", {
-    transform(_doc, ret) {
-        delete ret.passwordHash;
-        return ret;
-    },
-});
-
-export const User = mongoose.model("User", userSchema);
-```
-
-### 5.4.2) Criar `src/models/Team.js`
-
-Cria `backend/src/models/Team.js`:
-
-```js
-/**
- * @file Team.js
- * @description Modelo Team (equipa de Pokémon).
- *
- * Regras:
- * - pertence a um utilizador (userId)
- * - tem um name
- * - tem no máximo 6 Pokémon (pokemonIds)
- */
-
-import mongoose from "mongoose";
-
-const teamSchema = new mongoose.Schema(
-    {
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            required: true,
-            index: true,
-            ref: "User",
-        },
-
-        name: {
+        avatarUrl: {
             type: String,
-            required: true,
-            trim: true,
+            default: "",
         },
-
-        pokemonIds: {
-            type: [Number],
-            default: [],
-            validate: {
-                validator(value) {
-                    return Array.isArray(value) && value.length <= 6;
-                },
-                message: "Uma equipa pode ter no máximo 6 Pokémon",
+    },
+    {
+        timestamps: true,
+        toJSON: {
+            transform: (_doc, ret) => {
+                delete ret.passwordHash;
+                return ret;
             },
         },
     },
-    { timestamps: true },
 );
 
-export const Team = mongoose.model("Team", teamSchema);
+const User = mongoose.model("User", userSchema);
+
+export default User;
 ```
 
----
+### 3.2) Utils de cookies e CSRF
 
-## 5.5) Utils: cookies e CSRF
-
-### 5.5.1) Criar `src/utils/cookies.js`
-
-Cria `backend/src/utils/cookies.js`:
+`backend/src/utils/cookies.js`:
 
 ```js
-/**
- * @file cookies.js
- * @description Opções de cookies (dev vs prod).
- *
- * Nota:
- * - Em produção, normalmente: COOKIE_SECURE=true e HTTPS.
- * - sameSite "lax" é um equilíbrio bom para SPAs (protege alguma coisa sem partir UX).
- */
+const isProd = process.env.NODE_ENV === "production";
 
-/**
- * Determina se o cookie deve ser secure (HTTPS).
- *
- * @returns {boolean}
- */
-function isSecureCookie() {
-    return process.env.COOKIE_SECURE === "true";
+function baseCookieOptions() {
+    return {
+        path: "/",
+        sameSite: "lax",
+        secure: isProd,
+    };
 }
 
-/**
- * Cookie de autenticação: HttpOnly (JS não consegue ler).
- *
- * @returns {import("express").CookieOptions}
- */
 export function authCookieOptions() {
     return {
+        ...baseCookieOptions(),
         httpOnly: true,
-        sameSite: "lax",
-        secure: isSecureCookie(),
-        path: "/",
-        // maxAge é opcional; sem isto é "session cookie"
-        // maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
     };
 }
 
-/**
- * Cookie CSRF: não HttpOnly (frontend precisa ler).
- *
- * @returns {import("express").CookieOptions}
- */
 export function csrfCookieOptions() {
     return {
+        ...baseCookieOptions(),
         httpOnly: false,
-        sameSite: "lax",
-        secure: isSecureCookie(),
-        path: "/",
-        // maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+    };
+}
+
+export function clearCookieOptions() {
+    return {
+        ...baseCookieOptions(),
     };
 }
 ```
 
-### 5.5.2) Criar `src/utils/csrf.js`
-
-Cria `backend/src/utils/csrf.js`:
+`backend/src/utils/csrf.js`:
 
 ```js
-/**
- * @file csrf.js
- * @description Gera tokens CSRF simples.
- *
- * Aqui usamos crypto.randomBytes para obter um token imprevisível.
- * (Se fosse um token previsível, um atacante podia adivinhar.)
- */
+import crypto from "node:crypto";
 
-import crypto from "crypto";
-
-/**
- * Cria um token CSRF aleatório.
- *
- * @returns {string}
- */
 export function createCsrfToken() {
     return crypto.randomBytes(24).toString("hex");
 }
 ```
 
----
+### 3.3) Middlewares de segurança
 
-## 5.6) Middlewares: `requireCsrf` e `requireAuth`
-
-### 5.6.1) Criar `src/middlewares/requireCsrf.js`
-
-Cria `backend/src/middlewares/requireCsrf.js`:
+`backend/src/middlewares/requireAuth.js`:
 
 ```js
-/**
- * @file requireCsrf.js
- * @description CSRF mínimo para pedidos mutáveis.
- *
- * Regra:
- * - POST/PUT/PATCH/DELETE exigem:
- *   - cookie csrfToken
- *   - header x-csrf-token
- *   - e ambos iguais
- *
- * Importante:
- * - NÃO aplicamos CSRF a /api/auth/login e /api/auth/register,
- *   porque o utilizador ainda não tem csrfToken definido.
- */
+import jwt from "jsonwebtoken";
 
-const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+export function requireAuth(req, res, next) {
+    const token = req.cookies?.token;
 
-/**
- * @param {import("express").Request} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
- */
+    if (!token) {
+        return res.status(401).json({
+            error: { code: "UNAUTHORIZED", message: "Sessão em falta" },
+        });
+    }
+
+    try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        req.auth = { userId: payload.userId };
+        return next();
+    } catch {
+        return res.status(401).json({
+            error: { code: "UNAUTHORIZED", message: "Sessão inválida" },
+        });
+    }
+}
+```
+
+`backend/src/middlewares/requireCsrf.js`:
+
+```js
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
 export function requireCsrf(req, res, next) {
-    if (!MUTATING.has(req.method)) return next();
-
-    const url = req.originalUrl ?? "";
-    const isAuthLoginOrRegister =
-        req.method === "POST" &&
-        (url.startsWith("/api/auth/login") ||
-            url.startsWith("/api/auth/register"));
-
-    if (isAuthLoginOrRegister) return next();
+    if (SAFE_METHODS.has(req.method)) {
+        return next();
+    }
 
     const csrfCookie = req.cookies?.csrfToken;
-    const csrfHeader = req.headers["x-csrf-token"];
+    const csrfHeader = req.get("x-csrf-token");
 
     if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
-        return res
-            .status(403)
-            .json({ error: "CSRF token em falta ou inválido" });
+        return res.status(403).json({
+            error: { code: "CSRF_INVALID", message: "CSRF token inválido" },
+        });
     }
 
     return next();
 }
 ```
 
-### 5.6.2) Criar `src/middlewares/requireAuth.js`
+### 3.4) Rotas de autenticação
 
-Cria `backend/src/middlewares/requireAuth.js`:
-
-```js
-/**
- * @file requireAuth.js
- * @description Protege endpoints: exige cookie JWT válido.
- *
- * Este middleware:
- * - lê o cookie "token"
- * - valida o JWT
- * - coloca req.user.userId para as rotas usarem
- */
-
-import jwt from "jsonwebtoken";
-
-/**
- * @param {import("express").Request & { user?: { userId: string } }} req
- * @param {import("express").Response} res
- * @param {import("express").NextFunction} next
- */
-export function requireAuth(req, res, next) {
-    const token = req.cookies?.token;
-    if (!token) return res.status(401).json({ error: "Não autenticado" });
-
-    try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = { userId: payload.userId };
-        return next();
-    } catch {
-        return res.status(401).json({ error: "Token inválido ou expirado" });
-    }
-}
-```
-
----
-
-## 5.7) Rotas de autenticação: register/login/logout/me
-
-### 5.7.1) Contrato de API (auth)
-
-**POST `/api/auth/register`**
-
-Request JSON:
-
-```json
-{ "email": "a@a.com", "password": "12345678", "displayName": "Ana" }
-```
-
-Response (201):
-
-```json
-{
-    "user": {
-        "_id": "...",
-        "email": "...",
-        "displayName": "...",
-        "favorites": [],
-        "avatarUrl": ""
-    }
-}
-```
-
-**POST `/api/auth/login`**
-
-Request JSON:
-
-```json
-{ "email": "a@a.com", "password": "12345678" }
-```
-
-Response (200) + cookies `token` e `csrfToken`.
-
-**GET `/api/auth/me`**
-
-Response (200):
-
-```json
-{
-    "user": {
-        "_id": "...",
-        "email": "...",
-        "displayName": "...",
-        "favorites": [25, 1]
-    }
-}
-```
-
-Se não estiver autenticado: 401.
-
----
-
-### 5.7.2) Criar `src/routes/auth.routes.js`
-
-Cria `backend/src/routes/auth.routes.js`:
+`backend/src/routes/auth.routes.js`:
 
 ```js
-/**
- * @file auth.routes.js
- * @description Autenticação:
- * - POST /api/auth/register
- * - POST /api/auth/login
- * - POST /api/auth/logout
- * - GET  /api/auth/me
- *
- * Segurança:
- * - bcrypt para passwordHash
- * - JWT em cookie HttpOnly
- * - rate limiting no login (evita brute force “fácil”)
- */
-
-import express from "express";
+import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import rateLimit from "express-rate-limit";
-import { User } from "../models/User.js";
-import { authCookieOptions, csrfCookieOptions } from "../utils/cookies.js";
-import { createCsrfToken } from "../utils/csrf.js";
+import User from "../models/User.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
+import { requireCsrf } from "../middlewares/requireCsrf.js";
+import {
+    authCookieOptions,
+    csrfCookieOptions,
+    clearCookieOptions,
+} from "../utils/cookies.js";
+import { createCsrfToken } from "../utils/csrf.js";
 
-const router = express.Router();
+const router = Router();
+const SALT_ROUNDS = 10;
 
-const loginLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 10,
-});
-
-/**
- * Assina um JWT.
- *
- * @param {string} userId
- * @returns {string}
- */
 function signToken(userId) {
-    if (!process.env.JWT_SECRET) {
-        // Fail fast: sem secret não há JWT seguro.
-        throw new Error("JWT_SECRET em falta no .env");
-    }
-
-    return jwt.sign({ userId }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
-    });
+    return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 
-/**
- * Validação mínima de email.
- * (Em produção usarias validação mais completa.)
- *
- * @param {string} email
- * @returns {boolean}
- */
-function isValidEmail(email) {
-    return (
-        typeof email === "string" && email.includes("@") && email.includes(".")
-    );
+function normalizeEmail(email) {
+    return String(email ?? "")
+        .trim()
+        .toLowerCase();
+}
+
+function basicValidation({ username, email, password }) {
+    if (!username || String(username).trim().length < 3) {
+        return "Username deve ter pelo menos 3 caracteres";
+    }
+
+    if (!email || !normalizeEmail(email).includes("@")) {
+        return "Email inválido";
+    }
+
+    if (!password || String(password).length < 6) {
+        return "Password deve ter pelo menos 6 caracteres";
+    }
+
+    return null;
 }
 
 router.post("/register", async (req, res) => {
-    const { email, password, displayName } = req.body ?? {};
+    const { username, email, password } = req.body ?? {};
+    const validationError = basicValidation({ username, email, password });
 
-    if (!isValidEmail(email) || !password || !displayName) {
-        return res
-            .status(422)
-            .json({ error: "email, password e displayName são obrigatórios" });
+    if (validationError) {
+        return res.status(422).json({
+            error: { code: "VALIDATION_ERROR", message: validationError },
+        });
     }
 
-    if (String(password).length < 8) {
-        return res
-            .status(422)
-            .json({ error: "password deve ter pelo menos 8 chars" });
+    const normalizedEmail = normalizeEmail(email);
+    const alreadyExists = await User.findOne({ email: normalizedEmail });
+
+    if (alreadyExists) {
+        return res.status(409).json({
+            error: { code: "DUPLICATE_EMAIL", message: "Email já registado" },
+        });
     }
 
-    const existing = await User.findOne({ email: String(email).toLowerCase() });
-    if (existing) return res.status(409).json({ error: "Email já registado" });
-
-    const passwordHash = await bcrypt.hash(String(password), 10);
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     const user = await User.create({
-        email,
+        username: String(username).trim(),
+        email: normalizedEmail,
         passwordHash,
-        displayName,
     });
 
     const token = signToken(user.id);
@@ -1972,23 +694,37 @@ router.post("/register", async (req, res) => {
     res.cookie("token", token, authCookieOptions());
     res.cookie("csrfToken", csrfToken, csrfCookieOptions());
 
-    return res.status(201).json({ user: user.toJSON() });
+    return res.status(201).json({ user });
 });
 
-router.post("/login", loginLimiter, async (req, res) => {
-    const { email, password } = req.body ?? {};
+router.post("/login", async (req, res) => {
+    const email = normalizeEmail(req.body?.email);
+    const password = String(req.body?.password ?? "");
 
-    if (!isValidEmail(email) || !password) {
-        return res
-            .status(422)
-            .json({ error: "email e password são obrigatórios" });
+    if (!email || !password) {
+        return res.status(422).json({
+            error: {
+                code: "VALIDATION_ERROR",
+                message: "Credenciais inválidas",
+            },
+        });
     }
 
-    const user = await User.findOne({ email: String(email).toLowerCase() });
-    if (!user) return res.status(401).json({ error: "Credenciais inválidas" });
+    const user = await User.findOne({ email });
 
-    const ok = await bcrypt.compare(String(password), user.passwordHash);
-    if (!ok) return res.status(401).json({ error: "Credenciais inválidas" });
+    if (!user) {
+        return res.status(401).json({
+            error: { code: "INVALID_CREDENTIALS", message: "Login inválido" },
+        });
+    }
+
+    const passwordOk = await bcrypt.compare(password, user.passwordHash);
+
+    if (!passwordOk) {
+        return res.status(401).json({
+            error: { code: "INVALID_CREDENTIALS", message: "Login inválido" },
+        });
+    }
 
     const token = signToken(user.id);
     const csrfToken = createCsrfToken();
@@ -1996,1239 +732,1284 @@ router.post("/login", loginLimiter, async (req, res) => {
     res.cookie("token", token, authCookieOptions());
     res.cookie("csrfToken", csrfToken, csrfCookieOptions());
 
-    return res.json({ user: user.toJSON() });
-});
-
-/**
- * Logout.
- * Nota pedagógica:
- * - CSRF no logout é opcional (CSRF logout é “nuisance”).
- * - Se quiseres, podes exigir CSRF aqui também.
- */
-router.post("/logout", (_req, res) => {
-    res.clearCookie("token", { path: "/" });
-    res.clearCookie("csrfToken", { path: "/" });
-    return res.status(204).send();
+    return res.status(200).json({ user });
 });
 
 router.get("/me", requireAuth, async (req, res) => {
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
+    const user = await User.findById(req.auth.userId);
 
-    return res.json({ user: user.toJSON() });
+    if (!user) {
+        return res.status(404).json({
+            error: { code: "USER_NOT_FOUND", message: "Utilizador não existe" },
+        });
+    }
+
+    return res.status(200).json({ user });
+});
+
+router.post("/logout", requireAuth, requireCsrf, (_req, res) => {
+    res.clearCookie("token", clearCookieOptions());
+    res.clearCookie("csrfToken", clearCookieOptions());
+    return res.status(200).json({ ok: true });
 });
 
 export default router;
 ```
 
----
+### 3.5) `app.js` com CORS, cookies e ordem correta de middlewares
 
-## 5.8) Favoritos persistentes (por utilizador)
-
-### 5.8.1) Contrato de API (favorites)
-
-- `GET /api/favorites` → `{ favorites: number[] }`
-- `POST /api/favorites/:id` → `{ favorites: number[] }`
-- `DELETE /api/favorites/:id` → `{ favorites: number[] }`
-
-### 5.8.2) Criar `src/routes/favorites.routes.js`
-
-Cria `backend/src/routes/favorites.routes.js`:
+`backend/src/app.js`:
 
 ```js
-/**
- * @file favorites.routes.js
- * @description Favoritos por utilizador autenticado.
- *
- * Mudança em relação à Ficha 5:
- * - antes era um array “global” em memória
- * - agora é por utilizador, guardado em MongoDB (User.favorites)
- */
-
 import express from "express";
-import { User } from "../models/User.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
-
-const router = express.Router();
-
-/**
- * Converte e valida um id de Pokémon.
- *
- * @param {string} idParam
- * @returns {number|null}
- */
-function parsePokemonId(idParam) {
-    const id = Number.parseInt(idParam, 10);
-    return Number.isFinite(id) && id > 0 ? id : null;
-}
-
-router.get("/", requireAuth, async (req, res) => {
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    return res.json({ favorites: user.favorites });
-});
-
-router.post("/:id", requireAuth, async (req, res) => {
-    const pokemonId = parsePokemonId(req.params.id);
-    if (!pokemonId) return res.status(422).json({ error: "id inválido" });
-
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    if (!user.favorites.includes(pokemonId)) {
-        user.favorites.push(pokemonId);
-        await user.save();
-    }
-
-    return res.status(201).json({ favorites: user.favorites });
-});
-
-router.delete("/:id", requireAuth, async (req, res) => {
-    const pokemonId = parsePokemonId(req.params.id);
-    if (!pokemonId) return res.status(422).json({ error: "id inválido" });
-
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    user.favorites = user.favorites.filter((x) => x !== pokemonId);
-    await user.save();
-
-    return res.json({ favorites: user.favorites });
-});
-
-export default router;
-```
-
----
-
-## 5.9) Equipas (paginação + pesquisa)
-
-### 5.9.1) Contrato de API (teams)
-
-Request:
-
-```
-GET /api/teams?page=1&limit=5&q=elite
-```
-
-Response:
-
-```json
-{
-    "items": [{ "_id": "...", "name": "...", "pokemonIds": [1, 4] }],
-    "page": 1,
-    "limit": 5,
-    "total": 23
-}
-```
-
-### 5.9.2) Criar `src/routes/teams.routes.js`
-
-Cria `backend/src/routes/teams.routes.js`:
-
-```js
-/**
- * @file teams.routes.js
- * @description Equipas do utilizador autenticado.
- *
- * Treina:
- * - GET com paginação e pesquisa
- * - POST para criar
- * - DELETE com ownership
- */
-
-import express from "express";
-import mongoose from "mongoose";
-import { Team } from "../models/Team.js";
-import { requireAuth } from "../middlewares/requireAuth.js";
-
-const router = express.Router();
-
-/**
- * Lê e valida query params de listagem.
- *
- * @param {import("express").Request} req
- * @returns {{ page: number, limit: number, q: string }}
- */
-function readListQuery(req) {
-    const page = Math.max(1, Number.parseInt(req.query.page ?? "1", 10) || 1);
-    const limit = Math.max(
-        1,
-        Number.parseInt(req.query.limit ?? "10", 10) || 10,
-    );
-    const q = String(req.query.q ?? "").trim();
-    return { page, limit, q };
-}
-
-/**
- * Normaliza lista de IDs de Pokémon.
- *
- * @param {unknown} value
- * @returns {number[]}
- */
-function normalizePokemonIds(value) {
-    if (!Array.isArray(value)) return [];
-
-    return value
-        .map((n) => Number.parseInt(n, 10))
-        .filter((n) => Number.isFinite(n) && n > 0);
-}
-
-router.get("/", requireAuth, async (req, res) => {
-    const { page, limit, q } = readListQuery(req);
-
-    const filter = {
-        userId: req.user.userId,
-        ...(q ? { name: { $regex: q, $options: "i" } } : {}),
-    };
-
-    const total = await Team.countDocuments(filter);
-
-    const items = await Team.find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
-
-    return res.json({ items, page, limit, total });
-});
-
-router.post("/", requireAuth, async (req, res) => {
-    const { name, pokemonIds } = req.body ?? {};
-
-    if (!name || String(name).trim().length < 2) {
-        return res
-            .status(422)
-            .json({ error: "name é obrigatório (mínimo 2 chars)" });
-    }
-
-    const safeIds = normalizePokemonIds(pokemonIds);
-
-    if (safeIds.length > 6) {
-        return res.status(422).json({ error: "Máximo 6 Pokémon por equipa" });
-    }
-
-    const team = await Team.create({
-        userId: req.user.userId,
-        name: String(name).trim(),
-        pokemonIds: safeIds,
-    });
-
-    return res.status(201).json({ team });
-});
-
-router.delete("/:id", requireAuth, async (req, res) => {
-    const id = req.params.id;
-
-    // Evita CastError do Mongoose para IDs inválidos
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(422).json({ error: "id inválido" });
-    }
-
-    const deleted = await Team.findOneAndDelete({
-        _id: id,
-        userId: req.user.userId,
-    });
-
-    if (!deleted)
-        return res.status(404).json({ error: "Equipa não encontrada" });
-
-    return res.status(204).send();
-});
-
-export default router;
-```
-
----
-
-## 5.10) Upload de avatar (extra guiado)
-
-### 5.10.1) Criar pasta `uploads/`
-
-Na raiz do backend:
-
-```bash
-mkdir -p uploads
-```
-
-### 5.10.2) Criar `src/routes/users.routes.js`
-
-Cria `backend/src/routes/users.routes.js`:
-
-```js
-/**
- * @file users.routes.js
- * @description Perfil do utilizador (me) + upload de avatar.
- *
- * Upload:
- * - multipart/form-data
- * - campo "avatar"
- * - guardamos no disco (uploads/)
- * - guardamos o URL no User.avatarUrl
- */
-
-import express from "express";
-import path from "path";
-import multer from "multer";
-import { fileURLToPath } from "url";
-import { requireAuth } from "../middlewares/requireAuth.js";
-import { User } from "../models/User.js";
-
-const router = express.Router();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// uploads/ está na raiz do backend
-const uploadDir = path.join(__dirname, "..", "..", "uploads");
-
-/**
- * Storage do multer:
- * - destination: pasta uploads/
- * - filename: timestamp + nome "safe"
- */
-const storage = multer.diskStorage({
-    destination(_req, _file, cb) {
-        cb(null, uploadDir);
-    },
-    filename(_req, file, cb) {
-        // Segurança básica: remove espaços e reduz risco de path injection
-        const safeName = file.originalname
-            .replaceAll(" ", "_")
-            .replaceAll("..", ".");
-        cb(null, `${Date.now()}__${safeName}`);
-    },
-});
-
-/**
- * Aceitar apenas imagens.
- *
- * @param {import("express").Request} _req
- * @param {Express.Multer.File} file
- * @param {(error: Error|null, acceptFile: boolean) => void} cb
- */
-function imageFilter(_req, file, cb) {
-    const ok = file.mimetype.startsWith("image/");
-    cb(ok ? null : new Error("Só imagens"), ok);
-}
-
-const upload = multer({
-    storage,
-    fileFilter: imageFilter,
-    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-});
-
-router.get("/me", requireAuth, async (req, res) => {
-    const user = await User.findById(req.user.userId);
-    if (!user)
-        return res.status(404).json({ error: "Utilizador não encontrado" });
-
-    return res.json({ user: user.toJSON() });
-});
-
-router.post(
-    "/me/avatar",
-    requireAuth,
-    upload.single("avatar"),
-    async (req, res) => {
-        if (!req.file)
-            return res.status(422).json({ error: "Ficheiro em falta" });
-
-        const user = await User.findById(req.user.userId);
-        if (!user)
-            return res.status(404).json({ error: "Utilizador não encontrado" });
-
-        user.avatarUrl = `/uploads/${req.file.filename}`;
-        await user.save();
-
-        return res.json({ user: user.toJSON() });
-    },
-);
-
-export default router;
-```
-
----
-
-## 5.11) `app.js` (CORS + cookies + CSRF + rotas + health + static)
-
-Cria/atualiza `backend/src/app.js`:
-
-```js
-/**
- * @file app.js
- * @description Config do Express: middlewares + rotas.
- *
- * Ordem importante:
- * - cors com credentials
- * - json + cookieParser
- * - static (uploads)
- * - CSRF middleware
- * - routes
- */
-
-import express from "express";
+import path from "node:path";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
-import { requireCsrf } from "./middlewares/requireCsrf.js";
-
 import authRoutes from "./routes/auth.routes.js";
 import favoritesRoutes from "./routes/favorites.routes.js";
 import teamsRoutes from "./routes/teams.routes.js";
 import usersRoutes from "./routes/users.routes.js";
+import { requireCsrf } from "./middlewares/requireCsrf.js";
 
 const app = express();
+const uploadsDir = path.join(process.cwd(), "uploads");
 
 app.use(
     cors({
         origin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
         credentials: true,
-        allowedHeaders: ["Content-Type", "X-CSRF-Token"],
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     }),
 );
-
 app.use(express.json());
 app.use(cookieParser());
+app.use("/uploads", express.static(uploadsDir));
 
-// Uploads públicos (dev):
-app.use("/uploads", express.static("uploads"));
+app.get("/api/health", (_req, res) => {
+    res.status(200).json({ ok: true });
+});
 
-// CSRF mínimo (antes de routes que mudam dados):
+// Login/register/me não passam no guard global de CSRF.
+app.use("/api/auth", authRoutes);
+
+// A partir daqui, todas as mutações exigem X-CSRF-Token válido.
 app.use(requireCsrf);
 
-app.use("/api/auth", authRoutes);
 app.use("/api/favorites", favoritesRoutes);
 app.use("/api/teams", teamsRoutes);
 app.use("/api/users", usersRoutes);
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.use((_req, res) => {
+    res.status(404).json({
+        error: { code: "NOT_FOUND", message: "Rota inexistente" },
+    });
+});
+
+app.use((err, _req, res, next) => {
+    if (!err) {
+        return next();
+    }
+
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+    const message = err.message || "Erro no upload";
+
+    return res.status(status).json({
+        error: { code: "UPLOAD_ERROR", message },
+    });
+});
 
 export default app;
 ```
 
+### Checkpoint 3
+
+1. `POST /api/auth/register` cria utilizador e devolve `user`.
+2. Browser/cliente recebe cookies `token` (HttpOnly) e `csrfToken`.
+3. `GET /api/auth/me` devolve o utilizador autenticado.
+4. `POST /api/auth/logout` só funciona com CSRF header válido.
+
+### Erros comuns (CORS/cookies/CSRF)
+
+- `cors` sem `credentials: true`.
+- frontend sem `withCredentials: true` no Axios.
+- `CLIENT_ORIGIN` diferente da origem real do frontend.
+- tentar mutações sem enviar `X-CSRF-Token`.
+- limpar cookie com `path` diferente do usado no `res.cookie`.
+
 ---
 
-## 5.12) `server.js` (fail fast)
+## 4) Backend: modelos e rotas (users, teams, favorites)
 
-Cria/atualiza `backend/src/server.js`:
+### O que é
+
+Agora fechamos os recursos de negócio: favoritos por utilizador, equipas com paginação e upload de avatar.
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **Recurso**: entidade da API com identidade e regras (favorites, teams, users).
+- **Validação**: verificar dados de entrada antes de persistir.
+- **Conflito (409)**: pedido válido na forma, mas em choque com estado atual (ex.: favorito já existe).
+- **Schema vs validação de rota**: schema garante integridade do modelo; rota devolve erros mais claros ao cliente.
+
+2. **Como funciona “por baixo”**
+
+- Favorites ficam no documento `User`, como array numérico.
+- Teams guardam `userId`, nome e lista `pokemonIds`.
+- Paginação usa `skip/limit`: “salta N e devolve M”.
+- Pesquisa por `q` com `$regex` e `i` faz correspondência case-insensitive.
+- Upload usa `multipart/form-data`: ficheiro vai em partes binárias, não em JSON puro.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- O contrato simples de favorites facilita compatibilidade com Ficha 05.
+- Teams 1..6 reflete regra natural da Pokédex (equipa limitada).
+- Upload de avatar fecha o ciclo de integração frontend/backend com ficheiros reais.
+- Limitar `q` protege de regex demasiado pesada e pedidos abusivos.
+
+4. **Erros comuns e sintomas**
+
+- `422 id inválido` em favorites -> `id` veio string vazia/não inteiro.
+- `409 Pokémon já é favorito` -> UI tentou adicionar duplicado.
+- Team criada com IDs repetidos -> deduplicação ausente no cliente ou servidor.
+- Upload retorna 413 -> ficheiro excede limite configurado.
+- URL de avatar guarda path errado -> imagem não abre no browser.
+
+5. **Boas práticas e segurança**
+
+- Validar sempre no servidor, mesmo que frontend valide antes.
+- Limitar tamanho de inputs (`q`, upload) para reduzir abuso.
+- Não confiar apenas na extensão do ficheiro; tipo/mimetype também importa.
+- Associar sempre dados ao `userId` autenticado para isolamento por utilizador.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - shape de paginação
+
+```json
+{
+    "items": [],
+    "total": 27,
+    "page": 2,
+    "limit": 6,
+    "pages": 5
+}
+```
+
+> Exemplo isolado - favorites canónico
+
+```txt
+POST /api/favorites  body { "id": 150 } -> { "id": 150 }
+```
+
+### Porque fazemos isto
+
+A autenticação sem dados por utilizador não resolve o objetivo da app. Esta secção liga sessão + dados persistentes.
+
+### 4.1) Contrato de favorites (único)
+
+- `GET /api/favorites` -> `number[]`
+- `POST /api/favorites` com body `{ "id": number }` -> `{ "id": number }`
+- `DELETE /api/favorites/:id` -> `{ "id": number }`
+
+`backend/src/routes/favorites.routes.js`:
 
 ```js
-/**
- * @file server.js
- * @description Entry point do backend.
- *
- * Ordem correta:
- * 1) Ler variáveis ambiente (.env)
- * 2) Ligar ao MongoDB
- * 3) Só depois arrancar o servidor Express
- */
+import { Router } from "express";
+import User from "../models/User.js";
+import { requireAuth } from "../middlewares/requireAuth.js";
 
-import "dotenv/config";
-import app from "./app.js";
-import { connectToMongo } from "./db/connect.js";
+const router = Router();
 
-const PORT = Number.parseInt(process.env.PORT ?? "3000", 10);
-
-async function start() {
-    await connectToMongo(process.env.MONGODB_URI);
-
-    app.listen(PORT, () => {
-        console.log(`[api] Backend a correr em http://localhost:${PORT}`);
-    });
+function parsePositiveInt(value) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n <= 0) return null;
+    return n;
 }
 
-start().catch((err) => {
-    console.error("[api] Falha ao arrancar:", err);
-    process.exit(1);
+router.get("/", requireAuth, async (req, res) => {
+    const user = await User.findById(req.auth.userId).select("favorites");
+
+    if (!user) {
+        return res.status(404).json({
+            error: { code: "USER_NOT_FOUND", message: "Utilizador não existe" },
+        });
+    }
+
+    return res.status(200).json(user.favorites);
 });
+
+router.post("/", requireAuth, async (req, res) => {
+    const id = parsePositiveInt(req.body?.id);
+
+    if (!id) {
+        return res.status(422).json({
+            error: { code: "VALIDATION_ERROR", message: "id inválido" },
+        });
+    }
+
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+        return res.status(404).json({
+            error: { code: "USER_NOT_FOUND", message: "Utilizador não existe" },
+        });
+    }
+
+    if (user.favorites.includes(id)) {
+        return res.status(409).json({
+            error: { code: "DUPLICATE_KEY", message: "Pokémon já é favorito" },
+        });
+    }
+
+    user.favorites.push(id);
+    await user.save();
+
+    return res.status(201).json({ id });
+});
+
+router.delete("/:id", requireAuth, async (req, res) => {
+    const id = parsePositiveInt(req.params.id);
+
+    if (!id) {
+        return res.status(400).json({
+            error: { code: "INVALID_ID", message: "id inválido" },
+        });
+    }
+
+    const user = await User.findById(req.auth.userId);
+
+    if (!user) {
+        return res.status(404).json({
+            error: { code: "USER_NOT_FOUND", message: "Utilizador não existe" },
+        });
+    }
+
+    if (!user.favorites.includes(id)) {
+        return res.status(404).json({
+            error: { code: "NOT_FOUND", message: "Favorito não existe" },
+        });
+    }
+
+    user.favorites = user.favorites.filter((favId) => favId !== id);
+    await user.save();
+
+    return res.status(200).json({ id });
+});
+
+export default router;
 ```
+
+### 4.2) Modelo Team e rotas de equipas
+
+`backend/src/models/Team.js`:
+
+```js
+import mongoose from "mongoose";
+
+const teamSchema = new mongoose.Schema(
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true,
+        },
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: 50,
+        },
+        pokemonIds: {
+            type: [Number],
+            validate: {
+                validator: (arr) =>
+                    Array.isArray(arr) &&
+                    arr.length >= 1 &&
+                    arr.length <= 6 &&
+                    arr.every((id) => Number.isInteger(id) && id > 0),
+                message: "pokemonIds deve ter entre 1 e 6 ids válidos",
+            },
+        },
+    },
+    { timestamps: true },
+);
+
+const Team = mongoose.model("Team", teamSchema);
+
+export default Team;
+```
+
+`backend/src/routes/teams.routes.js`:
+
+```js
+import { Router } from "express";
+import Team from "../models/Team.js";
+import { requireAuth } from "../middlewares/requireAuth.js";
+
+const router = Router();
+
+function parsePositiveInt(value, fallback) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n <= 0) return fallback;
+    return n;
+}
+
+router.get("/", requireAuth, async (req, res) => {
+    const page = parsePositiveInt(req.query.page, 1);
+    const limit = Math.min(parsePositiveInt(req.query.limit, 10), 50);
+    const q = String(req.query.q ?? "")
+        .trim()
+        .slice(0, 50);
+
+    const filter = { userId: req.auth.userId };
+    if (q) {
+        filter.name = { $regex: q, $options: "i" };
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+        Team.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        Team.countDocuments(filter),
+    ]);
+
+    const pages = Math.max(1, Math.ceil(total / limit));
+
+    return res.status(200).json({ items, total, page, limit, pages });
+});
+
+router.post("/", requireAuth, async (req, res) => {
+    const name = String(req.body?.name ?? "").trim();
+    const pokemonIdsRaw = Array.isArray(req.body?.pokemonIds)
+        ? req.body.pokemonIds
+        : [];
+
+    const pokemonIds = [...new Set(pokemonIdsRaw.map(Number))].filter(
+        (id) => Number.isInteger(id) && id > 0,
+    );
+
+    if (!name) {
+        return res.status(422).json({
+            error: { code: "VALIDATION_ERROR", message: "name é obrigatório" },
+        });
+    }
+
+    if (pokemonIds.length < 1 || pokemonIds.length > 6) {
+        return res.status(422).json({
+            error: {
+                code: "VALIDATION_ERROR",
+                message: "pokemonIds deve ter entre 1 e 6 elementos",
+            },
+        });
+    }
+
+    const team = await Team.create({
+        userId: req.auth.userId,
+        name,
+        pokemonIds,
+    });
+
+    return res.status(201).json(team);
+});
+
+router.delete("/:id", requireAuth, async (req, res) => {
+    const team = await Team.findOne({
+        _id: req.params.id,
+        userId: req.auth.userId,
+    });
+
+    if (!team) {
+        return res.status(404).json({
+            error: { code: "NOT_FOUND", message: "Equipa não encontrada" },
+        });
+    }
+
+    await team.deleteOne();
+
+    return res.status(200).json({ id: req.params.id });
+});
+
+export default router;
+```
+
+### 4.3) Upload de avatar (obrigatório)
+
+Cria a pasta `backend/uploads/` com um ficheiro `backend/uploads/.gitkeep`.
+
+`backend/src/routes/users.routes.js`:
+
+```js
+import { Router } from "express";
+import fs from "node:fs";
+import path from "node:path";
+import multer from "multer";
+import User from "../models/User.js";
+import { requireAuth } from "../middlewares/requireAuth.js";
+
+const router = Router();
+
+const uploadsDir = path.join(process.cwd(), "uploads");
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+        const ext =
+            path.extname(file.originalname || "").toLowerCase() || ".png";
+        cb(
+            null,
+            `avatar-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`,
+        );
+    },
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith("image/")) {
+            cb(new Error("Ficheiro inválido: envia uma imagem"));
+            return;
+        }
+        cb(null, true);
+    },
+});
+
+router.post(
+    "/avatar",
+    requireAuth,
+    upload.single("avatar"),
+    async (req, res) => {
+        if (!req.file) {
+            return res.status(422).json({
+                error: {
+                    code: "VALIDATION_ERROR",
+                    message: "avatar é obrigatório",
+                },
+            });
+        }
+
+        const user = await User.findById(req.auth.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                error: {
+                    code: "USER_NOT_FOUND",
+                    message: "Utilizador não existe",
+                },
+            });
+        }
+
+        user.avatarUrl = `/uploads/${req.file.filename}`;
+        await user.save();
+
+        return res.status(200).json({ avatarUrl: user.avatarUrl });
+    },
+);
+
+export default router;
+```
+
+### Checkpoint 4
+
+- `GET /api/favorites` já devolve favoritos do utilizador autenticado.
+- `GET /api/teams?page=1&limit=5&q=` devolve `{ items, total, page, limit, pages }`.
+- `POST /api/users/avatar` grava imagem e devolve `avatarUrl`.
 
 ---
 
-## 5.13) Paragem C/D/E — testes manuais (backend)
+## 5) Frontend: refactor obrigatório para pages/components
 
-### 5.13.1) Arrancar backend
+### O que é
 
-```bash
-cd backend
-node src/server.js
+Esta etapa separa ficheiros de rota (`pages`) dos componentes reutilizáveis (`components`).
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **Refactor**: reorganizar sem mudar comportamento funcional esperado.
+- **Rota de página**: componente que representa um ecrã completo ligado ao URL.
+- **Componente reutilizável**: bloco UI reutilizado em várias páginas (cards, layout, loaders).
+
+2. **Como funciona “por baixo”**
+
+- O React Router instancia componentes por correspondência de rota.
+- `pages` tendem a receber dados/estado global e orquestrar componentes.
+- `components` recebem props e focam-se em apresentação/interação local.
+- Quando mudas caminhos físicos, qualquer import antigo quebra imediatamente no build.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- Esta separação evita “ficheiro tudo-em-um”.
+- Deixa o router mais legível (`App.jsx` mostra claramente ecrãs da app).
+- Facilita onboarding: quem entra no projeto percebe logo onde editar cada tipo de ficheiro.
+
+4. **Erros comuns e sintomas**
+
+- Página movida mas import antigo mantido -> erro de compilação.
+- Código de rota dentro de componente reutilizável -> acoplamento e bugs de navegação.
+- `NotFound` em pasta errada -> fallback não renderiza como esperado.
+- Misturar names iguais em duas pastas -> imports ambíguos/confusos.
+
+5. **Boas práticas e segurança**
+
+- Fazer refactor em passos pequenos e testar cada passo.
+- Atualizar imports logo após cada `mv`.
+- Não duplicar ficheiros “temporários” com lógica diferente para evitar drift.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - decisão simples
+
+```txt
+É rota com URL próprio? -> pages/
+É peça reaproveitada em várias páginas? -> components/
 ```
 
-### 5.13.2) Health check
+> Exemplo isolado - organização
 
-- `GET http://localhost:3000/api/health` → `{ ok: true }`
+```txt
+App.jsx usa pages
+pages usam components + services + context
+```
 
-### 5.13.3) Register/login (com Postman/Insomnia)
+### Porque fazemos isto
 
-1. `POST /api/auth/register`
-2. Confirmar cookies `token` e `csrfToken` no response (via tool)
-3. `GET /api/auth/me` → devolve o user
-4. `GET /api/favorites` → `{ favorites: [] }` (precisa estar autenticado)
+Sem esta separação, o projeto cresce confuso e os imports ficam incoerentes.
 
-Checkpoint sugerido:
+### 5.1) Migrar as páginas que já existem
+
+No root do projeto:
 
 ```bash
-git add -A
-git commit -m "Ficha 6: Backend Mongo + Auth + Favorites + Teams + Upload"
+mkdir -p frontend/src/pages
+mv frontend/src/components/PokemonListPage.jsx frontend/src/pages/PokemonListPage.jsx
+mv frontend/src/components/PokemonDetailsPage.jsx frontend/src/pages/PokemonDetailsPage.jsx
+mv frontend/src/components/FavoritesPage.jsx frontend/src/pages/FavoritesPage.jsx
+mv frontend/src/components/NotFound.jsx frontend/src/pages/NotFound.jsx
 ```
+
+### 5.2) Criar novas páginas obrigatórias
+
+Cria também em `frontend/src/pages/`:
+
+- `LoginPage.jsx`
+- `RegisterPage.jsx`
+- `TeamsPage.jsx`
+- `ProfilePage.jsx`
+
+### 5.3) Atualizar imports do router
+
+`frontend/src/App.jsx` vai passar a importar páginas de `@/pages/...`.
+
+### Checkpoint 5
+
+- A app continua a abrir sem erros de import.
+- Rota `*` usa `@/pages/NotFound.jsx`.
+- `components/` já não contém páginas de rota.
+
+### Erros comuns (refactor de pastas)
+
+- mover ficheiro e esquecer de corrigir imports no `App.jsx`.
+- manter `NotFound` em `components` mas importar de `pages`.
+- misturar componentes de UI com páginas na mesma pasta.
 
 ---
 
-# 6) FRONTEND — Axios + Services + Context + Rotas + Páginas
+## 6) Frontend: Axios (`apiClient`) + services
 
-> Agora ligamos o frontend ao backend com Axios e cookies.
+### O que é
 
----
+Vamos centralizar chamadas HTTP num cliente Axios único.
 
-## 6.0) Patch de Compatibilidade (frontend: mapa rápido)
+### Teoria
 
-### 6.0.1) Criar `frontend/.env`
+1. **Conceitos-chave**
 
-**Caminho:** `frontend/.env`
+- **Axios instance**: cliente HTTP configurado uma vez e reutilizado.
+- **`baseURL`**: prefixo comum de todos os endpoints.
+- **`withCredentials`**: permite envio/receção de cookies em pedidos cross-origin.
+- **Interceptor**: função que corre antes/depois dos pedidos para aplicar lógica transversal.
 
-```bash
+2. **Como funciona “por baixo”**
+
+- `axios.create(...)` devolve objeto com config base.
+- Em cada request mutável, o interceptor lê `csrfToken` do cookie e injeta header.
+- Se uma resposta falha, o erro Axios traz `err.response.status` quando há resposta HTTP.
+- Sem `baseURL`, cada chamada precisa URL completa e o risco de inconsistência aumenta.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- Evitas repetir configuração em todos os services.
+- Garante comportamento uniforme de cookies + CSRF em auth, favorites, teams e users.
+- Services ficam curtos e focados no contrato de cada recurso.
+
+4. **Erros comuns e sintomas**
+
+- Pedidos vão para host errado -> `VITE_API_URL` em falta/errado.
+- Sessão não mantém -> `withCredentials` ausente.
+- 403 em mutações -> interceptor não adicionou `X-CSRF-Token`.
+- Tratamento genérico de erro -> UI não distingue 401 de 403.
+
+5. **Boas práticas e segurança**
+
+- Centralizar clientes HTTP reduz bugs de configuração.
+- Não codificar segredos no frontend; usar apenas URL pública de API.
+- Tratar respostas de erro por status para mensagens úteis e debug rápido.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - leitura de erro Axios
+
+```js
+if (err.response?.status === 401) {
+    // sessão em falta
+}
+```
+
+> Exemplo isolado - sem interceptor (o que evitar)
+
+```txt
+Cada POST/DELETE lembra-se "à mão" de mandar CSRF -> probabilidade alta de esqueceres um.
+```
+
+### Porque fazemos isto
+
+Evitas duplicação de `baseURL`, `withCredentials` e header CSRF em cada request.
+
+### 6.1) Variáveis de ambiente frontend
+
+`frontend/.env`:
+
+```env
 VITE_API_URL=http://localhost:3000
 ```
 
-E garante que `frontend/.gitignore` ignora `.env` (se ainda não ignorar).
+`frontend/.env.example`:
 
-### 6.0.2) Criar `frontend/src/services/apiClient.js`
+```env
+VITE_API_URL=http://localhost:3000
+```
 
-**Caminho:** `frontend/src/services/apiClient.js`
+### 6.2) Instalar Axios
+
+No `frontend/`:
+
+```bash
+npm install axios
+```
+
+### 6.3) Criar `apiClient.js`
+
+`frontend/src/services/apiClient.js`:
 
 ```js
-/**
- * @file apiClient.js
- * @description Axios central:
- * - baseURL
- * - withCredentials para cookies (JWT HttpOnly)
- * - CSRF header automático em requests mutáveis
- */
-
 import axios from "axios";
 
-/**
- * Lê um cookie pelo nome.
- *
- * @param {string} name
- * @returns {string}
- */
 function getCookie(name) {
-    const parts = document.cookie.split(";").map((p) => p.trim());
-    const found = parts.find((p) => p.startsWith(`${name}=`));
-    return found ? decodeURIComponent(found.split("=").slice(1).join("=")) : "";
+    const chunk = document.cookie
+        .split(";")
+        .map((part) => part.trim())
+        .find((part) => part.startsWith(`${name}=`));
+
+    if (!chunk) return null;
+    return decodeURIComponent(chunk.split("=").slice(1).join("="));
 }
 
-export const api = axios.create({
+const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3000",
     withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
-    const method = (config.method ?? "get").toUpperCase();
-    const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+    const method = (config.method ?? "get").toLowerCase();
+    const needsCsrf = ["post", "put", "patch", "delete"].includes(method);
 
-    if (mutating) {
+    if (needsCsrf) {
         const csrf = getCookie("csrfToken");
-        if (csrf) config.headers["X-CSRF-Token"] = csrf;
+        if (csrf) {
+            config.headers = config.headers ?? {};
+            config.headers["X-CSRF-Token"] = csrf;
+        }
     }
 
     return config;
 });
+
+export default api;
 ```
 
-### 6.0.3) ALTERAR `frontend/src/services/favoritesApi.js` (mesma assinatura!)
+### 6.4) Services canónicos
 
-**Caminho:** `frontend/src/services/favoritesApi.js`
-
-Objetivo:
-
-- trocar `fetch` por `axios`
-- manter:
-    - `getFavorites() -> number[]`
-    - `addFavorite(id) -> {id}`
-    - `removeFavorite(id) -> {id}`
+`frontend/src/services/authApi.js`:
 
 ```js
-import { api } from "./apiClient";
+import api from "./apiClient.js";
 
-/**
- * favoritesApi.js
- *
- * Mantém EXACTAMENTE o mesmo contrato da Ficha 5:
- * - GET    /api/favorites          -> devolve Array<number>
- * - POST   /api/favorites { id }   -> devolve { id }
- * - DELETE /api/favorites/:id      -> devolve { id }
- */
+export async function register(payload) {
+    const res = await api.post("/api/auth/register", payload);
+    return res.data;
+}
+
+export async function login(payload) {
+    const res = await api.post("/api/auth/login", payload);
+    return res.data;
+}
+
+export async function restoreSession() {
+    const res = await api.get("/api/auth/me");
+    return res.data;
+}
+
+export async function logout() {
+    const res = await api.post("/api/auth/logout");
+    return res.data;
+}
+```
+
+`frontend/src/services/favoritesApi.js`:
+
+```js
+import api from "./apiClient.js";
 
 export async function getFavorites() {
     const res = await api.get("/api/favorites");
-    return res.data; // Array<number>
+    return res.data;
 }
 
 export async function addFavorite(id) {
     const res = await api.post("/api/favorites", { id });
-    return res.data; // { id }
+    return res.data;
 }
 
 export async function removeFavorite(id) {
     const res = await api.delete(`/api/favorites/${id}`);
-    return res.data; // { id }
+    return res.data;
 }
 ```
 
-### 6.0.4) Criar páginas novas (agora em `src/pages/`)
+`frontend/src/services/teamsApi.js`:
 
-> **Objetivo:** acrescentar páginas de **login/registo**, e páginas novas protegidas (**equipas** e **perfil**).  
-> **Nota:** as páginas que já existiam na Ficha 5 (lista/detalhe/favoritos) devem ser **movidas** para `src/pages/` na **Paragem B** (sem mudar o conteúdo).
+```js
+import api from "./apiClient.js";
 
-#### 6.0.4.1) Criar `frontend/src/pages/LoginPage.jsx`
+export async function listTeams({ page = 1, limit = 6, q = "" } = {}) {
+    const res = await api.get("/api/teams", {
+        params: { page, limit, q },
+    });
+    return res.data;
+}
 
-**Caminho:** `frontend/src/pages/LoginPage.jsx`
+export async function createTeam(payload) {
+    const res = await api.post("/api/teams", payload);
+    return res.data;
+}
+
+export async function removeTeam(id) {
+    const res = await api.delete(`/api/teams/${id}`);
+    return res.data;
+}
+```
+
+`frontend/src/services/usersApi.js`:
+
+```js
+import api from "./apiClient.js";
+
+export async function uploadAvatar(file) {
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const res = await api.post("/api/users/avatar", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+
+    return res.data;
+}
+```
+
+### Checkpoint 6
+
+- Não há `fetch` para backend nos serviços principais.
+- Todas as mutações passam pelo `apiClient` com CSRF header automático.
+- `VITE_API_URL` é usado de forma consistente.
+
+---
+
+## 7) Frontend: Context atualizado (compatível com Ficha 05) + `authReady`
+
+### O que é
+
+Vamos evoluir o `PokedexContext` para incluir autenticação sem quebrar as páginas da Ficha 05.
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **Context API**: mecanismo React para estado global sem prop drilling excessivo.
+- **Provider**: componente que expõe o estado/funções para a árvore abaixo.
+- **`authReady` pattern**: flag que indica se a restauração de sessão já terminou.
+- **`useEffect` + dependências**: sincronização com efeitos externos (API, timers, subscrições).
+
+2. **Como funciona “por baixo”**
+
+- No primeiro render, a app ainda não sabe se há sessão válida.
+- `bootstrap()` carrega dados base e tenta `restoreSession()`.
+- Enquanto isso, `authReady` fica `false`; rotas protegidas devem esperar.
+- `useCallback` estabiliza referência de funções; `useMemo` evita recomputar o objeto `value` sem necessidade.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- Evita redirecionar para login antes de confirmar sessão existente.
+- Mantém compatibilidade com páginas da Ficha 05 (pokemon/favorites continuam no contexto).
+- Centraliza login/logout/toggleFavorite para toda a app usar o mesmo fluxo.
+
+4. **Erros comuns e sintomas**
+
+- `usePokedex` fora de provider -> erro imediato em runtime.
+- Redirect “falso” para login no refresh -> falta de `authReady` no fluxo.
+- `useEffect` em loop -> dependências instáveis.
+- Favoritos desatualizados -> não recarregar após login/restauração.
+
+5. **Boas práticas e segurança**
+
+- Context deve guardar estado de sessão mínimo necessário, não dados sensíveis em excesso.
+- Separar funções assíncronas por responsabilidade (`bootstrap`, `login`, `logout`).
+- Tratar exceções por tipo/status para UI mais previsível.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - sem `authReady`
+
+```txt
+Render inicial: user = null
+ProtectedRoute interpreta como "não autenticado" e redireciona cedo demais.
+```
+
+> Exemplo isolado - com `authReady`
+
+```txt
+Enquanto authReady=false: mostra loading.
+Só decide redirecionar quando a verificação de sessão termina.
+```
+
+### Porque fazemos isto
+
+Sem `authReady`, as rotas protegidas podem redirecionar antes da restauração de sessão acabar.
+
+### 7.1) Substituir `frontend/src/context/PokedexContext.jsx`
 
 ```jsx
-/**
- * @file LoginPage.jsx
- * @description Página de login.
- */
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+import { fetchPokemonList } from "@/services/pokeApi.js";
+import * as authApi from "@/services/authApi.js";
+import * as favoritesApi from "@/services/favoritesApi.js";
 
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
+const POKEMON_LIMIT = 151;
 
-/**
- * @returns {JSX.Element}
- */
-export default function LoginPage() {
-    const { login } = usePokedex();
-    const navigate = useNavigate();
+const PokedexContext = createContext(null);
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+export function PokedexProvider({ children }) {
+    const [pokemon, setPokemon] = useState([]);
+    const [favorites, setFavorites] = useState([]);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [authReady, setAuthReady] = useState(false);
+    const [error, setError] = useState(null);
 
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const refreshSession = useCallback(async () => {
+        const data = await authApi.restoreSession();
+        setUser(data.user);
+        return data.user;
+    }, []);
 
-    /**
-     * Submete login.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    async function handleSubmit(e) {
-        e.preventDefault();
-        setError("");
+    const bootstrap = useCallback(async () => {
         setLoading(true);
+        setError(null);
 
         try {
-            await login({ email, password });
-            navigate("/favoritos");
-        } catch (err) {
-            setError("Login falhou. Confirma email e password.");
-        } finally {
-            setLoading(false);
-        }
-    }
+            const pokemonList = await fetchPokemonList(POKEMON_LIMIT);
+            setPokemon(pokemonList);
 
-    return (
-        <main style={{ maxWidth: 420, margin: "0 auto" }}>
-            <h1>Login</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            <form onSubmit={handleSubmit}>
-                <label>
-                    Email
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Password
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </label>
-
-                <button type="submit" disabled={loading}>
-                    {loading ? "A entrar..." : "Entrar"}
-                </button>
-            </form>
-
-            <p>
-                Não tens conta? <Link to="/registar">Registar</Link>
-            </p>
-        </main>
-    );
-}
-```
-
-#### 6.0.4.2) Criar `frontend/src/pages/RegisterPage.jsx`
-
-**Caminho:** `frontend/src/pages/RegisterPage.jsx`
-
-```jsx
-/**
- * @file RegisterPage.jsx
- * @description Página de registo.
- */
-
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
-
-/**
- * @returns {JSX.Element}
- */
-export default function RegisterPage() {
-    const { register } = usePokedex();
-    const navigate = useNavigate();
-
-    const [displayName, setDisplayName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    /**
-     * Submete registo.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    async function handleSubmit(e) {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
-
-        try {
-            await register({ displayName, email, password });
-            navigate("/favoritos");
-        } catch (err) {
-            setError(
-                "Registo falhou. Verifica se o email já existe e se a password tem 8+ chars.",
-            );
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    return (
-        <main style={{ maxWidth: 420, margin: "0 auto" }}>
-            <h1>Registar</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            <form onSubmit={handleSubmit}>
-                <label>
-                    Nome
-                    <input
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Email
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </label>
-
-                <label>
-                    Password (mínimo 8 chars)
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={8}
-                    />
-                </label>
-
-                <button type="submit" disabled={loading}>
-                    {loading ? "A criar..." : "Criar conta"}
-                </button>
-            </form>
-
-            <p>
-                Já tens conta? <Link to="/login">Login</Link>
-            </p>
-        </main>
-    );
-}
-```
-
-#### 6.0.4.3) Criar `frontend/src/pages/TeamsPage.jsx`
-
-**Caminho:** `frontend/src/pages/TeamsPage.jsx`
-
-```jsx
-/**
- * @file TeamsPage.jsx
- * @description Página de Equipas (protegida).
- *
- * Objetivos:
- * - listar equipas paginadas
- * - pesquisar por nome (q)
- * - criar nova equipa (nome + ids)
- * - apagar equipa
- */
-
-import React, { useEffect, useMemo, useState } from "react";
-import * as teamsApi from "../services/teamsApi.js";
-
-/**
- * Calcula número de páginas.
- *
- * @param {number} total
- * @param {number} limit
- * @returns {number}
- */
-function calcPages(total, limit) {
-    if (limit <= 0) return 1;
-    return Math.max(1, Math.ceil(total / limit));
-}
-
-/**
- * Converte string com ids "1, 25, 150" em [1,25,150].
- *
- * @param {string} raw
- * @returns {number[]}
- */
-function parseIds(raw) {
-    return raw
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean)
-        .map((x) => Number.parseInt(x, 10))
-        .filter((n) => Number.isFinite(n) && n > 0);
-}
-
-/**
- * @returns {JSX.Element}
- */
-export default function TeamsPage() {
-    const [page, setPage] = useState(1);
-    const [limit] = useState(5);
-
-    const [q, setQ] = useState("");
-    const [search, setSearch] = useState("");
-
-    const [items, setItems] = useState([]);
-    const [total, setTotal] = useState(0);
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    // Criar equipa
-    const [name, setName] = useState("");
-    const [rawIds, setRawIds] = useState("");
-
-    const pages = useMemo(() => calcPages(total, limit), [total, limit]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function load() {
-            setError("");
-            setLoading(true);
+            let restoredUser = null;
 
             try {
-                const data = await teamsApi.listTeams({
-                    page,
-                    limit,
-                    q: search,
-                });
-                if (cancelled) return;
-
-                setItems(data.items);
-                setTotal(data.total);
-            } catch {
-                if (!cancelled) setError("Falha ao carregar equipas.");
-            } finally {
-                if (!cancelled) setLoading(false);
+                restoredUser = await refreshSession();
+            } catch (err) {
+                if (err?.response?.status !== 401) {
+                    throw err;
+                }
+                setUser(null);
             }
-        }
 
-        load();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [page, limit, search]);
-
-    /**
-     * Aplica pesquisa e volta à página 1.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    function handleSearch(e) {
-        e.preventDefault();
-        setPage(1);
-        setSearch(q.trim());
-    }
-
-    /**
-     * Cria equipa e recarrega lista.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    async function handleCreate(e) {
-        e.preventDefault();
-        setError("");
-
-        try {
-            const pokemonIds = parseIds(rawIds);
-
-            await teamsApi.createTeam({
-                name: name.trim(),
-                pokemonIds,
-            });
-
-            // Reset form
-            setName("");
-            setRawIds("");
-
-            // Volta ao topo e força reload
-            setPage(1);
-            setSearch((s) => s);
+            if (restoredUser) {
+                const favoriteIds = await favoritesApi.getFavorites();
+                setFavorites(favoriteIds);
+            } else {
+                setFavorites([]);
+            }
         } catch (err) {
-            setError("Falha ao criar equipa. Confirma o nome e máximo 6 IDs.");
-        }
-    }
-
-    /**
-     * Apaga equipa e recarrega.
-     *
-     * @param {string} id
-     */
-    async function handleDelete(id) {
-        setError("");
-
-        try {
-            await teamsApi.deleteTeam(id);
-            // Reload “rápido”: remove localmente e ajusta total
-            setItems((prev) => prev.filter((t) => t._id !== id));
-            setTotal((t) => Math.max(0, t - 1));
-        } catch {
-            setError("Falha ao apagar equipa.");
-        }
-    }
-
-    return (
-        <main style={{ maxWidth: 900, margin: "0 auto" }}>
-            <h1>Equipas</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            <section style={{ marginBottom: 18 }}>
-                <h2>Pesquisar</h2>
-
-                <form onSubmit={handleSearch}>
-                    <input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder="Pesquisar por nome..."
-                    />
-                    <button type="submit">Pesquisar</button>
-                </form>
-            </section>
-
-            <section style={{ marginBottom: 18 }}>
-                <h2>Criar equipa</h2>
-
-                <form onSubmit={handleCreate}>
-                    <label>
-                        Nome
-                        <input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                        />
-                    </label>
-
-                    <label>
-                        Pokémon IDs (separados por vírgula, máx. 6)
-                        <input
-                            value={rawIds}
-                            onChange={(e) => setRawIds(e.target.value)}
-                            placeholder="ex: 1, 4, 7, 25"
-                        />
-                    </label>
-
-                    <button type="submit">Criar</button>
-                </form>
-            </section>
-
-            <section>
-                <h2>Lista</h2>
-
-                {loading ? <p>A carregar...</p> : null}
-
-                {items.length === 0 && !loading ? (
-                    <p>Sem equipas para mostrar.</p>
-                ) : (
-                    <ul
-                        style={{
-                            listStyle: "none",
-                            padding: 0,
-                            display: "grid",
-                            gap: 12,
-                        }}
-                    >
-                        {items.map((t) => (
-                            <li
-                                key={t._id}
-                                style={{
-                                    border: "1px solid #ddd",
-                                    padding: 12,
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                    }}
-                                >
-                                    <div>
-                                        <strong>{t.name}</strong>
-                                        <div>
-                                            Pokémon:{" "}
-                                            {Array.isArray(t.pokemonIds)
-                                                ? t.pokemonIds.join(", ")
-                                                : ""}
-                                        </div>
-                                    </div>
-
-                                    <button onClick={() => handleDelete(t._id)}>
-                                        Apagar
-                                    </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-
-                <div
-                    style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "center",
-                        marginTop: 12,
-                    }}
-                >
-                    <button
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                    >
-                        Anterior
-                    </button>
-
-                    <span>
-                        Página {page} / {pages}
-                    </span>
-
-                    <button
-                        onClick={() => setPage((p) => Math.min(pages, p + 1))}
-                        disabled={page >= pages}
-                    >
-                        Seguinte
-                    </button>
-                </div>
-            </section>
-        </main>
-    );
-}
-```
-
-#### 6.0.4.4) Criar `frontend/src/pages/ProfilePage.jsx`
-
-**Caminho:** `frontend/src/pages/ProfilePage.jsx`
-
-```jsx
-/**
- * @file ProfilePage.jsx
- * @description Página de perfil (protegida) com upload de avatar.
- */
-
-import React, { useState } from "react";
-import { usePokedex } from "../context/PokedexContext.jsx";
-import * as usersApi from "../services/usersApi.js";
-
-/**
- * @returns {JSX.Element}
- */
-export default function ProfilePage() {
-    const { user, refreshSession } = usePokedex();
-
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    /**
-     * Faz upload e depois refresca /me para atualizar user no Context.
-     *
-     * @param {React.ChangeEvent<HTMLInputElement>} e
-     */
-    async function handleFileChange(e) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setError("");
-        setLoading(true);
-
-        try {
-            await usersApi.uploadAvatar(file);
-            await refreshSession();
-        } catch {
-            setError("Upload falhou. Confirma se é imagem e <= 2MB.");
+            console.error(err);
+            setError("Erro ao carregar dados iniciais.");
         } finally {
             setLoading(false);
+            setAuthReady(true);
         }
-    }
+    }, [refreshSession]);
+
+    useEffect(() => {
+        bootstrap();
+    }, [bootstrap]);
+
+    const login = useCallback(async ({ email, password }) => {
+        const data = await authApi.login({ email, password });
+        setUser(data.user);
+
+        const favoriteIds = await favoritesApi.getFavorites();
+        setFavorites(favoriteIds);
+
+        return data.user;
+    }, []);
+
+    const register = useCallback(async ({ username, email, password }) => {
+        const data = await authApi.register({ username, email, password });
+        setUser(data.user);
+        setFavorites([]);
+        return data.user;
+    }, []);
+
+    const logout = useCallback(async () => {
+        try {
+            await authApi.logout();
+        } finally {
+            setUser(null);
+            setFavorites([]);
+        }
+    }, []);
+
+    const toggleFavorite = useCallback(
+        async (pokemonId) => {
+            if (!user) {
+                throw new Error("Tens de fazer login para gerir favoritos.");
+            }
+
+            if (favorites.includes(pokemonId)) {
+                await favoritesApi.removeFavorite(pokemonId);
+                setFavorites((prev) => prev.filter((id) => id !== pokemonId));
+            } else {
+                await favoritesApi.addFavorite(pokemonId);
+                setFavorites((prev) =>
+                    prev.includes(pokemonId) ? prev : [...prev, pokemonId],
+                );
+            }
+        },
+        [favorites, user],
+    );
+
+    const reloadFavorites = useCallback(async () => {
+        if (!user) {
+            setFavorites([]);
+            return;
+        }
+
+        const favoriteIds = await favoritesApi.getFavorites();
+        setFavorites(favoriteIds);
+    }, [user]);
+
+    const value = useMemo(
+        () => ({
+            pokemon,
+            favorites,
+            user,
+            loading,
+            error,
+            authReady,
+            login,
+            register,
+            logout,
+            toggleFavorite,
+            reload: bootstrap,
+            refreshSession,
+            reloadFavorites,
+        }),
+        [
+            pokemon,
+            favorites,
+            user,
+            loading,
+            error,
+            authReady,
+            login,
+            register,
+            logout,
+            toggleFavorite,
+            bootstrap,
+            refreshSession,
+            reloadFavorites,
+        ],
+    );
 
     return (
-        <main style={{ maxWidth: 700, margin: "0 auto" }}>
-            <h1>Perfil</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            <p>
-                <strong>Nome:</strong> {user?.displayName}
-            </p>
-            <p>
-                <strong>Email:</strong> {user?.email}
-            </p>
-
-            {user?.avatarUrl ? (
-                <div>
-                    <p>Avatar atual:</p>
-                    <img
-                        src={`${import.meta.env.VITE_API_URL}${user.avatarUrl}`}
-                        alt="avatar"
-                        width={120}
-                        height={120}
-                        style={{ objectFit: "cover", borderRadius: 8 }}
-                    />
-                </div>
-            ) : (
-                <p>Sem avatar.</p>
-            )}
-
-            <div style={{ marginTop: 12 }}>
-                <label>
-                    Upload avatar:
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        disabled={loading}
-                    />
-                </label>
-            </div>
-
-            {loading ? <p>A enviar...</p> : null}
-        </main>
+        <PokedexContext.Provider value={value}>
+            {children}
+        </PokedexContext.Provider>
     );
+}
+
+export function usePokedex() {
+    const ctx = useContext(PokedexContext);
+
+    if (!ctx) {
+        throw new Error("usePokedex deve ser usado dentro do PokedexProvider");
+    }
+
+    return ctx;
 }
 ```
 
-### 6.0.5) Criar componente de rota protegida
+### Checkpoint 7
 
-#### 6.0.5.1) Criar `frontend/src/components/ProtectedRoute.jsx`
+- App arranca mesmo sem sessão (fica `user = null`, `authReady = true`).
+- Com sessão ativa, favoritos são carregados do backend.
+- `toggleFavorite` atualiza estado sem “setState no-op”.
 
-**Caminho:** `frontend/src/components/ProtectedRoute.jsx`
+---
+
+## 8) Frontend: Router + ProtectedRoute + navegação condicional
+
+### O que é
+
+Nesta etapa protegemos páginas privadas e mostramos links certos conforme login.
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **React Router v6**: sistema de roteamento declarativo com `Routes`/`Route`.
+- **Nested routes**: rotas filhas renderizadas dentro de um layout pai via `Outlet`.
+- **`Navigate`**: redirecionamento declarativo.
+- **ProtectedRoute**: guarda de autenticação para rotas privadas.
+
+2. **Como funciona “por baixo”**
+
+- O router compara o URL atual com a árvore de rotas.
+- Se existir rota pai com `element={<Layout/>}`, o `Outlet` define onde entra a página filha.
+- `Navigate` troca a localização sem recarregar a página.
+- `useLocation` permite guardar origem para voltar após login.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- A app precisa de áreas públicas (home/login/registo) e privadas (favoritos/equipas/perfil).
+- Layout comum evita duplicar navegação em todas as páginas.
+- Redireção pós-login melhora fluxo do utilizador (volta para onde queria entrar).
+
+4. **Erros comuns e sintomas**
+
+- Esquecer `Outlet` no Layout -> páginas filhas não aparecem.
+- Rota privada sem guard -> acesso direto por URL sem login.
+- `Navigate` sem `replace` em certos fluxos -> histórico confuso ao usar botão “voltar”.
+- NotFound mal ligado -> rota inválida cai em página branca/erro.
+
+5. **Boas práticas e segurança**
+
+- Segurança real continua no backend; ProtectedRoute é UX/controle no cliente.
+- Manter árvore de rotas explícita e legível.
+- Evitar lógica de autenticação dispersa por múltiplas páginas.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - regra mental
+
+```txt
+Frontend protege experiência.
+Backend protege dados.
+Precisamos dos dois.
+```
+
+> Exemplo isolado - nested routes
+
+```txt
+/ (Layout)
+  /login
+  /favoritos
+```
+
+### Porque fazemos isto
+
+Evitas acesso direto a páginas privadas por URL e eliminas estado visual inconsistente na navbar.
+
+### 8.1) Criar `ProtectedRoute`
+
+`frontend/src/components/ProtectedRoute.jsx`:
 
 ```jsx
-/**
- * @file ProtectedRoute.jsx
- * @description Componente de proteção de rotas.
- *
- * Lógica:
- * - enquanto authReady=false, mostramos “a carregar”
- * - quando authReady=true:
- *   - se user existe -> renderiza children
- *   - senão -> redireciona para /login
- */
+import { Navigate, useLocation } from "react-router-dom";
+import LoadingSpinner from "@/components/LoadingSpinner.jsx";
+import { usePokedex } from "@/context/PokedexContext.jsx";
 
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
-
-/**
- * @param {{ children: React.ReactNode }} props
- * @returns {JSX.Element}
- */
-export default function ProtectedRoute({ children }) {
+function ProtectedRoute({ children }) {
     const { user, authReady } = usePokedex();
+    const location = useLocation();
 
     if (!authReady) {
-        return <p>A carregar sessão...</p>;
+        return <LoadingSpinner />;
     }
 
     if (!user) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
-    return <>{children}</>;
+    return children;
 }
+
+export default ProtectedRoute;
 ```
 
-### 6.0.6) ALTERAR rotas do frontend
+### 8.2) Atualizar `Layout` para links por estado de login
 
-#### 6.0.6.1) Alterar `frontend/src/App.jsx`
-
-> **Faz replace do ficheiro todo.**  
-> Este `App.jsx` é a versão da Ficha 5 (com `Layout` e rotas nested), com as rotas novas + proteção em `/favoritos`, `/equipas`, `/perfil`.
-
-**Caminho:** `frontend/src/App.jsx`
+`frontend/src/components/Layout.jsx`:
 
 ```jsx
-/* src/App.jsx */
+import { NavLink, Outlet } from "react-router-dom";
+import { usePokedex } from "@/context/PokedexContext.jsx";
+
+function Layout() {
+    const { pokemon, favorites, user, logout } = usePokedex();
+
+    async function handleLogout() {
+        try {
+            await logout();
+        } catch (err) {
+            console.error(err);
+            window.alert("Não foi possível terminar sessão.");
+        }
+    }
+
+    return (
+        <div className="pokedex">
+            <header className="pokedex__hero">
+                <div>
+                    <h1 className="pokedex__hero-title">Pokédex Digital</h1>
+                    <p className="pokedex__hero-subtitle">
+                        Sessão, equipas e perfil com avatar
+                    </p>
+                    <div className="pokedex__hero-stats">
+                        <div className="pokedex__hero-stat">
+                            Total
+                            <strong>{pokemon.length || 151}</strong>
+                        </div>
+                        <div className="pokedex__hero-stat">
+                            Favoritos
+                            <strong>{favorites.length}</strong>
+                        </div>
+                        <div className="pokedex__hero-stat">
+                            Utilizador
+                            <strong>
+                                {user ? user.username : "visitante"}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <nav className="type-filter" aria-label="Navegação principal">
+                <div className="type-filter__buttons">
+                    <NavLink to="/" end className="type-filter__button">
+                        Home
+                    </NavLink>
+
+                    {user ? (
+                        <>
+                            <NavLink
+                                to="/favoritos"
+                                className="type-filter__button"
+                            >
+                                Favoritos
+                            </NavLink>
+                            <NavLink
+                                to="/equipas"
+                                className="type-filter__button"
+                            >
+                                Equipas
+                            </NavLink>
+                            <NavLink
+                                to="/perfil"
+                                className="type-filter__button"
+                            >
+                                Perfil
+                            </NavLink>
+                            <button
+                                type="button"
+                                className="type-filter__button"
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <NavLink
+                                to="/login"
+                                className="type-filter__button"
+                            >
+                                Login
+                            </NavLink>
+                            <NavLink
+                                to="/registo"
+                                className="type-filter__button"
+                            >
+                                Registo
+                            </NavLink>
+                        </>
+                    )}
+                </div>
+            </nav>
+
+            <Outlet />
+        </div>
+    );
+}
+
+export default Layout;
+```
+
+### 8.3) Router final
+
+`frontend/src/App.jsx`:
+
+```jsx
 import { Route, Routes } from "react-router-dom";
 import Layout from "@/components/Layout.jsx";
-import NotFound from "@/components/NotFound.jsx";
-
-// Páginas existentes (vieram da Ficha 5; foram movidas para /pages)
-import PokemonListPage from "@/pages/PokemonListPage.jsx";
-import PokemonDetailsPage from "@/pages/PokemonDetailsPage.jsx";
-import FavoritesPage from "@/pages/FavoritesPage.jsx";
-
-// NOVO (Ficha 6)
 import ProtectedRoute from "@/components/ProtectedRoute.jsx";
+import FavoritesPage from "@/pages/FavoritesPage.jsx";
 import LoginPage from "@/pages/LoginPage.jsx";
+import NotFound from "@/pages/NotFound.jsx";
+import PokemonDetailsPage from "@/pages/PokemonDetailsPage.jsx";
+import PokemonListPage from "@/pages/PokemonListPage.jsx";
+import ProfilePage from "@/pages/ProfilePage.jsx";
 import RegisterPage from "@/pages/RegisterPage.jsx";
 import TeamsPage from "@/pages/TeamsPage.jsx";
-import ProfilePage from "@/pages/ProfilePage.jsx";
 
-export default function App() {
+function App() {
     return (
         <Routes>
             <Route path="/" element={<Layout />}>
                 <Route index element={<PokemonListPage />} />
                 <Route path="pokemon/:id" element={<PokemonDetailsPage />} />
-
-                {/* Rotas públicas (sem login) */}
                 <Route path="login" element={<LoginPage />} />
-                <Route path="registar" element={<RegisterPage />} />
+                <Route path="registo" element={<RegisterPage />} />
 
-                {/* Rotas protegidas (exigem sessão) */}
                 <Route
                     path="favoritos"
                     element={
@@ -3259,977 +2040,48 @@ export default function App() {
         </Routes>
     );
 }
+
+export default App;
 ```
 
-### 6.0.7) ALTERAR o Context (obrigatório para não quebrar o arranque)
+### 8.4) Páginas de auth e equipas
 
-> Na Ficha 5, o `loadInitialData()` chamava `getFavorites()` logo ao arrancar.  
-> Na Ficha 6, **favoritos exigem login**, por isso isso dava 401 e partia a app logo ao carregar.
-
-#### 6.0.7.1) Substituir `frontend/src/context/PokedexContext.jsx`
-
-> **Faz replace do ficheiro todo.**  
-> Mantém tudo o que tinhas (pokemon + favoritos), e adiciona o mínimo necessário para auth.
-
-**Caminho:** `frontend/src/context/PokedexContext.jsx`
+`frontend/src/pages/LoginPage.jsx`:
 
 ```jsx
-/* src/context/PokedexContext.jsx */
-import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
-import { fetchPokemonList } from "@/services/pokeApi.js";
-import {
-    addFavorite,
-    getFavorites,
-    removeFavorite,
-} from "@/services/favoritesApi.js";
-import {
-    login as loginApi,
-    logout as logoutApi,
-    me as meApi,
-    register as registerApi,
-} from "@/services/authApi.js";
-
-// Gen 1 = 151
-const POKEMON_LIMIT = 151;
-
-const PokedexContext = createContext(null);
-
-export function PokedexProvider({ children }) {
-    // -----------------------------
-    // Estado principal (Ficha 5)
-    // -----------------------------
-    const [pokemon, setPokemon] = useState([]);
-    const [favorites, setFavorites] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // -----------------------------
-    // NOVO (Ficha 6) — Autenticação
-    // -----------------------------
-    const [user, setUser] = useState(null);
-    const [authReady, setAuthReady] = useState(false);
-
-    // ----------------------------------------------------------------------
-    // Helper: tenta obter sessão atual.
-    // - Se não houver sessão (401), devolve null (não é erro "fatal").
-    // - Se houver outro erro (rede, 500, etc), re-lança.
-    // ----------------------------------------------------------------------
-    const safeMe = useCallback(async () => {
-        try {
-            const { user: meUser } = await meApi();
-            return meUser;
-        } catch (err) {
-            const status = err?.response?.status;
-
-            // 401 = sem sessão (normal antes de login)
-            if (status === 401) return null;
-
-            // outros erros: queremos saber
-            throw err;
-        }
-    }, []);
-
-    const loadInitialData = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
-            // Fazemos Pokémon SEMPRE (app pode funcionar sem login)
-            const pokemonPromise = fetchPokemonList(POKEMON_LIMIT);
-
-            // Tentamos recuperar sessão (pode ser null)
-            const meUser = await safeMe();
-
-            // Quando chegamos aqui, já sabemos se há ou não user
-            setUser(meUser);
-            setAuthReady(true);
-
-            // Agora terminamos o fetch da lista
-            const pokemonList = await pokemonPromise;
-            setPokemon(pokemonList);
-
-            // Favoritos só fazem sentido se houver sessão
-            if (meUser) {
-                const favoritesList = await getFavorites();
-                setFavorites(favoritesList);
-            } else {
-                setFavorites([]);
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Falha ao carregar dados.");
-
-            // IMPORTANTÍSSIMO: mesmo com erro, marcamos authReady para o UI não ficar preso.
-            setAuthReady(true);
-        } finally {
-            setLoading(false);
-        }
-    }, [safeMe]);
-
-    useEffect(() => {
-        loadInitialData();
-    }, [loadInitialData]);
-
-    // ------------------------------------------------------------
-    // Favoritos (igual à Ficha 5, mas agora exige login)
-    // ------------------------------------------------------------
-    const toggleFavorite = useCallback(
-        async (pokemonId) => {
-            // Se não houver sessão, não tentamos chamar a API (vai dar 401)
-            if (!user) {
-                alert("Precisas de fazer login para usar favoritos.");
-                return;
-            }
-
-            setError(null);
-
-            try {
-                const isFavorite = favorites.includes(pokemonId);
-
-                if (isFavorite) {
-                    await removeFavorite(pokemonId);
-                    setFavorites((prev) =>
-                        prev.filter((id) => id !== pokemonId),
-                    );
-                } else {
-                    await addFavorite(pokemonId);
-                    setFavorites((prev) => [...prev, pokemonId]);
-                }
-            } catch (err) {
-                console.error(err);
-                setError("Falha ao atualizar favoritos.");
-            }
-        },
-        [favorites, user],
-    );
-
-    // ------------------------------------------------------------
-    // NOVO (Ficha 6) — ações de auth
-    // ------------------------------------------------------------
-    const refreshSession = useCallback(async () => {
-        setError(null);
-
-        try {
-            const meUser = await safeMe();
-            setUser(meUser);
-            setAuthReady(true);
-
-            if (meUser) {
-                const favoritesList = await getFavorites();
-                setFavorites(favoritesList);
-            } else {
-                setFavorites([]);
-            }
-
-            return meUser;
-        } catch (err) {
-            console.error(err);
-            setError("Falha ao atualizar sessão.");
-            setAuthReady(true);
-            return null;
-        }
-    }, [safeMe]);
-
-    const register = useCallback(async ({ displayName, email, password }) => {
-        setError(null);
-
-        try {
-            const { user: newUser } = await registerApi({
-                displayName,
-                email,
-                password,
-            });
-            setUser(newUser);
-            setAuthReady(true);
-
-            // após registo, favoritos vazios
-            setFavorites([]);
-            return newUser;
-        } catch (err) {
-            console.error(err);
-            const msg = err?.response?.data?.error || "Falha no registo.";
-            setError(msg);
-            throw err;
-        }
-    }, []);
-
-    const login = useCallback(async ({ email, password }) => {
-        setError(null);
-
-        try {
-            const { user: loggedUser } = await loginApi({ email, password });
-            setUser(loggedUser);
-            setAuthReady(true);
-
-            // carregar favoritos do backend
-            const favoritesList = await getFavorites();
-            setFavorites(favoritesList);
-
-            return loggedUser;
-        } catch (err) {
-            console.error(err);
-            const msg = err?.response?.data?.error || "Falha no login.";
-            setError(msg);
-            throw err;
-        }
-    }, []);
-
-    const logout = useCallback(async () => {
-        setError(null);
-
-        try {
-            await logoutApi();
-        } catch (err) {
-            // Mesmo que o backend falhe a limpar cookies,
-            // localmente vamos "terminar sessão" para não bloquear o utilizador.
-            console.error(err);
-        } finally {
-            setUser(null);
-            setFavorites([]);
-            setAuthReady(true);
-        }
-    }, []);
-
-    const value = useMemo(
-        () => ({
-            // dados
-            pokemon,
-            favorites,
-            loading,
-            error,
-
-            // favoritos
-            toggleFavorite,
-
-            // auth
-            user,
-            authReady,
-            register,
-            login,
-            logout,
-            refreshSession,
-        }),
-        [
-            pokemon,
-            favorites,
-            loading,
-            error,
-            toggleFavorite,
-            user,
-            authReady,
-            register,
-            login,
-            logout,
-            refreshSession,
-        ],
-    );
-
-    return (
-        <PokedexContext.Provider value={value}>
-            {children}
-        </PokedexContext.Provider>
-    );
-}
-
-export function usePokedex() {
-    const ctx = useContext(PokedexContext);
-    if (!ctx)
-        throw new Error("usePokedex deve ser usado dentro de PokedexProvider");
-    return ctx;
-}
-```
-
-### 6.0.8) Criar services novos (axios)
-
-#### 6.0.8.1) Criar `frontend/src/services/authApi.js`
-
-**Caminho:** `frontend/src/services/authApi.js`
-
-```js
-/**
- * @file authApi.js
- * @description Chamadas de autenticação.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Regista utilizador.
- *
- * @param {{ email: string, password: string, displayName: string }} data
- * @returns {Promise<{ user: any }>}
- */
-export async function register(data) {
-    const res = await api.post("/api/auth/register", data);
-    return res.data;
-}
-
-/**
- * Login.
- *
- * @param {{ email: string, password: string }} data
- * @returns {Promise<{ user: any }>}
- */
-export async function login(data) {
-    const res = await api.post("/api/auth/login", data);
-    return res.data;
-}
-
-/**
- * Logout.
- *
- * @returns {Promise<void>}
- */
-export async function logout() {
-    await api.post("/api/auth/logout");
-}
-
-/**
- * Restaura sessão (se houver cookie JWT válido).
- *
- * @returns {Promise<{ user: any }>}
- */
-export async function me() {
-    const res = await api.get("/api/auth/me");
-    return res.data;
-}
-```
-
-#### 6.0.8.2) Criar `frontend/src/services/teamsApi.js`
-
-**Caminho:** `frontend/src/services/teamsApi.js`
-
-```js
-/**
- * @file teamsApi.js
- * @description Equipas paginadas.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Lista equipas com paginação e pesquisa.
- *
- * @param {{ page: number, limit: number, q: string }} params
- * @returns {Promise<{ items: any[], page: number, limit: number, total: number }>}
- */
-export async function listTeams(params) {
-    const res = await api.get("/api/teams", { params });
-    return res.data;
-}
-
-/**
- * Cria equipa.
- *
- * @param {{ name: string, pokemonIds: number[] }} data
- * @returns {Promise<{ team: any }>}
- */
-export async function createTeam(data) {
-    const res = await api.post("/api/teams", data);
-    return res.data;
-}
-
-/**
- * Apaga equipa.
- *
- * @param {string} id
- * @returns {Promise<void>}
- */
-export async function deleteTeam(id) {
-    await api.delete(`/api/teams/${id}`);
-}
-```
-
-#### 6.0.8.3) Criar `frontend/src/services/usersApi.js`
-
-**Caminho:** `frontend/src/services/usersApi.js`
-
-```js
-/**
- * @file usersApi.js
- * @description Upload de avatar.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Faz upload do avatar.
- *
- * @param {File} file
- * @returns {Promise<{ user: any }>}
- */
-export async function uploadAvatar(file) {
-    const form = new FormData();
-    form.append("avatar", file);
-
-    const res = await api.post("/api/users/me/avatar", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    return res.data;
-}
-```
-
----
-
-## 6.1) Instalar Axios
-
-Em `frontend/`:
-
-```bash
-npm install axios
-```
-
----
-
-## 6.2) Axios central: `apiClient.js` (com CSRF automático)
-
-Cria `frontend/src/services/apiClient.js`:
-
-```js
-/**
- * @file apiClient.js
- * @description Axios central:
- * - baseURL
- * - withCredentials para cookies (JWT HttpOnly)
- * - CSRF header automático em requests mutáveis
- */
-
-import axios from "axios";
-
-/**
- * Lê um cookie pelo nome.
- *
- * @param {string} name
- * @returns {string}
- */
-function getCookie(name) {
-    const parts = document.cookie.split(";").map((p) => p.trim());
-    const found = parts.find((p) => p.startsWith(`${name}=`));
-    return found ? decodeURIComponent(found.split("=").slice(1).join("=")) : "";
-}
-
-export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3000",
-    withCredentials: true,
-});
-
-api.interceptors.request.use((config) => {
-    const method = (config.method ?? "get").toUpperCase();
-    const mutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
-
-    if (mutating) {
-        const csrf = getCookie("csrfToken");
-        if (csrf) config.headers["X-CSRF-Token"] = csrf;
-    }
-
-    return config;
-});
-```
-
----
-
-## 6.3) Services (camada de API)
-
-> Isto é a “camada que fala com o backend”.  
-> O resto da app chama funções simples, e não fica cheio de `axios.get(...)`.
-
-### 6.3.1) `authApi.js`
-
-Cria `frontend/src/services/authApi.js`:
-
-```js
-/**
- * @file authApi.js
- * @description Chamadas de autenticação.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Regista utilizador.
- *
- * @param {{ email: string, password: string, displayName: string }} data
- * @returns {Promise<{ user: any }>}
- */
-export async function register(data) {
-    const res = await api.post("/api/auth/register", data);
-    return res.data;
-}
-
-/**
- * Login.
- *
- * @param {{ email: string, password: string }} data
- * @returns {Promise<{ user: any }>}
- */
-export async function login(data) {
-    const res = await api.post("/api/auth/login", data);
-    return res.data;
-}
-
-/**
- * Logout.
- *
- * @returns {Promise<void>}
- */
-export async function logout() {
-    await api.post("/api/auth/logout");
-}
-
-/**
- * Restaura sessão (se houver cookie JWT válido).
- *
- * @returns {Promise<{ user: any }>}
- */
-export async function me() {
-    const res = await api.get("/api/auth/me");
-    return res.data;
-}
-```
-
-### 6.3.2) `favoritesApi.js`
-
-Cria `frontend/src/services/favoritesApi.js`:
-
-```js
-/**
- * @file favoritesApi.js
- * @description Favoritos por utilizador autenticado.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Lista favoritos.
- *
- * @returns {Promise<{ favorites: number[] }>}
- */
-export async function getFavorites() {
-    const res = await api.get("/api/favorites");
-    return res.data;
-}
-
-/**
- * Adiciona favorito.
- *
- * @param {number} pokemonId
- * @returns {Promise<{ favorites: number[] }>}
- */
-export async function addFavorite(pokemonId) {
-    const res = await api.post(`/api/favorites/${pokemonId}`);
-    return res.data;
-}
-
-/**
- * Remove favorito.
- *
- * @param {number} pokemonId
- * @returns {Promise<{ favorites: number[] }>}
- */
-export async function removeFavorite(pokemonId) {
-    const res = await api.delete(`/api/favorites/${pokemonId}`);
-    return res.data;
-}
-```
-
-### 6.3.3) `teamsApi.js`
-
-Cria `frontend/src/services/teamsApi.js`:
-
-```js
-/**
- * @file teamsApi.js
- * @description Equipas paginadas.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Lista equipas com paginação e pesquisa.
- *
- * @param {{ page: number, limit: number, q: string }} params
- * @returns {Promise<{ items: any[], page: number, limit: number, total: number }>}
- */
-export async function listTeams(params) {
-    const res = await api.get("/api/teams", { params });
-    return res.data;
-}
-
-/**
- * Cria equipa.
- *
- * @param {{ name: string, pokemonIds: number[] }} data
- * @returns {Promise<{ team: any }>}
- */
-export async function createTeam(data) {
-    const res = await api.post("/api/teams", data);
-    return res.data;
-}
-
-/**
- * Apaga equipa.
- *
- * @param {string} id
- * @returns {Promise<void>}
- */
-export async function deleteTeam(id) {
-    await api.delete(`/api/teams/${id}`);
-}
-```
-
-### 6.3.4) `usersApi.js` (upload)
-
-Cria `frontend/src/services/usersApi.js`:
-
-```js
-/**
- * @file usersApi.js
- * @description Upload de avatar.
- */
-
-import { api } from "./apiClient";
-
-/**
- * Faz upload do avatar.
- *
- * @param {File} file
- * @returns {Promise<{ user: any }>}
- */
-export async function uploadAvatar(file) {
-    const form = new FormData();
-    form.append("avatar", file);
-
-    const res = await api.post("/api/users/me/avatar", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    return res.data;
-}
-```
-
-Checkpoint (Paragem F):
-
-```bash
-git add -A
-git commit -m "Ficha 6: Axios central + services"
-```
-
----
-
-## 6.4) Context: adicionar Auth + boot de sessão + favoritos do backend
-
-### 6.4.1) Teoria: “boot” da SPA
-
-Quando a SPA abre:
-
-- não sabemos se o user está autenticado
-- chamamos `/api/auth/me`
-- se der 200 → user existe e podemos buscar favoritos (ou usar `user.favorites`)
-- se der 401 → sem sessão
-
-Para evitar “flash” de UI errada, criamos `authReady`.
-
----
-
-### 6.4.2) `PokedexContext.jsx` (versão final completa)
-
-> Importante: este ficheiro **substitui** o teu Context da Ficha 5.  
-> Mantém a ideia de “estado global” e acrescenta Auth + favoritos do backend.  
-> Se o teu Context da Ficha 5 tiver mais lógica (filtros, etc.), integra-a aqui.
-
-Cria/atualiza `frontend/src/context/PokedexContext.jsx`:
-
-```jsx
-/**
- * @file PokedexContext.jsx
- * @description Context global da app:
- * - Auth (user, authReady, login, register, logout)
- * - Favoritos (favoriteIds, toggleFavorite)
- *
- * Nota pedagógica:
- * - O token JWT está em cookie HttpOnly, por isso o frontend não “vê” o token.
- * - Para saber se há sessão, chamamos /api/auth/me.
- */
-
-import React, {
-    createContext,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-} from "react";
-import * as authApi from "../services/authApi.js";
-import * as favoritesApi from "../services/favoritesApi.js";
-
-/**
- * @typedef {Object} PokedexContextValue
- * @property {any|null} user
- * @property {boolean} authReady
- * @property {number[]} favoriteIds
- * @property {(data: {email: string, password: string, displayName: string}) => Promise<void>} register
- * @property {(data: {email: string, password: string}) => Promise<void>} login
- * @property {() => Promise<void>} logout
- * @property {() => Promise<void>} refreshSession
- * @property {(pokemonId: number) => Promise<void>} toggleFavorite
- */
-
-const PokedexContext = createContext(null);
-
-/**
- * Hook de acesso ao Context.
- *
- * @returns {PokedexContextValue}
- */
-export function usePokedex() {
-    const value = useContext(PokedexContext);
-    if (!value)
-        throw new Error(
-            "usePokedex tem de ser usado dentro de <PokedexProvider>",
-        );
-    return value;
-}
-
-/**
- * Provider do Context.
- *
- * @param {{ children: React.ReactNode }} props
- * @returns {JSX.Element}
- */
-export function PokedexProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [authReady, setAuthReady] = useState(false);
-
-    /**
-     * Lista de IDs favoritos (vêm do backend).
-     * Guardamos separado para ser rápido verificar includes().
-     */
-    const [favoriteIds, setFavoriteIds] = useState([]);
-
-    /**
-     * Restaura sessão ao arrancar a SPA.
-     *
-     * Lógica:
-     * - tenta /me
-     * - se OK: seta user e favorites
-     * - se 401: user = null e favorites = []
-     */
-    async function refreshSession() {
-        try {
-            const data = await authApi.me();
-            setUser(data.user);
-
-            // Nesta ficha, favorites estão no próprio user.
-            // Também podias chamar GET /api/favorites, mas não é obrigatório.
-            setFavoriteIds(
-                Array.isArray(data.user?.favorites) ? data.user.favorites : [],
-            );
-        } catch (err) {
-            // 401 ou falha de rede
-            setUser(null);
-            setFavoriteIds([]);
-        } finally {
-            setAuthReady(true);
-        }
-    }
-
-    useEffect(() => {
-        refreshSession();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    /**
-     * Registar utilizador.
-     *
-     * @param {{ email: string, password: string, displayName: string }} data
-     * @returns {Promise<void>}
-     */
-    async function register(data) {
-        const res = await authApi.register(data);
-        setUser(res.user);
-        setFavoriteIds(
-            Array.isArray(res.user?.favorites) ? res.user.favorites : [],
-        );
-        setAuthReady(true);
-    }
-
-    /**
-     * Login.
-     *
-     * @param {{ email: string, password: string }} data
-     * @returns {Promise<void>}
-     */
-    async function login(data) {
-        const res = await authApi.login(data);
-        setUser(res.user);
-        setFavoriteIds(
-            Array.isArray(res.user?.favorites) ? res.user.favorites : [],
-        );
-        setAuthReady(true);
-    }
-
-    /**
-     * Logout.
-     *
-     * @returns {Promise<void>}
-     */
-    async function logout() {
-        await authApi.logout();
-        setUser(null);
-        setFavoriteIds([]);
-    }
-
-    /**
-     * Alterna favorito (add/remove).
-     *
-     * Regras:
-     * - se não houver user, não faz sentido (rota protegida deve evitar isto)
-     * - decide add ou remove pelo estado atual do array
-     *
-     * @param {number} pokemonId
-     * @returns {Promise<void>}
-     */
-    async function toggleFavorite(pokemonId) {
-        if (!user) return;
-
-        const has = favoriteIds.includes(pokemonId);
-
-        if (has) {
-            const data = await favoritesApi.removeFavorite(pokemonId);
-            setFavoriteIds(data.favorites);
-        } else {
-            const data = await favoritesApi.addFavorite(pokemonId);
-            setFavoriteIds(data.favorites);
-        }
-    }
-
-    const value = useMemo(
-        () => ({
-            user,
-            authReady,
-            favoriteIds,
-            register,
-            login,
-            logout,
-            refreshSession,
-            toggleFavorite,
-        }),
-        [user, authReady, favoriteIds],
-    );
-
-    return (
-        <PokedexContext.Provider value={value}>
-            {children}
-        </PokedexContext.Provider>
-    );
-}
-```
-
----
-
-## 6.5) ProtectedRoute (rotas protegidas)
-
-Cria `frontend/src/components/ProtectedRoute.jsx`:
-
-```jsx
-/**
- * @file ProtectedRoute.jsx
- * @description Componente de proteção de rotas.
- *
- * Lógica:
- * - enquanto authReady=false, mostramos “a carregar”
- * - quando authReady=true:
- *   - se user existe -> renderiza children
- *   - senão -> redireciona para /login
- */
-
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
-
-/**
- * @param {{ children: React.ReactNode }} props
- * @returns {JSX.Element}
- */
-export default function ProtectedRoute({ children }) {
-    const { user, authReady } = usePokedex();
-
-    if (!authReady) {
-        return <p>A carregar sessão...</p>;
-    }
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    return <>{children}</>;
-}
-```
-
----
-
-## 6.6) Páginas: Login e Register
-
-### 6.6.1) `LoginPage.jsx`
-
-Cria `frontend/src/pages/LoginPage.jsx`:
-
-```jsx
-/**
- * @file LoginPage.jsx
- * @description Página de login.
- */
-
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
-
-/**
- * @returns {JSX.Element}
- */
-export default function LoginPage() {
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { usePokedex } from "@/context/PokedexContext.jsx";
+
+function LoginPage() {
     const { login } = usePokedex();
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = location.state?.from?.pathname || "/";
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
-    /**
-     * Submete login.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(event) {
+        event.preventDefault();
         setError("");
-        setLoading(true);
+        setSubmitting(true);
 
         try {
             await login({ email, password });
-            navigate("/favoritos");
-        } catch (err) {
-            setError("Login falhou. Confirma email e password.");
+            navigate(redirectTo, { replace: true });
+        } catch {
+            setError("Login inválido.");
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     }
 
     return (
-        <main style={{ maxWidth: 420, margin: "0 auto" }}>
-            <h1>Login</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
+        <section className="pokedex__results">
+            <h2>Login</h2>
             <form onSubmit={handleSubmit}>
                 <label>
                     Email
@@ -4240,7 +2092,6 @@ export default function LoginPage() {
                         required
                     />
                 </label>
-
                 <label>
                     Password
                     <input
@@ -4250,86 +2101,64 @@ export default function LoginPage() {
                         required
                     />
                 </label>
-
-                <button type="submit" disabled={loading}>
-                    {loading ? "A entrar..." : "Entrar"}
+                <button type="submit" disabled={submitting}>
+                    {submitting ? "A entrar..." : "Entrar"}
                 </button>
             </form>
-
-            <p>
-                Não tens conta? <Link to="/registar">Registar</Link>
-            </p>
-        </main>
+            {error && <p className="pokedex__empty">{error}</p>}
+        </section>
     );
 }
+
+export default LoginPage;
 ```
 
-### 6.6.2) `RegisterPage.jsx`
-
-Cria `frontend/src/pages/RegisterPage.jsx`:
+`frontend/src/pages/RegisterPage.jsx`:
 
 ```jsx
-/**
- * @file RegisterPage.jsx
- * @description Página de registo.
- */
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { usePokedex } from "@/context/PokedexContext.jsx";
 
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
-
-/**
- * @returns {JSX.Element}
- */
-export default function RegisterPage() {
+function RegisterPage() {
     const { register } = usePokedex();
     const navigate = useNavigate();
 
-    const [displayName, setDisplayName] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
-    /**
-     * Submete registo.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(event) {
+        event.preventDefault();
         setError("");
-        setLoading(true);
+        setSubmitting(true);
 
         try {
-            await register({ displayName, email, password });
-            navigate("/favoritos");
-        } catch (err) {
-            setError(
-                "Registo falhou. Verifica se o email já existe e se a password tem 8+ chars.",
-            );
+            await register({ username, email, password });
+            navigate("/", { replace: true });
+        } catch {
+            setError("Não foi possível criar conta.");
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     }
 
     return (
-        <main style={{ maxWidth: 420, margin: "0 auto" }}>
-            <h1>Registar</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
+        <section className="pokedex__results">
+            <h2>Registo</h2>
             <form onSubmit={handleSubmit}>
                 <label>
-                    Nome
+                    Username
                     <input
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        minLength={3}
                         required
                     />
                 </label>
-
                 <label>
                     Email
                     <input
@@ -4339,744 +2168,506 @@ export default function RegisterPage() {
                         required
                     />
                 </label>
-
                 <label>
-                    Password (mínimo 8 chars)
+                    Password
                     <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        minLength={6}
                         required
-                        minLength={8}
                     />
                 </label>
-
-                <button type="submit" disabled={loading}>
-                    {loading ? "A criar..." : "Criar conta"}
+                <button type="submit" disabled={submitting}>
+                    {submitting ? "A criar..." : "Criar conta"}
                 </button>
             </form>
-
-            <p>
-                Já tens conta? <Link to="/login">Login</Link>
-            </p>
-        </main>
+            {error && <p className="pokedex__empty">{error}</p>}
+        </section>
     );
 }
+
+export default RegisterPage;
 ```
 
----
-
-## 6.7) Página Favoritos (protegida)
-
-> Se na Ficha 5 já tinhas `FavoritesPage`, podes manter o layout.  
-> A diferença é que agora os IDs vêm do backend via Context (`favoriteIds`), e o toggle usa `toggleFavorite`.
-
-Cria `frontend/src/pages/FavoritesPage.jsx`:
+`frontend/src/pages/TeamsPage.jsx`:
 
 ```jsx
-/**
- * @file FavoritesPage.jsx
- * @description Página de favoritos (protegida).
- *
- * Estratégia:
- * - temos apenas IDs no backend
- * - para mostrar nomes/imagens, precisamos de ir à PokéAPI buscar detalhes
- * - fazemos Promise.all para buscar todos os Pokémon favoritos
- */
+import { useEffect, useState } from "react";
+import { createTeam, listTeams, removeTeam } from "@/services/teamsApi.js";
 
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { usePokedex } from "../context/PokedexContext.jsx";
-
-const POKE_API = "https://pokeapi.co/api/v2/pokemon";
-
-/**
- * Busca detalhes de um Pokémon por id.
- *
- * @param {number} id
- * @returns {Promise<any>}
- */
-async function fetchPokemonById(id) {
-    const res = await fetch(`${POKE_API}/${id}`);
-    if (!res.ok) throw new Error("Falha ao buscar Pokémon");
-    return res.json();
-}
-
-/**
- * @returns {JSX.Element}
- */
-export default function FavoritesPage() {
-    const { favoriteIds, toggleFavorite } = usePokedex();
-
-    const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function load() {
-            setError("");
-            setLoading(true);
-
-            try {
-                const data = await Promise.all(
-                    favoriteIds.map((id) => fetchPokemonById(id)),
-                );
-                if (!cancelled) setItems(data);
-            } catch {
-                if (!cancelled)
-                    setError("Falha ao carregar detalhes dos favoritos.");
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-
-        if (favoriteIds.length === 0) {
-            setItems([]);
-            return;
-        }
-
-        load();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [favoriteIds]);
-
-    return (
-        <main style={{ maxWidth: 900, margin: "0 auto" }}>
-            <h1>Favoritos</h1>
-
-            {loading ? <p>A carregar...</p> : null}
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            {favoriteIds.length === 0 ? (
-                <p>Ainda não tens favoritos.</p>
-            ) : (
-                <ul
-                    style={{
-                        listStyle: "none",
-                        padding: 0,
-                        display: "grid",
-                        gap: 12,
-                    }}
-                >
-                    {items.map((p) => (
-                        <li
-                            key={p.id}
-                            style={{ border: "1px solid #ddd", padding: 12 }}
-                        >
-                            <div
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 12,
-                                }}
-                            >
-                                <img
-                                    src={p.sprites?.front_default}
-                                    alt={p.name}
-                                    width={64}
-                                    height={64}
-                                />
-                                <div style={{ flex: 1 }}>
-                                    <strong>
-                                        #{p.id} {p.name}
-                                    </strong>
-                                    <div>
-                                        <Link to={`/pokemon/${p.id}`}>
-                                            Ver detalhes
-                                        </Link>
-                                    </div>
-                                </div>
-
-                                <button onClick={() => toggleFavorite(p.id)}>
-                                    Remover
-                                </button>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </main>
-    );
-}
-```
-
----
-
-## 6.8) Página Teams (paginação + pesquisa + create + delete)
-
-Cria `frontend/src/pages/TeamsPage.jsx`:
-
-```jsx
-/**
- * @file TeamsPage.jsx
- * @description Página de Equipas (protegida).
- *
- * Objetivos:
- * - listar equipas paginadas
- * - pesquisar por nome (q)
- * - criar nova equipa (nome + ids)
- * - apagar equipa
- */
-
-import React, { useEffect, useMemo, useState } from "react";
-import * as teamsApi from "../services/teamsApi.js";
-
-/**
- * Calcula número de páginas.
- *
- * @param {number} total
- * @param {number} limit
- * @returns {number}
- */
-function calcPages(total, limit) {
-    if (limit <= 0) return 1;
-    return Math.max(1, Math.ceil(total / limit));
-}
-
-/**
- * Converte string com ids "1, 25, 150" em [1,25,150].
- *
- * @param {string} raw
- * @returns {number[]}
- */
-function parseIds(raw) {
-    return raw
-        .split(",")
-        .map((x) => x.trim())
-        .filter(Boolean)
-        .map((x) => Number.parseInt(x, 10))
-        .filter((n) => Number.isFinite(n) && n > 0);
-}
-
-/**
- * @returns {JSX.Element}
- */
-export default function TeamsPage() {
-    const [page, setPage] = useState(1);
-    const [limit] = useState(5);
-
-    const [q, setQ] = useState("");
-    const [search, setSearch] = useState("");
-
+function TeamsPage() {
     const [items, setItems] = useState([]);
     const [total, setTotal] = useState(0);
-
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-
-    // Criar equipa
+    const [page, setPage] = useState(1);
+    const [pages, setPages] = useState(1);
+    const [q, setQ] = useState("");
     const [name, setName] = useState("");
-    const [rawIds, setRawIds] = useState("");
-
-    const pages = useMemo(() => calcPages(total, limit), [total, limit]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function load() {
-            setError("");
-            setLoading(true);
-
-            try {
-                const data = await teamsApi.listTeams({
-                    page,
-                    limit,
-                    q: search,
-                });
-                if (cancelled) return;
-
-                setItems(data.items);
-                setTotal(data.total);
-            } catch {
-                if (!cancelled) setError("Falha ao carregar equipas.");
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
-        }
-
-        load();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [page, limit, search]);
-
-    /**
-     * Aplica pesquisa e volta à página 1.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    function handleSearch(e) {
-        e.preventDefault();
-        setPage(1);
-        setSearch(q.trim());
-    }
-
-    /**
-     * Cria equipa e recarrega lista.
-     *
-     * @param {React.FormEvent<HTMLFormElement>} e
-     */
-    async function handleCreate(e) {
-        e.preventDefault();
-        setError("");
-
-        try {
-            const pokemonIds = parseIds(rawIds);
-
-            await teamsApi.createTeam({
-                name: name.trim(),
-                pokemonIds,
-            });
-
-            // Reset form
-            setName("");
-            setRawIds("");
-
-            // Volta ao topo e força reload
-            setPage(1);
-            setSearch((s) => s);
-        } catch (err) {
-            setError("Falha ao criar equipa. Confirma o nome e máximo 6 IDs.");
-        }
-    }
-
-    /**
-     * Apaga equipa e recarrega.
-     *
-     * @param {string} id
-     */
-    async function handleDelete(id) {
-        setError("");
-
-        try {
-            await teamsApi.deleteTeam(id);
-            // Reload “rápido”: remove localmente e ajusta total
-            setItems((prev) => prev.filter((t) => t._id !== id));
-            setTotal((t) => Math.max(0, t - 1));
-        } catch {
-            setError("Falha ao apagar equipa.");
-        }
-    }
-
-    return (
-        <main style={{ maxWidth: 900, margin: "0 auto" }}>
-            <h1>Equipas</h1>
-
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            <section style={{ marginBottom: 18 }}>
-                <h2>Pesquisar</h2>
-
-                <form onSubmit={handleSearch}>
-                    <input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder="Pesquisar por nome..."
-                    />
-                    <button type="submit">Pesquisar</button>
-                </form>
-            </section>
-
-            <section style={{ marginBottom: 18 }}>
-                <h2>Criar equipa</h2>
-
-                <form onSubmit={handleCreate}>
-                    <label>
-                        Nome
-                        <input
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                        />
-                    </label>
-
-                    <label>
-                        Pokémon IDs (separados por vírgula, máx. 6)
-                        <input
-                            value={rawIds}
-                            onChange={(e) => setRawIds(e.target.value)}
-                            placeholder="ex: 1, 4, 7, 25"
-                        />
-                    </label>
-
-                    <button type="submit">Criar</button>
-                </form>
-            </section>
-
-            <section>
-                <h2>Lista</h2>
-
-                {loading ? <p>A carregar...</p> : null}
-
-                {items.length === 0 && !loading ? (
-                    <p>Sem equipas para mostrar.</p>
-                ) : (
-                    <ul
-                        style={{
-                            listStyle: "none",
-                            padding: 0,
-                            display: "grid",
-                            gap: 12,
-                        }}
-                    >
-                        {items.map((t) => (
-                            <li
-                                key={t._id}
-                                style={{
-                                    border: "1px solid #ddd",
-                                    padding: 12,
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                    }}
-                                >
-                                    <div>
-                                        <strong>{t.name}</strong>
-                                        <div>
-                                            Pokémon:{" "}
-                                            {Array.isArray(t.pokemonIds)
-                                                ? t.pokemonIds.join(", ")
-                                                : ""}
-                                        </div>
-                                    </div>
-
-                                    <button onClick={() => handleDelete(t._id)}>
-                                        Apagar
-                                    </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-
-                <div
-                    style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "center",
-                        marginTop: 12,
-                    }}
-                >
-                    <button
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                    >
-                        Anterior
-                    </button>
-
-                    <span>
-                        Página {page} / {pages}
-                    </span>
-
-                    <button
-                        onClick={() => setPage((p) => Math.min(pages, p + 1))}
-                        disabled={page >= pages}
-                    >
-                        Seguinte
-                    </button>
-                </div>
-            </section>
-        </main>
-    );
-}
-```
-
----
-
-## 6.9) Página Profile (avatar) (extra)
-
-Cria `frontend/src/pages/ProfilePage.jsx`:
-
-```jsx
-/**
- * @file ProfilePage.jsx
- * @description Página de perfil (protegida) com upload de avatar.
- */
-
-import React, { useState } from "react";
-import { usePokedex } from "../context/PokedexContext.jsx";
-import * as usersApi from "../services/usersApi.js";
-
-/**
- * @returns {JSX.Element}
- */
-export default function ProfilePage() {
-    const { user, refreshSession } = usePokedex();
-
-    const [error, setError] = useState("");
+    const [pokemonIdsInput, setPokemonIdsInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    /**
-     * Faz upload e depois refresca /me para atualizar user no Context.
-     *
-     * @param {React.ChangeEvent<HTMLInputElement>} e
-     */
-    async function handleFileChange(e) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setError("");
+    async function load(targetPage = page) {
         setLoading(true);
+        setError("");
 
         try {
-            await usersApi.uploadAvatar(file);
-            await refreshSession();
+            const data = await listTeams({ page: targetPage, limit: 6, q });
+            setItems(data.items);
+            setTotal(data.total);
+            setPage(data.page);
+            setPages(data.pages);
         } catch {
-            setError("Upload falhou. Confirma se é imagem e <= 2MB.");
+            setError("Erro ao carregar equipas.");
         } finally {
             setLoading(false);
         }
     }
 
+    useEffect(() => {
+        load(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [q]);
+
+    async function handleCreate(event) {
+        event.preventDefault();
+        setError("");
+
+        const pokemonIds = [
+            ...new Set(
+                pokemonIdsInput
+                    .split(",")
+                    .map((x) => Number(x.trim()))
+                    .filter((x) => Number.isInteger(x) && x > 0),
+            ),
+        ];
+
+        if (!name.trim()) {
+            setError("Nome da equipa é obrigatório.");
+            return;
+        }
+
+        if (pokemonIds.length < 1 || pokemonIds.length > 6) {
+            setError("Indica entre 1 e 6 IDs de Pokémon.");
+            return;
+        }
+
+        try {
+            await createTeam({ name: name.trim(), pokemonIds });
+            setName("");
+            setPokemonIdsInput("");
+            await load(1);
+        } catch {
+            setError("Não foi possível criar equipa.");
+        }
+    }
+
+    async function handleDelete(id) {
+        try {
+            await removeTeam(id);
+            await load(page);
+        } catch {
+            setError("Não foi possível apagar equipa.");
+        }
+    }
+
     return (
-        <main style={{ maxWidth: 700, margin: "0 auto" }}>
-            <h1>Perfil</h1>
+        <section className="pokedex__results">
+            <h2>Equipas</h2>
 
-            {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
-
-            <p>
-                <strong>Nome:</strong> {user?.displayName}
-            </p>
-            <p>
-                <strong>Email:</strong> {user?.email}
-            </p>
-
-            {user?.avatarUrl ? (
-                <div>
-                    <p>Avatar atual:</p>
-                    <img
-                        src={`${import.meta.env.VITE_API_URL}${user.avatarUrl}`}
-                        alt="avatar"
-                        width={120}
-                        height={120}
-                        style={{ objectFit: "cover", borderRadius: 8 }}
+            <form onSubmit={handleCreate}>
+                <label>
+                    Nome da equipa
+                    <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
                     />
-                </div>
-            ) : (
-                <p>Sem avatar.</p>
+                </label>
+                <label>
+                    IDs Pokémon (separados por vírgula)
+                    <input
+                        value={pokemonIdsInput}
+                        onChange={(e) => setPokemonIdsInput(e.target.value)}
+                        placeholder="1, 4, 7"
+                        required
+                    />
+                </label>
+                <button type="submit">Criar equipa</button>
+            </form>
+
+            <label>
+                Pesquisar por nome
+                <input value={q} onChange={(e) => setQ(e.target.value)} />
+            </label>
+
+            {loading && <p>A carregar...</p>}
+            {error && <p className="pokedex__empty">{error}</p>}
+
+            {!loading && !error && (
+                <>
+                    <p>Total: {total}</p>
+                    <ul>
+                        {items.map((team) => (
+                            <li key={team._id}>
+                                <strong>{team.name}</strong> - [
+                                {team.pokemonIds.join(", ")}]
+                                <button
+                                    type="button"
+                                    onClick={() => handleDelete(team._id)}
+                                >
+                                    Apagar
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+
+                    <div>
+                        <button
+                            type="button"
+                            disabled={page <= 1}
+                            onClick={() => load(page - 1)}
+                        >
+                            Anterior
+                        </button>
+                        <span>
+                            Página {page} de {pages}
+                        </span>
+                        <button
+                            type="button"
+                            disabled={page >= pages}
+                            onClick={() => load(page + 1)}
+                        >
+                            Seguinte
+                        </button>
+                    </div>
+                </>
+            )}
+        </section>
+    );
+}
+
+export default TeamsPage;
+```
+
+### Checkpoint 8
+
+- Rotas privadas redirecionam para `/login` sem sessão.
+- Depois de login, links privados aparecem no `Layout`.
+- Teams cria/apaga e refresca por chamada real à API.
+
+### Erros comuns (rotas protegidas)
+
+- esquecer `authReady` no `ProtectedRoute`.
+- chamar `navigate` antes de `login` terminar.
+- rota privada sem wrapper `ProtectedRoute`.
+
+---
+
+## 9) Upload de avatar obrigatório: backend + frontend (Profile)
+
+### O que é
+
+Vamos ligar a rota `/api/users/avatar` à página de perfil.
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **`multipart/form-data`**: formato HTTP para enviar ficheiros e campos no mesmo pedido.
+- **FormData**: API do browser para construir esse payload.
+- **Multer**: middleware Express para parsing de uploads.
+- **Static files**: ficheiros servidos diretamente por URL (`/uploads/...`).
+
+2. **Como funciona “por baixo”**
+
+- O browser envia fronteiras (boundaries) multipart com metadados e bytes do ficheiro.
+- Multer intercepta pedido, valida tipo/tamanho e grava no disco.
+- Depois da gravação, a rota guarda no utilizador um caminho público (`avatarUrl`).
+- `express.static(...)` mapeia a pasta física para URL pública.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- Avatar é um caso realista de integração fullstack com ficheiros.
+- Reutilizamos sessão já autenticada para associar imagem ao utilizador certo.
+- O retorno `{ avatarUrl }` simplifica atualização imediata da UI.
+
+4. **Erros comuns e sintomas**
+
+- 400 no upload com mensagem de ficheiro inválido -> tipo não imagem.
+- 413 no upload -> ficheiro maior que limite.
+- Upload 200 mas imagem não abre -> static não aponta para o diretório certo.
+- Frontend envia JSON em vez de FormData -> `req.file` fica vazio.
+
+5. **Boas práticas e segurança**
+
+- Limitar tamanho de upload protege servidor e disco.
+- Não confiar só no nome/extensão do ficheiro.
+- Idealmente, em cenários reais, usar armazenamento dedicado e varredura de conteúdo.
+- Manter diretório de uploads controlado e sem execução de código.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - analogia
+
+```txt
+FormData é como um envelope com vários compartimentos:
+- campo "avatar" com ficheiro
+- outros campos opcionais de texto
+```
+
+> Exemplo isolado - sintoma clássico
+
+```txt
+Se `req.file` é undefined, quase sempre o cliente não enviou multipart corretamente.
+```
+
+### Porque fazemos isto
+
+É o exemplo completo de `multipart/form-data` com atualização de sessão visual na UI.
+
+### 9.1) Criar `frontend/src/pages/ProfilePage.jsx`
+
+```jsx
+import { useState } from "react";
+import { usePokedex } from "@/context/PokedexContext.jsx";
+import { uploadAvatar } from "@/services/usersApi.js";
+
+function ProfilePage() {
+    const { user, refreshSession } = usePokedex();
+    const [file, setFile] = useState(null);
+    const [feedback, setFeedback] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+        setFeedback("");
+
+        if (!file) {
+            setFeedback("Escolhe uma imagem.");
+            return;
+        }
+
+        setSubmitting(true);
+
+        try {
+            await uploadAvatar(file);
+            await refreshSession();
+            setFeedback("Avatar atualizado com sucesso.");
+            setFile(null);
+        } catch {
+            setFeedback("Não foi possível atualizar o avatar.");
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    return (
+        <section className="pokedex__results">
+            <h2>Perfil</h2>
+
+            {user && (
+                <>
+                    <p>
+                        <strong>{user.username}</strong> ({user.email})
+                    </p>
+
+                    {user.avatarUrl ? (
+                        <img
+                            src={`${import.meta.env.VITE_API_URL}${user.avatarUrl}`}
+                            alt={`Avatar de ${user.username}`}
+                            width="140"
+                            height="140"
+                            style={{ objectFit: "cover", borderRadius: "12px" }}
+                        />
+                    ) : (
+                        <p>Ainda sem avatar.</p>
+                    )}
+                </>
             )}
 
-            <div style={{ marginTop: 12 }}>
+            <form onSubmit={handleSubmit}>
                 <label>
-                    Upload avatar:
+                    Nova imagem
                     <input
                         type="file"
                         accept="image/*"
-                        onChange={handleFileChange}
-                        disabled={loading}
+                        onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                        required
                     />
                 </label>
-            </div>
 
-            {loading ? <p>A enviar...</p> : null}
-        </main>
+                <button type="submit" disabled={submitting}>
+                    {submitting ? "A enviar..." : "Atualizar avatar"}
+                </button>
+            </form>
+
+            {feedback && <p className="pokedex__empty">{feedback}</p>}
+        </section>
     );
 }
+
+export default ProfilePage;
 ```
 
+### Checkpoint 9
+
+- Upload devolve `avatarUrl` e o browser mostra imagem nova após `refreshSession()`.
+- URL da imagem abre diretamente: `http://localhost:3000/uploads/...`.
+
 ---
 
-## 6.10) Atualizar Router (`App.jsx`) com rotas protegidas
+## 10) Checkpoint final: testes manuais completos + erros comuns
 
-Cria/atualiza `frontend/src/App.jsx`:
+### O que é
 
-```jsx
-/**
- * @file App.jsx
- * @description Router da app.
- *
- * Nesta ficha:
- * - /login e /registar são públicas
- * - /favoritos, /equipas e /perfil são protegidas
- *
- * Nota:
- * - Mantém as tuas rotas existentes (lista, detalhes, etc.)
- * - Aqui mostramos um exemplo completo com as rotas novas.
- */
+Validação funcional fim-a-fim da ficha.
 
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+### Teoria
 
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
+1. **Conceitos-chave**
 
-import LoginPage from "./pages/LoginPage.jsx";
-import RegisterPage from "./pages/RegisterPage.jsx";
-import FavoritesPage from "./pages/FavoritesPage.jsx";
-import TeamsPage from "./pages/TeamsPage.jsx";
-import ProfilePage from "./pages/ProfilePage.jsx";
+- **Teste manual E2E**: validação do fluxo completo de ponta a ponta.
+- **Sintoma vs causa**: a mensagem visível nem sempre indica a origem real.
+- **Ferramentas de debug**: DevTools Network, Application/Cookies, curl, Postman/Insomnia.
 
-// As tuas páginas existentes da Ficha 5 (exemplos):
-// import HomePage from "./pages/HomePage.jsx";
-// import PokemonDetailsPage from "./pages/PokemonDetailsPage.jsx";
+2. **Como funciona “por baixo”**
 
-export default function App() {
-    return (
-        <Routes>
-            {/* Rotas públicas */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/registar" element={<RegisterPage />} />
+- Cada clique relevante gera request HTTP observável no separador Network.
+- No browser, erros CORS aparecem no console e podem bloquear antes de veres resposta útil.
+- `401`, `403`, `422`, `500` têm significados diferentes e orientam diagnóstico.
+- Cookies podem existir no storage, mas só são enviados se origin/credentials/políticas permitirem.
 
-            {/* Rotas protegidas */}
-            <Route
-                path="/favoritos"
-                element={
-                    <ProtectedRoute>
-                        <FavoritesPage />
-                    </ProtectedRoute>
-                }
-            />
+3. **Porque estamos a fazer assim neste projeto**
 
-            <Route
-                path="/equipas"
-                element={
-                    <ProtectedRoute>
-                        <TeamsPage />
-                    </ProtectedRoute>
-                }
-            />
+- A Ficha 06 junta muitas peças; só testes fim-a-fim confirmam integração real.
+- A checklist final evita o “parece funcionar” baseado em meia dúzia de cliques.
+- Validar status codes acelera muito o debug e evita tentativas aleatórias.
 
-            <Route
-                path="/perfil"
-                element={
-                    <ProtectedRoute>
-                        <ProfilePage />
-                    </ProtectedRoute>
-                }
-            />
+4. **Erros comuns e sintomas**
 
-            {/* Mantém as tuas rotas da Ficha 5 aqui */}
-            {/* <Route path="/" element={<HomePage />} /> */}
-            {/* <Route path="/pokemon/:id" element={<PokemonDetailsPage />} /> */}
+- “CORS error” no browser e nada no backend -> bloqueio no cliente antes de chegar à rota.
+- 401 em rotas privadas após login -> cookie não enviado/aceite.
+- 403 em mutações -> header CSRF em falta ou token desfasado.
+- 500 em endpoint de dados -> erro interno (stack no backend, input inesperado, DB).
+- UI sem atualização após ação com 200 -> estado local não foi sincronizado.
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/favoritos" replace />} />
-        </Routes>
-    );
-}
+5. **Boas práticas e segurança**
+
+- Testar sempre cenários de sucesso e falha.
+- Verificar explicitamente status code e payload, não só “apareceu algo no ecrã”.
+- Não mascarar erros no frontend com mensagens genéricas sem logs úteis.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - triagem rápida
+
+```txt
+Se for 401: olha para sessão/cookie.
+Se for 403: olha para CSRF.
+Se for 422: olha para validação do payload.
+Se for 500: olha para logs do backend.
 ```
 
----
+> Exemplo isolado - ordem de debug
 
-## 6.11) Garantir que o Provider envolve a app (`main.jsx`)
-
-No `frontend/src/main.jsx`, confirma que tens algo neste estilo:
-
-```jsx
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-
-import App from "./App.jsx";
-import { PokedexProvider } from "./context/PokedexContext.jsx";
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-    <React.StrictMode>
-        <BrowserRouter>
-            <PokedexProvider>
-                <App />
-            </PokedexProvider>
-        </BrowserRouter>
-    </React.StrictMode>,
-);
+```txt
+1) Confirmar request chegou
+2) Ver status
+3) Ver payload
+4) Ver logs
 ```
 
-Checkpoint (Paragem G/H dependendo se fizeste Profile):
+### Porque fazemos isto
 
-```bash
-git add -A
-git commit -m "Ficha 6: Auth + Protected routes + Favorites + Teams + (Profile upload)"
+Se não testares o fluxo completo (login -> favoritos -> equipas -> avatar -> logout), falhas de integração passam despercebidas.
+
+### 10.1) Testes obrigatórios
+
+1. **Health + arranque**
+    - `GET /api/health` devolve `{ ok: true }`.
+2. **Registo e login**
+    - criar conta em `/registo`, fazer logout, voltar a fazer login em `/login`.
+3. **Sessão restaurada**
+    - refresh da página com sessão ativa mantém utilizador autenticado (`/api/auth/me`).
+4. **Favoritos (contrato correto)**
+    - marcar/desmarcar favorito e confirmar requests:
+        - `GET /api/favorites` -> array de ids
+        - `POST /api/favorites` body `{ id }`
+        - `DELETE /api/favorites/:id`
+5. **Rotas protegidas**
+    - sem login, `/favoritos`, `/equipas`, `/perfil` redirecionam para `/login`.
+6. **Equipas**
+    - criar equipa, pesquisar por nome, paginar, apagar equipa.
+7. **Avatar**
+    - upload de imagem no perfil e imagem visível após refresh.
+8. **Logout**
+    - logout limpa sessão; rotas protegidas deixam de ser acessíveis.
+
+### 10.2) Erros comuns finais
+
+- **CORS/cookies**: origem errada em `CLIENT_ORIGIN`.
+- **CSRF**: mutações a falhar com 403 por ausência do header.
+- **Imports**: `App.jsx` ainda a importar páginas de `components`.
+- **Env vars**: frontend sem `VITE_API_URL` ou backend sem `JWT_SECRET`.
+- **Uploads**: `express.static(uploadsDir)` em falta no `app.js`.
+
+---
+
+## 11) Resumo / Checklist final
+
+### Teoria
+
+1. **Conceitos-chave**
+
+- **Checklist de entrega**: verificação objetiva para garantir conclusão real.
+- **Critério de aceite**: definição clara do que conta como “feito”.
+- **Regressão**: quando uma alteração nova estraga algo que antes funcionava.
+
+2. **Como funciona “por baixo”**
+
+- Cada item da checklist representa uma dependência crítica entre camadas.
+- Se um item falha, normalmente há efeito em cascata (ex.: auth falha -> rotas protegidas falham -> favoritos/equipas também).
+- A checklist transforma validação subjetiva em validação mensurável.
+
+3. **Porque estamos a fazer assim neste projeto**
+
+- Ajuda-te a fechar a ficha com confiança, sem “buracos” escondidos.
+- Serve também para preparação de avaliação: sabes exatamente o que demonstrar.
+- Facilita manutenção futura: quando voltares ao projeto, tens um mapa de estado final esperado.
+
+4. **Erros comuns e sintomas**
+
+- Marcar item sem testar de verdade -> bug aparece na demonstração final.
+- Testar só caminho feliz -> falhas de segurança/validação passam despercebidas.
+- Ignorar logs porque “a UI parece ok” -> problemas latentes em produção.
+
+5. **Boas práticas e segurança**
+
+- Repetir checklist após alterações relevantes.
+- Guardar evidências rápidas (prints de Network/logs) durante validação.
+- Tratar segurança como requisito funcional, não como “extra”.
+
+6. **Mini-exemplos pedagógicos (isolados)**
+    > Exemplo isolado - forma de fechar tarefa
+
+```txt
+Item checklist + teste executado + resultado observado + estado final.
 ```
 
----
+> Exemplo isolado - mentalidade profissional
 
-# 7) Testes manuais (frontend)
+```txt
+"Funciona no meu computador" não substitui validação sistemática.
+```
 
-Checklist:
+- [ ] Projeto está organizado em `backend/` e `frontend/`.
+- [ ] Frontend separado em `src/pages` (rotas) e `src/components` (reutilização).
+- [ ] `favorites` usa apenas 1 contrato (GET array, POST body `{id}`, DELETE `/:id`).
+- [ ] Auth com JWT em cookie HttpOnly está funcional (`register/login/me/logout`).
+- [ ] CSRF ativo para mutações e fluxo coerente com cookies.
+- [ ] Axios central (`apiClient`) com `withCredentials` e `X-CSRF-Token` automático.
+- [ ] Equipas com paginação/pesquisa em backend e frontend.
+- [ ] Upload de avatar implementado e visível no perfil.
+- [ ] Rotas protegidas funcionam com `ProtectedRoute` e `authReady`.
+- [ ] Testes manuais fim-a-fim executados com sucesso.
 
-1. **Registar** → entra e fica autenticado
-2. **Refresh** → continua autenticado (`/api/auth/me`)
-3. **Favoritos**
-    - adicionar/remover funciona
-    - sair e entrar com outro user → favoritos diferentes
-4. **Equipas**
-    - criar equipa
-    - paginação e pesquisa funcionam
-5. **Perfil / Avatar (extra)**
-    - upload funciona
-    - avatar aparece depois do refresh
-
----
-
-# 8) Erros comuns (e como resolver)
-
-## 8.1) Cookies não aparecem
-
-- no backend: `cors({ credentials: true, origin: ... })`
-- no frontend: axios `withCredentials: true`
-- estás a usar os URLs certos (`5173` e `3000`)
-
-## 8.2) 403 CSRF token inválido
-
-- tens de mandar header `X-CSRF-Token` (o interceptor faz isso)
-- o cookie `csrfToken` tem de existir (só aparece depois de login/register)
-- faz logout e login de novo
-
-## 8.3) Mongo não liga
-
-- IP não autorizado no Atlas
-- password com caracteres especiais sem encoding
-- URI errada ou base de dados mal escrita
-
-## 8.4) Upload não aparece
-
-- confirma `app.use("/uploads", express.static("uploads"))`
-- confirma que `uploads/` existe
-- confirma que `avatarUrl` começa por `/uploads/`
-
----
-
-# 9) Checklist final (avaliação)
-
-Core:
-
-- MongoDB Atlas ligado e sem erros
-- Auth completo (register/login/logout/me)
-- Favoritos persistentes e por utilizador
-- Axios centralizado com cookies + CSRF
-- Equipas paginadas + pesquisa
-
-Extra:
-
-- Upload avatar funcional
-- Código organizado e comentado com lógica (não comentários genéricos)
-
-## 9.1) Checklist final de integração
-
-1. **Backend**
-    - `backend/.env` existe e tem `MONGO_URI` + `JWT_SECRET`.
-    - `server.js` usa `connectDB()` antes de `app.listen()`.
-    - `app.js` tem `cookieParser()` + `requireCsrf` + CORS com `credentials: true`.
-
-2. **Frontend**
-    - `frontend/.env` tem `VITE_API_URL`.
-    - `apiClient.js` está a usar `withCredentials: true`.
-    - `PokedexContext.jsx` já não chama `getFavorites()` sem sessão.
-    - `App.jsx` protege `/favoritos`, `/equipas`, `/perfil`.
-
-3. **Teste rápido**
-    - Abre a app, deve aparecer a lista (sem login).
-    - Vai a `/favoritos` → deve redirecionar para `/login`.
-    - Faz registo/login → entra em `/favoritos`.
-    - Cria uma equipa em `/equipas`.
-
----
-
-Fim.
+Se tudo estiver marcado, a Ficha 06 está concluída e consistente com a Ficha 05.

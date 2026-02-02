@@ -1,4 +1,4 @@
-# Tutorial passo a passo — React Laboratório (Ficha 02) (12.º ano)
+# Tutorial passo a passo - React Laboratório (Ficha 02) (12.º ano)
 
 Este tutorial explica, do início ao fim, como criar o projeto **react-ficha-02**.
 O objetivo é treinar **8 temas de React** de forma gradual, com exemplos simples, visuais e interativos.
@@ -27,10 +27,10 @@ Ou seja: o `App.jsx` só precisa de “montar” os blocos pela ordem certa.
 
 Estrutura (resumo):
 
--   `src/components/` → componentes de layout (PageHeader, Section, etc.)
--   `src/sections/` → as 8 secções da ficha
--   `public/mini-data.json` → dados para o exemplo do `fetch`
--   `src/styles.css` → estilos globais
+- `src/components/` → componentes de layout (PageHeader, Section, etc.)
+- `src/sections/` → as 8 secções da ficha
+- `public/mini-data.json` → dados para o exemplo do `fetch`
+- `src/styles.css` → estilos globais
 
 ---
 
@@ -38,10 +38,10 @@ Estrutura (resumo):
 
 Antes de começar, confirma que tens:
 
--   Node.js (versão 18 ou superior)
--   npm (vem com o Node)
--   Um editor de código (VS Code, por exemplo)
--   Terminal aberto na pasta onde vais criar o projeto
+- Node.js (versão 18 ou superior)
+- npm (vem com o Node)
+- Um editor de código (VS Code, por exemplo)
+- Terminal aberto na pasta onde vais criar o projeto
 
 Para confirmar Node e npm:
 
@@ -118,9 +118,9 @@ react-ficha-02/
 
 Edita `src/main.jsx` para garantir que:
 
--   Importa `App.jsx`
--   Importa `styles.css`
--   Renderiza `<App />` dentro do `div#root`
+- Importa `App.jsx`
+- Importa `styles.css`
+- Renderiza `<App />` dentro do `div#root`
 
 ```jsx
 import React from "react";
@@ -131,15 +131,15 @@ import "./styles.css";
 ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <App />
-    </React.StrictMode>
+    </React.StrictMode>,
 );
 ```
 
 O que isto faz:
 
--   Liga o React ao `div#root` do `index.html`.
--   Diz ao React para “desenhar” o componente `App` dentro desse `div`.
--   Carrega os estilos globais (`styles.css`).
+- Liga o React ao `div#root` do `index.html`.
+- Diz ao React para “desenhar” o componente `App` dentro desse `div`.
+- Carrega os estilos globais (`styles.css`).
 
 ---
 
@@ -200,15 +200,18 @@ body {
     font-family: "Work Sans", "Trebuchet MS", sans-serif;
     color: var(--ink);
     background-color: var(--bg);
-    background-image: radial-gradient(
+    background-image:
+        radial-gradient(
             circle at 10% 10%,
             rgba(36, 87, 255, 0.16),
             transparent 45%
-        ), radial-gradient(
+        ),
+        radial-gradient(
             circle at 90% 20%,
             rgba(255, 107, 53, 0.16),
             transparent 45%
-        ), linear-gradient(135deg, #eef4ff 0%, #f7f9ff 55%, #eef7ff 100%);
+        ),
+        linear-gradient(135deg, #eef4ff 0%, #f7f9ff 55%, #eef7ff 100%);
     line-height: 1.6;
 }
 
@@ -501,7 +504,9 @@ button {
     font-size: 0.9rem;
     font-family: inherit;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
     box-shadow: 0 10px 18px -14px rgba(255, 107, 53, 0.9);
 }
 
@@ -738,8 +743,8 @@ select {
 
 Dentro de `src`, cria as pastas:
 
--   `components`
--   `sections`
+- `components`
+- `sections`
 
 E na raiz do projeto cria (se não existir) a pasta `public`.
 
@@ -806,9 +811,9 @@ Cria `src/components/PageHeader.jsx`.
 
 Repara que:
 
--   temos um array `chips`
--   usamos `map` para criar “chips”
--   o JSX fica limpo porque tiramos dados para fora
+- temos um array `chips`
+- usamos `map` para criar “chips”
+- o JSX fica limpo porque tiramos dados para fora
 
 ```jsx
 const chips = [
@@ -908,8 +913,8 @@ export default App;
 Este componente é o “molde” de cada passo.
 Ele recebe:
 
--   `step`, `title`, `subtitle`, `accent` (props)
--   `children` (conteúdo dentro da secção)
+- `step`, `title`, `subtitle`, `accent` (props)
+- `children` (conteúdo dentro da secção)
 
 Depois cria o layout padrão de cada secção. É basicamente um “envelope” reutilizável.
 
@@ -962,14 +967,14 @@ A partir daqui, em cada secção tu vais:
 
 ---
 
-## 11) Secção 1 — Fundamentos (src/sections/Fundamentos.jsx)
+## 11) Secção 1 - Fundamentos (src/sections/Fundamentos.jsx)
 
 ![App 02](./Images/02/03.png)
 
 Objetivo do passo:
 
--   perceber o fluxo `index.html → main.jsx → App.jsx`
--   praticar `map` para listas simples
+- perceber o fluxo `index.html → main.jsx → App.jsx`
+- praticar `map` para listas simples
 
 Esta parte é muito parecida com o que já foi feito na ficha 01. Mas é importante reforçar os fundamentos.
 
@@ -1095,15 +1100,15 @@ export default App;
 
 ---
 
-## 12) Secção 2 — JSX e componentes (src/sections/JsxComponentes.jsx)
+## 12) Secção 2 - JSX e componentes (src/sections/JsxComponentes.jsx)
 
 ![App 02](./Images/02/04.png)
 
 Objetivo do passo:
 
--   perceber que JSX mistura HTML com JavaScript
--   lembrar as “regras chatas” (className, htmlFor, style como objeto)
--   criar um componente pequeno (`RegraCard`) dentro de outro
+- perceber que JSX mistura HTML com JavaScript
+- lembrar as “regras chatas” (className, htmlFor, style como objeto)
+- criar um componente pequeno (`RegraCard`) dentro de outro
 
 Cria `src/sections/JsxComponentes.jsx`:
 
@@ -1243,15 +1248,15 @@ export default App;
 
 ---
 
-## 13) Secção 3 — Props e composição (src/sections/PropsComposicao.jsx)
+## 13) Secção 3 - Props e composição (src/sections/PropsComposicao.jsx)
 
 ![App 02](./Images/02/05.png)
 
 Objetivo do passo:
 
--   perceber props com vários tipos (string, number, boolean, object, array)
--   perceber `children` (conteúdo “lá dentro” do componente)
--   ver `...trilho` (spread) para passar props todas de uma vez
+- perceber props com vários tipos (string, number, boolean, object, array)
+- perceber `children` (conteúdo “lá dentro” do componente)
+- ver `...trilho` (spread) para passar props todas de uma vez
 
 Cria `src/sections/PropsComposicao.jsx`:
 
@@ -1364,7 +1369,7 @@ Atualiza o `App.jsx` e adiciona a secção. Experimenta fazer tu sozinho agora.
 
 ---
 
-## 14) Secção 4 — Estado e eventos (src/sections/EstadoEventos.jsx)
+## 14) Secção 4 - Estado e eventos (src/sections/EstadoEventos.jsx)
 
 ![App 02](./Images/02/06.png)
 
@@ -1372,9 +1377,9 @@ Antes de usares callbacks pela primeira vez neste tutorial, reve a secao "Callba
 
 Objetivo do passo:
 
--   aprender `useState`
--   aprender handlers (funções chamadas por `onClick`)
--   perceber atualização “segura” com `prev => ...`
+- aprender `useState`
+- aprender handlers (funções chamadas por `onClick`)
+- perceber atualização “segura” com `prev => ...`
 
 Cria `src/sections/EstadoEventos.jsx`:
 
@@ -1495,7 +1500,7 @@ Atualiza o `App.jsx` e adiciona a secção. Já estás a ficar bom nisto!
 
 ---
 
-## 15) Secção 5 — Listas e condicionais (src/sections/ListasCondicionais.jsx)
+## 15) Secção 5 - Listas e condicionais (src/sections/ListasCondicionais.jsx)
 
 ![App 02](./Images/02/07.png)
 
@@ -1503,10 +1508,10 @@ Embora já tenhamos feito isto na outra ficha, este é um passo mais “pesado�
 
 O que vamos praticar aqui:
 
--   `map` (mostrar lista)
--   `filter` (filtrar)
--   `sort` (ordenar)
--   e alguns estados para controlar tudo
+- `map` (mostrar lista)
+- `filter` (filtrar)
+- `sort` (ordenar)
+- e alguns estados para controlar tudo
 
 ### 15.1) Primeiro: lista base com map
 
@@ -1678,7 +1683,7 @@ function ListasCondicionais() {
                     ...equipa,
                     pontos: Math.max(0, equipa.pontos + variacao),
                 };
-            })
+            }),
         );
     }
 
@@ -1712,7 +1717,7 @@ function ListasCondicionais() {
     const ordenadas = [...filtradas].sort((a, b) =>
         ordenarPor === "pontos"
             ? b.pontos - a.pontos
-            : a.nome.localeCompare(b.nome)
+            : a.nome.localeCompare(b.nome),
     );
 
     const visiveis = mostrarTop ? ordenadas.slice(0, 3) : ordenadas;
@@ -1783,7 +1788,7 @@ Já sabes, atualiza o `App.jsx`, adiciona a secção e confirma que tudo funcion
 
 ---
 
-## 16) Secção 6 — Formulários controlados (src/sections/FormulariosControlados.jsx)
+## 16) Secção 6 - Formulários controlados (src/sections/FormulariosControlados.jsx)
 
 ![App 02](./Images/02/08.png)
 
@@ -1791,21 +1796,21 @@ Agora vamos entrar numa nova parte da matéria que não foi vista na ficha 01: *
 
 Uma breve explicação do conceito:
 
--   Um formulário controlado é aquele onde o estado do React é a “fonte de verdade” para os valores dos inputs. Isto quer dizer que cada input tem o seu valor (`value`) ligado a uma variável de estado, e qualquer mudança no input atualiza essa variável através de um handler (`onChange`). O estado ao mudar faz com que o React re-renderize o componente, refletindo o novo valor no input ou algum erro no formulário.
--   Quando o formulário é submetido, podemos usar um handler (`onSubmit`) para validar os dados e evitar que a página recarregue (com `event.preventDefault()`).
--   Se o utilizador não preencher os dados corretamente, podemos mostrar mensagens de erro ou sucesso que aparecem dinamicamente e sem recarregar a página.
+- Um formulário controlado é aquele onde o estado do React é a “fonte de verdade” para os valores dos inputs. Isto quer dizer que cada input tem o seu valor (`value`) ligado a uma variável de estado, e qualquer mudança no input atualiza essa variável através de um handler (`onChange`). O estado ao mudar faz com que o React re-renderize o componente, refletindo o novo valor no input ou algum erro no formulário.
+- Quando o formulário é submetido, podemos usar um handler (`onSubmit`) para validar os dados e evitar que a página recarregue (com `event.preventDefault()`).
+- Se o utilizador não preencher os dados corretamente, podemos mostrar mensagens de erro ou sucesso que aparecem dinamicamente e sem recarregar a página.
 
 Definições rápidas (para não confundir):
 
--   **Input controlado:** o `value` vem do estado; sem `onChange` o input bloqueia.
--   **Handler:** função ligada ao evento (ex.: `onChange`, `onSubmit`).
--   **preventDefault:** impede o refresh automático do `<form>`.
+- **Input controlado:** o `value` vem do estado; sem `onChange` o input bloqueia.
+- **Handler:** função ligada ao evento (ex.: `onChange`, `onSubmit`).
+- **preventDefault:** impede o refresh automático do `<form>`.
 
 Objetivo do passo:
 
--   perceber inputs controlados (`value` + `onChange`)
--   perceber `onSubmit` + `event.preventDefault()`
--   validar e mostrar mensagens
+- perceber inputs controlados (`value` + `onChange`)
+- perceber `onSubmit` + `event.preventDefault()`
+- validar e mostrar mensagens
 
 Cria `src/sections/FormulariosControlados.jsx` (versão final da ficha):
 
@@ -1945,7 +1950,7 @@ Já sabes, atualiza o `App.jsx`, adiciona a secção e confirma que tudo funcion
 
 ---
 
-## 17) Secção 7 — Síncrono vs assíncrono (src/sections/AsyncBasico.jsx)
+## 17) Secção 7 - Síncrono vs assíncrono (src/sections/AsyncBasico.jsx)
 
 ![App 02](./Images/02/09.png)
 
@@ -1953,24 +1958,24 @@ Este é o passo mais importante para perceber **bloqueio** e **paralelo**, por i
 
 Primeiro, vamos voltar a explicar os conceitos de sincronia, assincronia, bloqueio, sequência e paralelo:
 
--   **Síncrono**: o código é executado numa sequência linear. Cada operação deve ser concluída antes da próxima começar. Se uma operação demora muito tempo, tudo o resto fica bloqueado (incluindo a UI). Exemplo: O utilizador clica num botão e o navegador fica “congelado” até o cliente receber a resposta do servidor.
+- **Síncrono**: o código é executado numa sequência linear. Cada operação deve ser concluída antes da próxima começar. Se uma operação demora muito tempo, tudo o resto fica bloqueado (incluindo a UI). Exemplo: O utilizador clica num botão e o navegador fica “congelado” até o cliente receber a resposta do servidor.
 
--   **Assíncrono**: o código pode iniciar operações que não bloqueiam a execução do restante código. O JavaScript usa promessas (`Promise`) e `async/await` para lidar com operações assíncronas. A UI permanece responsiva enquanto as operações estão em andamento. Exemplo: O utilizador clica num botão, o pedido é enviado ao servidor, mas a UI continua a responder a cliques e atualizações visuais. Uma promessa é um conceito que representa um valor que pode estar disponível agora, no futuro ou nunca. E nós preparamos o código para lidar com esses valores futuros sem bloquear a execução do restante código. Quando a resposta chegar, se a promessa for resolvida, podemos atualizar a UI com os novos dados.
+- **Assíncrono**: o código pode iniciar operações que não bloqueiam a execução do restante código. O JavaScript usa promessas (`Promise`) e `async/await` para lidar com operações assíncronas. A UI permanece responsiva enquanto as operações estão em andamento. Exemplo: O utilizador clica num botão, o pedido é enviado ao servidor, mas a UI continua a responder a cliques e atualizações visuais. Uma promessa é um conceito que representa um valor que pode estar disponível agora, no futuro ou nunca. E nós preparamos o código para lidar com esses valores futuros sem bloquear a execução do restante código. Quando a resposta chegar, se a promessa for resolvida, podemos atualizar a UI com os novos dados.
 
--   **Bloqueio**: ocorre quando uma operação síncrona demora muito tempo para ser concluída, impedindo que o restante código seja executado. Durante esse tempo, a UI não pode atualizar ou responder a interações do utilizador.
+- **Bloqueio**: ocorre quando uma operação síncrona demora muito tempo para ser concluída, impedindo que o restante código seja executado. Durante esse tempo, a UI não pode atualizar ou responder a interações do utilizador.
 
--   **Sequência**: em operações assíncronas, a sequência refere-se a executar várias operações uma após a outra. Cada operação começa apenas quando a anterior foi concluída. Isto pode ser feito usando `await` dentro de uma função `async`.
+- **Sequência**: em operações assíncronas, a sequência refere-se a executar várias operações uma após a outra. Cada operação começa apenas quando a anterior foi concluída. Isto pode ser feito usando `await` dentro de uma função `async`.
 
--   **Paralelo**: em operações assíncronas, o paralelo refere-se a iniciar várias operações ao mesmo tempo, permitindo que todas sejam executadas simultaneamente. Isto pode ser feito usando `Promise.all`, que aguarda que todas as promessas sejam resolvidas antes de continuar.
+- **Paralelo**: em operações assíncronas, o paralelo refere-se a iniciar várias operações ao mesmo tempo, permitindo que todas sejam executadas simultaneamente. Isto pode ser feito usando `Promise.all`, que aguarda que todas as promessas sejam resolvidas antes de continuar.
 
--   **Se chegaram até aqui...**: Campeões! :D
+- **Se chegaram até aqui...**: Campeões! :D
 
 O que quero que observes:
 
--   No modo **bloqueante**, a UI “congela” (ticks param, input não responde, não consegues escrever).
--   No modo **assíncrono**, a UI continua viva.
--   Em **sequência**, os pedidos acabam um a um.
--   Em **paralelo**, os pedidos correm ao mesmo tempo.
+- No modo **bloqueante**, a UI “congela” (ticks param, input não responde, não consegues escrever).
+- No modo **assíncrono**, a UI continua viva.
+- Em **sequência**, os pedidos acabam um a um.
+- Em **paralelo**, os pedidos correm ao mesmo tempo.
 
 Vais reparar num número que são os “ticks” (batidas - atualizações da UI). Esse número mostra quantas vezes a UI conseguiu atualizar durante a execução dos pedidos. Quanto mais alto, mais responsiva a UI foi. Vais reparar que no modo bloqueante, esse número é muito baixo (ou zero), porque a UI não consegue atualizar enquanto o thread principal está ocupado. No entanto, nos modos assíncronos (sequência e paralelo), esse número é significativamente mais alto, indicando que a UI permaneceu responsiva e conseguiu atualizar várias vezes enquanto os pedidos estavam em andamento.
 
@@ -2272,7 +2277,7 @@ Atualiza o `App.jsx`, adiciona a secção e confirma que tudo funciona.
 
 ---
 
-## 18) Secção 8 — useEffect e dados externos (src/sections/UseEffectDados.jsx)
+## 18) Secção 8 - useEffect e dados externos (src/sections/UseEffectDados.jsx)
 
 ![App 02](./Images/02/10.png)
 
@@ -2280,22 +2285,22 @@ Aqui vamos buscar dados de um ficheiro JSON com `fetch`.
 Como vimos na teórica, o `useEffect` é usado para correr efeitos colaterais, como buscar dados externos, depois do render.
 O funcionamento é o seguinte:
 
--   Quando o componente é montado (aparece na UI), o `useEffect` corre e chama a função `carregar`, que faz o fetch dos dados.
--   Enquanto os dados estão a ser carregados, o estado `estado` é definido como "loading", e uma mensagem de carregamento é mostrada.
--   Se o fetch for bem-sucedido, os dados são armazenados no estado `itens`, e o estado `estado` é atualizado para "ready", mostrando os dados na UI.
--   Se houver um erro durante o fetch, o estado `estado` é definido como "error", e uma mensagem de erro é exibida.
--   O utilizador pode filtrar os dados por categoria usando um menu dropdown, e o título da página é atualizado para refletir o número de temas visíveis.
+- Quando o componente é montado (aparece na UI), o `useEffect` corre e chama a função `carregar`, que faz o fetch dos dados.
+- Enquanto os dados estão a ser carregados, o estado `estado` é definido como "loading", e uma mensagem de carregamento é mostrada.
+- Se o fetch for bem-sucedido, os dados são armazenados no estado `itens`, e o estado `estado` é atualizado para "ready", mostrando os dados na UI.
+- Se houver um erro durante o fetch, o estado `estado` é definido como "error", e uma mensagem de erro é exibida.
+- O utilizador pode filtrar os dados por categoria usando um menu dropdown, e o título da página é atualizado para refletir o número de temas visíveis.
 
 O que quero que observes:
 
--   O `useEffect` corre depois do render, permitindo buscar dados sem bloquear a UI.
--   O estado controla o que é mostrado na UI (loading, erro, dados).
+- O `useEffect` corre depois do render, permitindo buscar dados sem bloquear a UI.
+- O estado controla o que é mostrado na UI (loading, erro, dados).
 
 Definições rápidas:
 
--   **Efeito (side effect):** trabalho fora do render (fetch, storage, DOM).
--   **Dependências:** valores que fazem o effect correr de novo.
--   **Cleanup:** função devolvida pelo effect para limpar timers/listeners.
+- **Efeito (side effect):** trabalho fora do render (fetch, storage, DOM).
+- **Dependências:** valores que fazem o effect correr de novo.
+- **Cleanup:** função devolvida pelo effect para limpar timers/listeners.
 
 ### 18.1) Colocar o ficheiro mini-data.json no sítio certo (public)
 
@@ -2517,13 +2522,13 @@ export default App;
 
 Confirma:
 
--   `index.html` tem `<div id="root"></div>`
--   `src/main.jsx` faz render do `<App />`
--   `src/styles.css` está importado no `main.jsx`
--   `src/components` tem `PageHeader.jsx` e `Section.jsx`
--   `src/sections` tem as 8 secções
--   `public/mini-data.json` existe (para o `fetch`)
--   `npm run dev` abre a página sem erros
+- `index.html` tem `<div id="root"></div>`
+- `src/main.jsx` faz render do `<App />`
+- `src/styles.css` está importado no `main.jsx`
+- `src/components` tem `PageHeader.jsx` e `Section.jsx`
+- `src/sections` tem as 8 secções
+- `public/mini-data.json` existe (para o `fetch`)
+- `npm run dev` abre a página sem erros
 
 ---
 

@@ -1,4 +1,4 @@
-# Tutorial passo a passo — Migração da Pokédex Explorer (Ficha 03) para Pokédex v2 com Router (Ficha 04) (12.º ano)
+# Tutorial passo a passo - Migração da Pokédex Explorer (Ficha 03) para Pokédex v2 com Router (Ficha 04) (12.º ano)
 
 Este tutorial **continua diretamente a Ficha 3**.
 A ideia é simples: **mantemos a mesma app**, o mesmo visual e os mesmos dados,
@@ -65,26 +65,26 @@ Uma Pokédex digital com dados reais da **PokéAPI**, agora com rotas reais:
 
 ### 0.1) Ligações diretas aos temas dos ficheiros de React (1 ao 10)
 
-1. **Fundamentos e setup** — Vite, estrutura base, `index.html`, `main.jsx`.
-2. **JSX e componentes** — UI dividida em componentes pequenos.
-3. **Props e composição** — dados e handlers via props.
-4. **Estado e eventos** — `useState`, cliques, inputs.
-5. **Listas e condicionais** — `map`, `filter`, `&&`, ternários.
-6. **Formulários controlados** — input com `value` e `onChange`.
-7. **Assíncrono** — `fetch`, `async/await`, `Promise.all`.
-8. **useEffect e dados externos** — carregar API e guardar/ler do `localStorage`.
-9. **React Router fundamentos** — `BrowserRouter`, `Routes`, `Route`, `Link`, `NavLink`.
-10. **Navegação e rotas dinâmicas** — `useParams`, `useNavigate`, query string e 404.
+1. **Fundamentos e setup** - Vite, estrutura base, `index.html`, `main.jsx`.
+2. **JSX e componentes** - UI dividida em componentes pequenos.
+3. **Props e composição** - dados e handlers via props.
+4. **Estado e eventos** - `useState`, cliques, inputs.
+5. **Listas e condicionais** - `map`, `filter`, `&&`, ternários.
+6. **Formulários controlados** - input com `value` e `onChange`.
+7. **Assíncrono** - `fetch`, `async/await`, `Promise.all`.
+8. **useEffect e dados externos** - carregar API e guardar/ler do `localStorage`.
+9. **React Router fundamentos** - `BrowserRouter`, `Routes`, `Route`, `Link`, `NavLink`.
+10. **Navegação e rotas dinâmicas** - `useParams`, `useNavigate`, query string e 404.
 
 ### 0.2) Mapa de fases (visão rápida)
 
-- Fase 1 — Router mínimo (BrowserRouter + App com Routes simples)
-- Fase 2 — Layout com `Outlet` + `NavLink`
-- Fase 2.5 — Router sem mexer na lógica (só no return)
-- Fase 3 — Extrair lista para `PokemonListPage` (ainda sem query string)
-- Fase 4 — Migrar detalhes para `/pokemon/:id`
-- Fase 5 — Migrar filtros para query string (`q` e `type`)
-- Fase 6 — FavoritesPage e rota 404 (`*`)
+- Fase 1 - Router mínimo (BrowserRouter + App com Routes simples)
+- Fase 2 - Layout com `Outlet` + `NavLink`
+- Fase 2.5 - Router sem mexer na lógica (só no return)
+- Fase 3 - Extrair lista para `PokemonListPage` (ainda sem query string)
+- Fase 4 - Migrar detalhes para `/pokemon/:id`
+- Fase 5 - Migrar filtros para query string (`q` e `type`)
+- Fase 6 - FavoritesPage e rota 404 (`*`)
 
 **Vocabulário rápido**
 
@@ -107,7 +107,7 @@ Uma Pokédex digital com dados reais da **PokéAPI**, agora com rotas reais:
 - **Paragem C**: Detalhes por URL `/pokemon/:id` funcionam.
 - **Paragem D**: Filtros na URL + favoritos + 404 prontos.
 
-**Tabela rápida — Antes (State) vs Depois (URL)**
+**Tabela rápida - Antes (State) vs Depois (URL)**
 
 | Aspeto       | Ficha 03 (state)                | Ficha 04 (URL)    |
 | ------------ | ------------------------------- | ----------------- |
@@ -151,7 +151,7 @@ npm install react-router-dom
 
 - Ao duplicares a pasta, pode ficar um `node_modules` antigo. Em caso de dúvidas:
     - apaga `node_modules` e corre `npm install` novamente.
-- A instalação do Router não “ativa” nada por si — só instala a biblioteca.
+- A instalação do Router não “ativa” nada por si - só instala a biblioteca.
 
 ### 2.1) Duplicar a pasta (opção simples)
 
@@ -195,7 +195,7 @@ Para usar o alias `@`, precisas de duas coisas:
 
 Isso já deve ter sido feito na Ficha 3.
 
-Não mexas no `vite.config.js` — mantém exatamente o da Ficha 3.
+Não mexas no `vite.config.js` - mantém exatamente o da Ficha 3.
 Mantém também o `jsconfig.json` igual ao da Ficha 3 para o VS Code.
 
 ### Checkpoint
@@ -551,7 +551,7 @@ const searchTerm = params.get("q") ?? ""; // Evita null
 - Normaliza `searchTerm` (de `q`) e `type` com `|| ""` para evitar `null`.
 - Mantém a URL como fonte de verdade dos filtros.
 
-(E novamente, respondendo ao Guilherme, fonte de verdade é uma expressão que significa que a informação mais confiável e oficial vem de um lugar específico — neste caso, a URL.)
+(E novamente, respondendo ao Guilherme, fonte de verdade é uma expressão que significa que a informação mais confiável e oficial vem de um lugar específico - neste caso, a URL.)
 
 ### 6.3) Rota `*` no fim (apanha tudo)
 
@@ -612,7 +612,7 @@ Escolhe **uma** destas opções:
 
 ---
 
-## 7) Fase 1 — Router mínimo
+## 7) Fase 1 - Router mínimo
 
 Vamos implementar um Router mínimo para garantir que tudo está a funcionar...
 
@@ -763,7 +763,7 @@ Sem isto, a Fase 2.5 não funciona.
 
 ---
 
-## 8) Fase 2 — Layout com `Outlet` + `NavLink`
+## 8) Fase 2 - Layout com `Outlet` + `NavLink`
 
 ### Ponto da situação
 
@@ -997,7 +997,7 @@ export default App;
 
 ---
 
-## 8.5) Fase 2.5 — Router sem mexer na lógica
+## 8.5) Fase 2.5 - Router sem mexer na lógica
 
 ### Ponto da situação
 
@@ -1029,13 +1029,13 @@ Não substituas o ficheiro todo: troca apenas o bloco do `return`.
 
 Vamos lá...
 
-### Parte A — Mantém‑se igual (lógica)
+### Parte A - Mantém‑se igual (lógica)
 
 Tudo o que é estado, `useEffect`, fetch, favoritos, filtragem e handlers
 fica **exatamente igual** ao que já tens da Ficha 3.
 Isso inclui a navegação por estado com `currentPage` e `selectedPokemon`.
 
-### Parte B — O que muda (renderização via Router)
+### Parte B - O que muda (renderização via Router)
 
 Na Ficha 3, tu controlavas “que página aparece” com estado:
 
@@ -1272,7 +1272,7 @@ import { getTypeGradient } from "@/components/typeData.js";
 
 ---
 
-## 10) Fase 3 — Extrair a lista para `PokemonListPage`
+## 10) Fase 3 - Extrair a lista para `PokemonListPage`
 
 ### Ponto da situação
 
@@ -1323,7 +1323,7 @@ e `ErrorMessage` exatamente como estão na Ficha 3; só ajusta imports.
 
 Antes de usares callbacks pela primeira vez nesta ficha, reve a secao "Callbacks e fluxo de dados" em `React/03_props_e_composicao.md#sec-3`.
 
-### 10.1) Fase A — lista simples
+### 10.1) Fase A - lista simples
 
 Cria o ficheiro `src/components/PokemonListPage.jsx`.
 
@@ -1381,7 +1381,7 @@ function PokemonListPage({ pokemon, favorites, onToggleFavorite }) {
 export default PokemonListPage;
 ```
 
-### 10.2) Fase B — pesquisa por nome (`useState`)
+### 10.2) Fase B - pesquisa por nome (`useState`)
 
 Este bloco **SUBSTITUI** o anterior.
 Assim adicionas pesquisa sem manter duas lógicas de filtro em paralelo.
@@ -1449,7 +1449,7 @@ function PokemonListPage({ pokemon, favorites, onToggleFavorite }) {
 export default PokemonListPage;
 ```
 
-### 10.3) Fase C — filtro por tipo (`useState`)
+### 10.3) Fase C - filtro por tipo (`useState`)
 
 Este bloco **SUBSTITUI** o anterior.
 Agora adicionamos o filtro por tipo sem duplicar o `filtered`.
@@ -1659,7 +1659,7 @@ export default PokemonListPage;
 
 ---
 
-## 11) `App.jsx` (Fase 3) — dados + favoritos
+## 11) `App.jsx` (Fase 3) - dados + favoritos
 
 ### Ponto da situação
 
@@ -1691,7 +1691,7 @@ O `App` passa a **gerir dados e favoritos**, e a rota `/` passa a renderizar
 Se usaste outra (ex.: `pokemonFavorites`), mantém exatamente esse valor
 para não perder favoritos.
 
-### 11.1) Parte A — Fica igual (lógica: estado e efeitos)
+### 11.1) Parte A - Fica igual (lógica: estado e efeitos)
 
 ```jsx
 import { useEffect, useState } from "react";
@@ -1783,7 +1783,7 @@ Até aqui tens a **mesma lógica** da Ficha 3.
 O que muda a seguir é **só a renderização**: o `Route index` passa a renderizar
 `PokemonListPage`.
 
-### 11.2) Parte B — Muda (renderização via Router)
+### 11.2) Parte B - Muda (renderização via Router)
 
 ```jsx
         <Routes>
@@ -1831,7 +1831,7 @@ export default App;
 
 ---
 
-## 12) Fase 4 — Migrar detalhes para rota dinâmica `/pokemon/:id`
+## 12) Fase 4 - Migrar detalhes para rota dinâmica `/pokemon/:id`
 
 ### Ponto da situação
 
@@ -1880,7 +1880,7 @@ loading/erro da Ficha 3 para evitar o “não encontrado” durante o fetch.
 Cria a página a partir do componente da Ficha 3,
 mas agora com `useParams` e `useNavigate`.
 
-#### 12.1.1) Parte A — lógica e hooks (fora do return)
+#### 12.1.1) Parte A - lógica e hooks (fora do return)
 
 ```jsx
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -2009,7 +2009,7 @@ function PokemonDetailsPage({
 Até aqui ligaste os hooks do Router, trataste `loading`/`error` e encontraste
 o Pokémon certo. A seguir vais renderizar a UI **igual à da Ficha 3**.
 
-#### 12.1.2) Parte B — JSX (dentro do return)
+#### 12.1.2) Parte B - JSX (dentro do return)
 
 ```jsx
         <article className="pokemon-details">
@@ -2140,7 +2140,7 @@ Agora precisamos da rota dinâmica para detalhes.
 Nesta fase o `App` ganha a rota `pokemon/:id` e passa `pokemon`, `loading`
 e `error` para a página de detalhes.
 
-### 12.2.1) Parte A — Fica igual (lógica: estado e efeitos)
+### 12.2.1) Parte A - Fica igual (lógica: estado e efeitos)
 
 ```jsx
 import { useEffect, useState } from "react";
@@ -2222,7 +2222,7 @@ Até aqui mantiveste o estado global como na Ficha 3.
 O que muda a seguir é **a renderização via Router**: adicionamos a rota
 dinâmica `pokemon/:id` e ligamos a `PokemonDetailsPage`.
 
-### 12.2.2) Parte B — Muda (rotas: adiciona `/pokemon/:id`)
+### 12.2.2) Parte B - Muda (rotas: adiciona `/pokemon/:id`)
 
 ```jsx
         <Routes>
@@ -2285,7 +2285,7 @@ export default App;
 
 ---
 
-## 13) Fase 5 — Migrar filtros para query string
+## 13) Fase 5 - Migrar filtros para query string
 
 ### Ponto da situação
 
@@ -2335,11 +2335,11 @@ poluir o histórico a cada tecla.
 **Reutilização:** `SearchBar`, `TypeFilter` e `PokemonCard` mantêm-se iguais;
 apenas muda a origem do estado (URL).
 
-### Parte A — Fica igual (lógica global)
+### Parte A - Fica igual (lógica global)
 
 Estado global no `App`, fetch e favoritos **não mudam**.
 
-### Parte B — Muda (lógica da lista)
+### Parte B - Muda (lógica da lista)
 
 `PokemonListPage` passa a ler/escrever `searchTerm` e `type` pela URL,
 mas o JSX da lista mantém‑se igual.
@@ -2349,7 +2349,7 @@ mas o JSX da lista mantém‑se igual.
 Este bloco **SUBSTITUI** a versão com `useState`.
 A fonte de verdade dos filtros passa a ser a URL (query string).
 
-#### 13.1.1) Parte A — lógica e hooks (fora do return)
+#### 13.1.1) Parte A - lógica e hooks (fora do return)
 
 ```jsx
 import { useMemo } from "react";
@@ -2465,7 +2465,7 @@ Até aqui ligaste a query string aos filtros e garantiste que a navegação
 para detalhes preserva `q` e `type`. A seguir vais renderizar a UI da lista,
 com os estados de loading/erro/vazio.
 
-#### 13.1.2) Parte B — JSX (dentro do return)
+#### 13.1.2) Parte B - JSX (dentro do return)
 
 ```jsx
         <>
@@ -2663,7 +2663,7 @@ que o hero consiga calcular **total**, **favoritos** e **filtrados**.
 Aqui o `Layout` recebe dados apenas para mostrar contadores; em apps maiores,
 uma alternativa comum é Context/Store.
 
-### 13.3.1) Parte A — Fica igual (lógica: estado e efeitos)
+### 13.3.1) Parte A - Fica igual (lógica: estado e efeitos)
 
 ```jsx
 import { useEffect, useState } from "react";
@@ -2757,7 +2757,7 @@ Até aqui tens o estado global (dados, loading/erro, favoritos).
 O que muda a seguir é **a renderização via Router**: passamos dados ao
 `Layout` e ligamos as páginas às rotas.
 
-### 13.3.2) Parte B — Muda (renderização via Router)
+### 13.3.2) Parte B - Muda (renderização via Router)
 
 ```jsx
         <Routes>
@@ -2831,7 +2831,7 @@ export default App;
 
 ---
 
-## 14) Fase 6 — FavoritesPage e rota 404
+## 14) Fase 6 - FavoritesPage e rota 404
 
 ### Ponto da situação
 
@@ -3008,7 +3008,7 @@ Este bloco **SUBSTITUI** o `App.jsx` da fase 5.
 É aqui que entram a rota de favoritos e a 404.
 Adicionamos a rota `/favoritos` e o fallback `*`, mantendo o mesmo estado global.
 
-### 14.3.1) Parte A — Fica igual (lógica: estado e efeitos)
+### 14.3.1) Parte A - Fica igual (lógica: estado e efeitos)
 
 ```jsx
 import { useEffect, useState } from "react";
@@ -3085,7 +3085,7 @@ O estado continua igual ao das fases anteriores.
 O que muda a seguir é **a renderização via Router**: adicionamos a rota de
 favoritos e o fallback 404.
 
-### 14.3.2) Parte B — Muda (rotas: favoritos + 404)
+### 14.3.2) Parte B - Muda (rotas: favoritos + 404)
 
 ```jsx
         <Routes>

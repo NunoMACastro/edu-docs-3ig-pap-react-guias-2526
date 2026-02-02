@@ -1,4 +1,4 @@
-# Soluções — Exercícios finais (Ficha 3)
+# Soluções - Exercícios finais (Ficha 3)
 
 Base: parte do **código final do `App.jsx`** na secção 19.2 da ficha.
 As soluções abaixo mostram **o que tens de acrescentar/alterar** para cada exercício.
@@ -75,6 +75,7 @@ const [sortBy, setSortBy] = useState("id-asc");
 O sort recebe o array `filteredPokemon` e cria um novo array ordenado `sortedPokemon`.
 a ordenação depende do valor de `sortBy`.
 Ou seja, o sort recebe um a e b e compara-os conforme o critério selecionado.
+
 ```jsx
 const sortedPokemon = [...filteredPokemon].sort((a, b) => {
     switch (sortBy) {
@@ -228,7 +229,7 @@ function LoadingSpinner({ loadedCount = 0, total = 151 }) {
 
 ---
 
-## 5) Acessibilidade — `aria-label` nos botões de tipo
+## 5) Acessibilidade - `aria-label` nos botões de tipo
 
 ### Alterações no `src/components/TypeFilter.jsx`
 
