@@ -2,18 +2,22 @@
 
 Este tutorial continua diretamente a Ficha 05.
 A app mantém o visual, a navegação e as páginas principais - ou seja, o aluno não começa do zero e não perde o trabalho anterior.
+Home/Details/Favorites continuam a funcionar como antes (mesma UX), mas agora com sessão e base de dados.
 
 O foco desta ficha não é criar uma app “maior”. É tornar a mesma app real, com as preocupações que existem fora da sala de aula:
 
 - Persistência real: o que guardavas em memória passa para MongoDB Atlas
 - Sessão real: o utilizador passa a ter conta e login:
-- register / login / me / logout
+    - `POST /api/auth/register`
+    - `POST /api/auth/login`
+    - `GET /api/auth/me`
+    - `POST /api/auth/logout`
 - JWT guardado em cookie HttpOnly
 
 Segurança web real:
 
-- CORS bem configurado para permitir credenciais
-- CSRF para proteger mutações (POST/DELETE/etc.)
+- Configurar CORS para permitir credenciais
+- Implementar CSRF para proteger mutações (POST/DELETE/etc.)
 
 Organização profissional no frontend:
 
@@ -91,6 +95,8 @@ Na Ficha 05 tinhas favoritos em memória e frontend/backend já separados. Agora
 | GET    | `/api/favorites`     | -                  | `number[]`         |
 | POST   | `/api/favorites`     | `{ "id": number }` | `{ "id": number }` |
 | DELETE | `/api/favorites/:id` | -                  | `{ "id": number }` |
+
+Mesmo guardando no Mongo/User internamente, para o frontend o contrato mantém-se: `GET -> number[]`.
 
 > Não uses variantes alternativas. Este contrato é único em toda a Ficha 06.
 
@@ -301,6 +307,8 @@ Sem base de dados e sem `.env`, as próximas secções (auth, equipas, favoritos
 No `backend/`:
 
 ```bash
+# Executa estes comandos na pasta indicada imediatamente acima do bloco.
+# Mantém a ordem dos comandos para evitar erros de setup.
 npm install cors mongoose dotenv bcrypt jsonwebtoken cookie-parser multer
 npm install -D nodemon
 ```
@@ -310,29 +318,43 @@ npm install -D nodemon
 `backend/.env`:
 
 ```env
+# Porta onde o Express vai escutar pedidos HTTP no ambiente local.
 PORT=3000
+# Usado para distinguir comportamentos de desenvolvimento/produção (cookies, logs, etc.).
 NODE_ENV=development
+# Origem permitida no CORS para o frontend (tem de bater certo com o URL do Vite).
 CLIENT_ORIGIN=http://localhost:5173
+# Connection string do MongoDB Atlas (host + credenciais + nome da base de dados).
 MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?retryWrites=true&w=majority
+# Segredo usado para assinar/verificar JWT; nunca publicar valor real no Git.
 JWT_SECRET=troca_isto_por_um_seguro
 ```
 
 `backend/.env.example`:
 
 ```env
+# Exemplo da porta local do backend.
 PORT=3000
+# Exemplo de ambiente (dev/prod).
 NODE_ENV=development
+# Exemplo da origem do frontend permitida pelo CORS.
 CLIENT_ORIGIN=http://localhost:5173
+# Exemplo de URI do Atlas (substituir USER/PASSWORD por credenciais reais locais).
 MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?retryWrites=true&w=majority
+# Exemplo de segredo JWT (no projeto real deve ser forte e privado).
 JWT_SECRET=define_um_valor_seguro
 ```
 
 `backend/.gitignore` (garante estas entradas):
 
 ```gitignore
+# Dependências instaladas localmente (recriadas com npm install).
 node_modules
+# Segredos/configuração local por máquina.
 .env
+# Ficheiros de upload gerados em runtime.
 uploads/*
+# Mantém só um ficheiro vazio para garantir que a pasta existe no repositório.
 !uploads/.gitkeep
 ```
 
@@ -341,15 +363,29 @@ uploads/*
 `backend/src/db/connect.js`:
 
 ```js
+/**
+ * Trecho: backend/src/db/connect.js
+ * Objetivo: centralizar ligação ao MongoDB e falhar cedo quando faltar configuração crítica.
+
+ */
+
 import mongoose from "mongoose";
 
+/**
+ * Liga a aplicação ao MongoDB Atlas antes do backend aceitar pedidos.
+ *
+ * @returns {Promise<void>}
+ * @throws {Error} Quando MONGODB_URI não existe.
+ */
 export async function connectToMongo() {
     const uri = process.env.MONGODB_URI;
 
     if (!uri) {
+        // Falha explícita para evitar servidor "meio vivo" sem base de dados.
         throw new Error("MONGODB_URI em falta no backend/.env");
     }
 
+    // Se a URI estiver inválida ou o Atlas rejeitar, esta Promise rejeita e o bootstrap trata.
     await mongoose.connect(uri);
     console.log("[mongo] ligado com sucesso");
 }
@@ -358,13 +394,25 @@ export async function connectToMongo() {
 `backend/src/server.js`:
 
 ```js
+/**
+ * Trecho: backend/src/server.js
+ * Objetivo: arrancar o backend pela ordem correta (env -> mongo -> listen).
+
+ */
+
 import "dotenv/config";
 import app from "./app.js";
 import { connectToMongo } from "./db/connect.js";
 
 const port = Number(process.env.PORT ?? 3000);
 
+/**
+ * Bootstrap da aplicação.
+ *
+ * @returns {Promise<void>}
+ */
 async function bootstrap() {
+    // Fail fast: se Mongo falhar, não abrimos a porta HTTP.
     await connectToMongo();
 
     app.listen(port, () => {
@@ -373,6 +421,7 @@ async function bootstrap() {
 }
 
 bootstrap().catch((err) => {
+    // Erro fatal de arranque: termina o processo para evitar estado inconsistente.
     console.error("[fatal] falha ao arrancar", err);
     process.exit(1);
 });
@@ -418,6 +467,16 @@ Nesta secção criamos sessão com JWT em cookie HttpOnly e proteção CSRF nas 
 - Métodos seguros (`GET/HEAD/OPTIONS`) não alteram estado e passam sem token CSRF.
 - Preflight `OPTIONS` acontece antes de algumas mutações cross-origin e precisa de CORS coerente.
 
+```txt
+Login -> backend cria JWT -> Set-Cookie: token (HttpOnly)
+      -> backend cria csrfToken -> Set-Cookie: csrfToken (não HttpOnly)
+
+Pedidos seguintes:
+- Browser envia cookies automaticamente
+- Frontend lê csrfToken e envia header X-CSRF-Token
+- Backend compara cookie csrfToken vs header X-CSRF-Token
+```
+
 3. **Porque estamos a fazer assim neste projeto**
 
 - Cookies HttpOnly reduzem impacto de XSS (token não fica exposto ao JavaScript da página).
@@ -433,6 +492,13 @@ Nesta secção criamos sessão com JWT em cookie HttpOnly e proteção CSRF nas 
 - 401 em rota protegida com cookie presente -> JWT expirado/inválido ou `JWT_SECRET` mudou.
 - Logout “não limpa” -> opções de `clearCookie` não compatíveis com cookie original.
 
+| Status | Leitura rápida                                  |
+| ------ | ----------------------------------------------- |
+| 401    | sem sessão / token inválido                     |
+| 403    | CSRF inválido (ou pedido recusado por política) |
+| 422    | payload inválido (cliente corrige)              |
+| 404    | recurso não existe                              |
+
 5. **Boas práticas e segurança**
 
 - Não usar `origin: *` com credenciais.
@@ -440,6 +506,8 @@ Nesta secção criamos sessão com JWT em cookie HttpOnly e proteção CSRF nas 
 - `SameSite` e `Secure` devem ser ajustados ao ambiente (dev/prod).
 - Não guardar password nem token em logs.
 - Tratar `JWT_SECRET` como segredo sensível.
+
+> Nota rápida (dev vs prod): em produção, `secure: true` exige HTTPS; em dev (`http`) pode bloquear cookies, por isso controlamos pelo `NODE_ENV`.
 
 6. **Mini-exemplos pedagógicos (isolados)**
     > Exemplo isolado - cartão de acesso
@@ -463,11 +531,22 @@ Com cookies, o browser envia credenciais automaticamente. Isso pede duas coisas 
 1. CORS com `credentials: true`
 2. proteção CSRF para `POST/PUT/PATCH/DELETE`
 
+- Backend: `cors({ origin: CLIENT_ORIGIN, credentials: true })`
+- Frontend: `axios.create({ withCredentials: true })`
+
+Se faltar uma destas duas peças, o login pode “parecer” funcionar mas a sessão não persiste.
+
 ### 3.1) Modelo User
 
 `backend/src/models/User.js`:
 
 ```js
+/**
+ * Trecho: backend/src/models/User.js
+ * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+
+ */
+
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
@@ -520,32 +599,61 @@ export default User;
 `backend/src/utils/cookies.js`:
 
 ```js
+/**
+ * Trecho: backend/src/utils/cookies.js
+ * Objetivo: definir opções de cookies num único sítio para evitar inconsistências entre set/clear.
+
+ */
+
 const isProd = process.env.NODE_ENV === "production";
 
+/**
+ * Opções base partilhadas por todos os cookies da app.
+ *
+ * @returns {{path: string, sameSite: string, secure: boolean}}
+ */
 function baseCookieOptions() {
     return {
+        // Manter o mesmo path é essencial para clearCookie funcionar corretamente.
         path: "/",
         sameSite: "lax",
         secure: isProd,
     };
 }
 
+/**
+ * Cookie de autenticação (JWT).
+ *
+ * @returns {{path: string, sameSite: string, secure: boolean, httpOnly: boolean, maxAge: number}}
+ */
 export function authCookieOptions() {
     return {
         ...baseCookieOptions(),
+        // HttpOnly protege token contra acesso direto via JavaScript no browser.
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 7,
     };
 }
 
+/**
+ * Cookie CSRF (precisa de ser legível no frontend para enviar no header).
+ *
+ * @returns {{path: string, sameSite: string, secure: boolean, httpOnly: boolean, maxAge: number}}
+ */
 export function csrfCookieOptions() {
     return {
         ...baseCookieOptions(),
+        // Não HttpOnly de propósito: o cliente lê este valor para X-CSRF-Token.
         httpOnly: false,
         maxAge: 1000 * 60 * 60 * 24 * 7,
     };
 }
 
+/**
+ * Opções usadas ao limpar cookies; devem bater com as opções usadas no set.
+ *
+ * @returns {{path: string, sameSite: string, secure: boolean}}
+ */
 export function clearCookieOptions() {
     return {
         ...baseCookieOptions(),
@@ -556,8 +664,19 @@ export function clearCookieOptions() {
 `backend/src/utils/csrf.js`:
 
 ```js
+/**
+ * Trecho: backend/src/utils/csrf.js
+ * Objetivo: gerar token CSRF aleatório para o padrão double-submit-cookie.
+
+ */
+
 import crypto from "node:crypto";
 
+/**
+ * Gera um token CSRF em hexadecimal.
+ *
+ * @returns {string}
+ */
 export function createCsrfToken() {
     return crypto.randomBytes(24).toString("hex");
 }
@@ -568,22 +687,41 @@ export function createCsrfToken() {
 `backend/src/middlewares/requireAuth.js`:
 
 ```js
+/**
+ * Trecho: backend/src/middlewares/requireAuth.js
+ * Objetivo: proteger rotas privadas validando o JWT recebido via cookie HttpOnly.
+
+ */
+
 import jwt from "jsonwebtoken";
 
+/**
+ * Middleware de autenticação.
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ * @returns {void}
+ */
 export function requireAuth(req, res, next) {
+    // O cookie "token" é enviado automaticamente pelo browser quando withCredentials=true.
     const token = req.cookies?.token;
 
     if (!token) {
+        // 401 = não autenticado (sem sessão).
         return res.status(401).json({
             error: { code: "UNAUTHORIZED", message: "Sessão em falta" },
         });
     }
 
     try {
+        // Verifica assinatura e expiração do JWT usando o segredo do backend.
         const payload = jwt.verify(token, process.env.JWT_SECRET);
+        // Guardamos o userId em req.auth para os handlers seguintes.
         req.auth = { userId: payload.userId };
         return next();
     } catch {
+        // 401 novamente: token existe mas é inválido/expirado.
         return res.status(401).json({
             error: { code: "UNAUTHORIZED", message: "Sessão inválida" },
         });
@@ -594,17 +732,34 @@ export function requireAuth(req, res, next) {
 `backend/src/middlewares/requireCsrf.js`:
 
 ```js
+/**
+ * Trecho: backend/src/middlewares/requireCsrf.js
+ * Objetivo: bloquear mutações sem prova CSRF (header + cookie a coincidir).
+
+ */
+
+// Métodos seguros não alteram estado e não exigem token CSRF.
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+/**
+ * Middleware CSRF (double submit cookie).
+ *
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ * @returns {void}
+ */
 export function requireCsrf(req, res, next) {
     if (SAFE_METHODS.has(req.method)) {
         return next();
     }
 
+    // Cookie vem automaticamente no pedido; header vem explicitamente do frontend.
     const csrfCookie = req.cookies?.csrfToken;
     const csrfHeader = req.get("x-csrf-token");
 
     if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+        // 403 = pedido entendido, mas recusado por política de segurança.
         return res.status(403).json({
             error: { code: "CSRF_INVALID", message: "CSRF token inválido" },
         });
@@ -619,6 +774,12 @@ export function requireCsrf(req, res, next) {
 `backend/src/routes/auth.routes.js`:
 
 ```js
+/**
+ * Trecho: backend/src/routes/auth.routes.js
+ * Objetivo: gerir ciclo de sessão (register/login/me/logout) com cookies e JWT.
+
+ */
+
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -635,16 +796,34 @@ import { createCsrfToken } from "../utils/csrf.js";
 const router = Router();
 const SALT_ROUNDS = 10;
 
+/**
+ * Assina JWT com identificação mínima do utilizador.
+ *
+ * @param {string} userId
+ * @returns {string}
+ */
 function signToken(userId) {
     return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 
+/**
+ * Normaliza email para evitar duplicados com maiúsculas/espaços.
+ *
+ * @param {unknown} email
+ * @returns {string}
+ */
 function normalizeEmail(email) {
     return String(email ?? "")
         .trim()
         .toLowerCase();
 }
 
+/**
+ * Validação de input para registo.
+ *
+ * @param {{username: unknown, email: unknown, password: unknown}} param0
+ * @returns {string | null}
+ */
 function basicValidation({ username, email, password }) {
     if (!username || String(username).trim().length < 3) {
         return "Username deve ter pelo menos 3 caracteres";
@@ -666,6 +845,7 @@ router.post("/register", async (req, res) => {
     const validationError = basicValidation({ username, email, password });
 
     if (validationError) {
+        // 422 = estrutura do pedido válida, mas dados falham regras de negócio.
         return res.status(422).json({
             error: { code: "VALIDATION_ERROR", message: validationError },
         });
@@ -675,11 +855,13 @@ router.post("/register", async (req, res) => {
     const alreadyExists = await User.findOne({ email: normalizedEmail });
 
     if (alreadyExists) {
+        // 409 = conflito com estado atual (email já existe).
         return res.status(409).json({
             error: { code: "DUPLICATE_EMAIL", message: "Email já registado" },
         });
     }
 
+    // bcrypt é intencionalmente "lento" para dificultar brute force offline.
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     const user = await User.create({
@@ -691,6 +873,7 @@ router.post("/register", async (req, res) => {
     const token = signToken(user.id);
     const csrfToken = createCsrfToken();
 
+    // token -> HttpOnly; csrfToken -> legível para o frontend (header CSRF).
     res.cookie("token", token, authCookieOptions());
     res.cookie("csrfToken", csrfToken, csrfCookieOptions());
 
@@ -702,6 +885,7 @@ router.post("/login", async (req, res) => {
     const password = String(req.body?.password ?? "");
 
     if (!email || !password) {
+        // 422 para payload incompleto.
         return res.status(422).json({
             error: {
                 code: "VALIDATION_ERROR",
@@ -713,6 +897,7 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+        // 401 não revela se o email existe ou não (evita enumeração fácil).
         return res.status(401).json({
             error: { code: "INVALID_CREDENTIALS", message: "Login inválido" },
         });
@@ -739,6 +924,7 @@ router.get("/me", requireAuth, async (req, res) => {
     const user = await User.findById(req.auth.userId);
 
     if (!user) {
+        // Pode acontecer se conta foi apagada depois do token ter sido emitido.
         return res.status(404).json({
             error: { code: "USER_NOT_FOUND", message: "Utilizador não existe" },
         });
@@ -748,6 +934,7 @@ router.get("/me", requireAuth, async (req, res) => {
 });
 
 router.post("/logout", requireAuth, requireCsrf, (_req, res) => {
+    // Clear usa as mesmas opções-base para garantir que o browser remove mesmo os cookies.
     res.clearCookie("token", clearCookieOptions());
     res.clearCookie("csrfToken", clearCookieOptions());
     return res.status(200).json({ ok: true });
@@ -761,6 +948,12 @@ export default router;
 `backend/src/app.js`:
 
 ```js
+/**
+ * Trecho: backend/src/app.js
+ * Objetivo: montar a pipeline do Express na ordem certa (CORS -> parsers -> rotas -> 404 -> erros).
+
+ */
+
 import express from "express";
 import path from "node:path";
 import cors from "cors";
@@ -774,14 +967,19 @@ import { requireCsrf } from "./middlewares/requireCsrf.js";
 const app = express();
 const uploadsDir = path.join(process.cwd(), "uploads");
 
+// CORS tem de vir cedo para responder corretamente a preflight e pedidos cross-origin.
 app.use(
     cors({
         origin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
+        // Sem credentials=true os cookies de sessão não viajam entre frontend e backend.
         credentials: true,
     }),
 );
+// Parser de JSON para req.body em endpoints application/json.
 app.use(express.json());
+// Parser de cookies para req.cookies (necessário em auth/csrf).
 app.use(cookieParser());
+// Ficheiros estáticos de avatar servidos em /uploads/...
 app.use("/uploads", express.static(uploadsDir));
 
 app.get("/api/health", (_req, res) => {
@@ -816,6 +1014,8 @@ app.use((err, _req, res, next) => {
     const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
     const message = err.message || "Erro no upload";
 
+    // ATENÇÃO (armadilha): erros de upload podem parecer "genéricos".
+    // Nota: mantemos resposta curta aqui para ficar alinhada com o enunciado.
     return res.status(status).json({
         error: { code: "UPLOAD_ERROR", message },
     });
@@ -918,12 +1118,24 @@ A autenticação sem dados por utilizador não resolve o objetivo da app. Esta s
 `backend/src/routes/favorites.routes.js`:
 
 ```js
+/**
+ * Trecho: backend/src/routes/favorites.routes.js
+ * Objetivo: gerir favoritos por utilizador mantendo contrato compatível com a Ficha 05.
+
+ */
+
 import { Router } from "express";
 import User from "../models/User.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router = Router();
 
+/**
+ * Converte input para inteiro positivo.
+ *
+ * @param {unknown} value
+ * @returns {number | null}
+ */
 function parsePositiveInt(value) {
     const n = Number(value);
     if (!Number.isInteger(n) || n <= 0) return null;
@@ -931,6 +1143,7 @@ function parsePositiveInt(value) {
 }
 
 router.get("/", requireAuth, async (req, res) => {
+    // GET devolve array de IDs, sem envelope extra (contrato canónico da ficha).
     const user = await User.findById(req.auth.userId).select("favorites");
 
     if (!user) {
@@ -946,6 +1159,7 @@ router.post("/", requireAuth, async (req, res) => {
     const id = parsePositiveInt(req.body?.id);
 
     if (!id) {
+        // 422 para body inválido (cliente consegue corrigir o pedido).
         return res.status(422).json({
             error: { code: "VALIDATION_ERROR", message: "id inválido" },
         });
@@ -960,6 +1174,7 @@ router.post("/", requireAuth, async (req, res) => {
     }
 
     if (user.favorites.includes(id)) {
+        // 409 quando o mesmo favorito já existe.
         return res.status(409).json({
             error: { code: "DUPLICATE_KEY", message: "Pokémon já é favorito" },
         });
@@ -975,6 +1190,7 @@ router.delete("/:id", requireAuth, async (req, res) => {
     const id = parsePositiveInt(req.params.id);
 
     if (!id) {
+        // 400 porque o parâmetro de rota já é inválido à partida.
         return res.status(400).json({
             error: { code: "INVALID_ID", message: "id inválido" },
         });
@@ -1008,6 +1224,12 @@ export default router;
 `backend/src/models/Team.js`:
 
 ```js
+/**
+ * Trecho: backend/src/models/Team.js
+ * Objetivo: definir a estrutura de dados de uma equipa no MongoDB.
+
+ */
+
 import mongoose from "mongoose";
 
 const teamSchema = new mongoose.Schema(
@@ -1016,6 +1238,7 @@ const teamSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             required: true,
+            // Índice acelera listagens por utilizador.
             index: true,
         },
         name: {
@@ -1027,6 +1250,7 @@ const teamSchema = new mongoose.Schema(
         pokemonIds: {
             type: [Number],
             validate: {
+                // Regra de negócio: equipa entre 1 e 6 IDs válidos.
                 validator: (arr) =>
                     Array.isArray(arr) &&
                     arr.length >= 1 &&
@@ -1047,12 +1271,25 @@ export default Team;
 `backend/src/routes/teams.routes.js`:
 
 ```js
+/**
+ * Trecho: backend/src/routes/teams.routes.js
+ * Objetivo: criar/listar/apagar equipas com paginação e pesquisa por nome.
+
+ */
+
 import { Router } from "express";
 import Team from "../models/Team.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router = Router();
 
+/**
+ * Valida inteiros positivos para query params de paginação.
+ *
+ * @param {unknown} value
+ * @param {number} fallback
+ * @returns {number}
+ */
 function parsePositiveInt(value, fallback) {
     const n = Number(value);
     if (!Number.isInteger(n) || n <= 0) return fallback;
@@ -1062,15 +1299,18 @@ function parsePositiveInt(value, fallback) {
 router.get("/", requireAuth, async (req, res) => {
     const page = parsePositiveInt(req.query.page, 1);
     const limit = Math.min(parsePositiveInt(req.query.limit, 10), 50);
+    // Limite de 50 chars protege de regex exagerada sem complicar a ficha.
     const q = String(req.query.q ?? "")
         .trim()
         .slice(0, 50);
 
     const filter = { userId: req.auth.userId };
     if (q) {
+        // Pesquisa case-insensitive por nome.
         filter.name = { $regex: q, $options: "i" };
     }
 
+    // Skip calcula quantos documentos saltar antes de ler a página atual.
     const skip = (page - 1) * limit;
 
     const [items, total] = await Promise.all([
@@ -1090,6 +1330,7 @@ router.post("/", requireAuth, async (req, res) => {
         : [];
 
     const pokemonIds = [...new Set(pokemonIdsRaw.map(Number))].filter(
+        // Remove duplicados e rejeita valores não inteiros/<=0.
         (id) => Number.isInteger(id) && id > 0,
     );
 
@@ -1100,6 +1341,7 @@ router.post("/", requireAuth, async (req, res) => {
     }
 
     if (pokemonIds.length < 1 || pokemonIds.length > 6) {
+        // 422 por regra de negócio da equipa Pokémon.
         return res.status(422).json({
             error: {
                 code: "VALIDATION_ERROR",
@@ -1144,6 +1386,12 @@ Cria a pasta `backend/uploads/` com um ficheiro `backend/uploads/.gitkeep`.
 `backend/src/routes/users.routes.js`:
 
 ```js
+/**
+ * Trecho: backend/src/routes/users.routes.js
+ * Objetivo: receber upload de avatar e guardar URL pública no perfil do utilizador.
+
+ */
+
 import { Router } from "express";
 import fs from "node:fs";
 import path from "node:path";
@@ -1153,12 +1401,15 @@ import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router = Router();
 
+// Diretório único de uploads; usado aqui e no express.static do app.js.
 const uploadsDir = path.join(process.cwd(), "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
+    // Guarda sempre na pasta uploads da raiz do backend.
     destination: (_req, _file, cb) => cb(null, uploadsDir),
     filename: (_req, file, cb) => {
+        // Nome pseudo-único para reduzir colisões entre uploads.
         const ext =
             path.extname(file.originalname || "").toLowerCase() || ".png";
         cb(
@@ -1170,8 +1421,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage,
+    // Limite de 2MB evita uploads gigantes em ambiente pedagógico.
     limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
+        // ATENÇÃO (armadilha): mimetype pode ser falsificado; aqui é filtro básico de sala de aula.
+        // Nota: não corrigimos aqui para manter o snippet alinhado com o enunciado.
         if (!file.mimetype.startsWith("image/")) {
             cb(new Error("Ficheiro inválido: envia uma imagem"));
             return;
@@ -1186,6 +1440,7 @@ router.post(
     upload.single("avatar"),
     async (req, res) => {
         if (!req.file) {
+            // 422 quando o campo avatar não foi enviado.
             return res.status(422).json({
                 error: {
                     code: "VALIDATION_ERROR",
@@ -1208,6 +1463,7 @@ router.post(
         user.avatarUrl = `/uploads/${req.file.filename}`;
         await user.save();
 
+        // Mantemos contrato simples: devolver apenas a URL pública.
         return res.status(200).json({ avatarUrl: user.avatarUrl });
     },
 );
@@ -1287,10 +1543,17 @@ Sem esta separação, o projeto cresce confuso e os imports ficam incoerentes.
 No root do projeto:
 
 ```bash
+# Executa estes comandos na pasta indicada imediatamente acima do bloco.
+# Mantém a ordem dos comandos para evitar erros de setup.
+# Este mkdir cria a pasta de pages (rotas) sem mexer nos componentes reutilizáveis.
 mkdir -p frontend/src/pages
+# Move a rota Home para pages/.
 mv frontend/src/components/PokemonListPage.jsx frontend/src/pages/PokemonListPage.jsx
+# Move a rota de detalhe para pages/.
 mv frontend/src/components/PokemonDetailsPage.jsx frontend/src/pages/PokemonDetailsPage.jsx
+# Move a rota de favoritos para pages/.
 mv frontend/src/components/FavoritesPage.jsx frontend/src/pages/FavoritesPage.jsx
+# Move a rota de fallback 404 para pages/.
 mv frontend/src/components/NotFound.jsx frontend/src/pages/NotFound.jsx
 ```
 
@@ -1366,6 +1629,12 @@ Vamos centralizar chamadas HTTP num cliente Axios único.
     > Exemplo isolado - leitura de erro Axios
 
 ```js
+/**
+ * Trecho: snippet do enunciado
+ * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+
+ */
+
 if (err.response?.status === 401) {
     // sessão em falta
 }
@@ -1386,12 +1655,14 @@ Evitas duplicação de `baseURL`, `withCredentials` e header CSRF em cada reques
 `frontend/.env`:
 
 ```env
+# URL base do backend usada pelo Vite no cliente (axios baseURL).
 VITE_API_URL=http://localhost:3000
 ```
 
 `frontend/.env.example`:
 
 ```env
+# Exemplo da URL base do backend para quem clonar o projeto.
 VITE_API_URL=http://localhost:3000
 ```
 
@@ -1400,6 +1671,8 @@ VITE_API_URL=http://localhost:3000
 No `frontend/`:
 
 ```bash
+# Executa estes comandos na pasta indicada imediatamente acima do bloco.
+# Mantém a ordem dos comandos para evitar erros de setup.
 npm install axios
 ```
 
@@ -1408,8 +1681,20 @@ npm install axios
 `frontend/src/services/apiClient.js`:
 
 ```js
+/**
+ * Trecho: frontend/src/services/apiClient.js
+ * Objetivo: centralizar chamadas HTTP e injetar CSRF automaticamente nas mutações.
+
+ */
+
 import axios from "axios";
 
+/**
+ * Lê valor de um cookie por nome.
+ *
+ * @param {string} name
+ * @returns {string | null}
+ */
 function getCookie(name) {
     const chunk = document.cookie
         .split(";")
@@ -1422,17 +1707,20 @@ function getCookie(name) {
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3000",
+    // Sem isto o browser não envia/recebe cookies cross-origin.
     withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
     const method = (config.method ?? "get").toLowerCase();
+    // Só métodos que alteram estado precisam de prova CSRF.
     const needsCsrf = ["post", "put", "patch", "delete"].includes(method);
 
     if (needsCsrf) {
         const csrf = getCookie("csrfToken");
         if (csrf) {
             config.headers = config.headers ?? {};
+            // Header esperado no backend (requireCsrf).
             config.headers["X-CSRF-Token"] = csrf;
         }
     }
@@ -1448,23 +1736,51 @@ export default api;
 `frontend/src/services/authApi.js`:
 
 ```js
+/**
+ * Trecho: frontend/src/services/authApi.js
+ * Objetivo: encapsular endpoints de autenticação para manter páginas limpas.
+
+ */
+
 import api from "./apiClient.js";
 
+/**
+ * Regista utilizador e inicia sessão (cookies definidos pelo backend).
+ *
+ * @param {{username: string, email: string, password: string}} payload
+ * @returns {Promise<any>}
+ */
 export async function register(payload) {
     const res = await api.post("/api/auth/register", payload);
     return res.data;
 }
 
+/**
+ * Faz login e recebe sessão por cookie.
+ *
+ * @param {{email: string, password: string}} payload
+ * @returns {Promise<any>}
+ */
 export async function login(payload) {
     const res = await api.post("/api/auth/login", payload);
     return res.data;
 }
 
+/**
+ * Tenta restaurar sessão existente.
+ *
+ * @returns {Promise<any>}
+ */
 export async function restoreSession() {
     const res = await api.get("/api/auth/me");
     return res.data;
 }
 
+/**
+ * Termina sessão atual.
+ *
+ * @returns {Promise<any>}
+ */
 export async function logout() {
     const res = await api.post("/api/auth/logout");
     return res.data;
@@ -1474,18 +1790,41 @@ export async function logout() {
 `frontend/src/services/favoritesApi.js`:
 
 ```js
+/**
+ * Trecho: frontend/src/services/favoritesApi.js
+ * Objetivo: isolar o contrato canónico de favoritos num único módulo.
+
+ */
+
 import api from "./apiClient.js";
 
+/**
+ * GET /api/favorites -> number[]
+ *
+ * @returns {Promise<number[]>}
+ */
 export async function getFavorites() {
     const res = await api.get("/api/favorites");
     return res.data;
 }
 
+/**
+ * POST /api/favorites { id } -> { id }
+ *
+ * @param {number} id
+ * @returns {Promise<{id: number}>}
+ */
 export async function addFavorite(id) {
     const res = await api.post("/api/favorites", { id });
     return res.data;
 }
 
+/**
+ * DELETE /api/favorites/:id -> { id }
+ *
+ * @param {number} id
+ * @returns {Promise<{id: number}>}
+ */
 export async function removeFavorite(id) {
     const res = await api.delete(`/api/favorites/${id}`);
     return res.data;
@@ -1495,8 +1834,20 @@ export async function removeFavorite(id) {
 `frontend/src/services/teamsApi.js`:
 
 ```js
+/**
+ * Trecho: frontend/src/services/teamsApi.js
+ * Objetivo: centralizar chamadas HTTP das equipas com paginação e CRUD básico.
+
+ */
+
 import api from "./apiClient.js";
 
+/**
+ * Lista equipas paginadas.
+ *
+ * @param {{page?: number, limit?: number, q?: string}} [param0]
+ * @returns {Promise<any>}
+ */
 export async function listTeams({ page = 1, limit = 6, q = "" } = {}) {
     const res = await api.get("/api/teams", {
         params: { page, limit, q },
@@ -1504,11 +1855,23 @@ export async function listTeams({ page = 1, limit = 6, q = "" } = {}) {
     return res.data;
 }
 
+/**
+ * Cria uma nova equipa.
+ *
+ * @param {{name: string, pokemonIds: number[]}} payload
+ * @returns {Promise<any>}
+ */
 export async function createTeam(payload) {
     const res = await api.post("/api/teams", payload);
     return res.data;
 }
 
+/**
+ * Remove equipa por ID.
+ *
+ * @param {string} id
+ * @returns {Promise<any>}
+ */
 export async function removeTeam(id) {
     const res = await api.delete(`/api/teams/${id}`);
     return res.data;
@@ -1518,10 +1881,23 @@ export async function removeTeam(id) {
 `frontend/src/services/usersApi.js`:
 
 ```js
+/**
+ * Trecho: frontend/src/services/usersApi.js
+ * Objetivo: subir avatar via multipart/form-data.
+
+ */
+
 import api from "./apiClient.js";
 
+/**
+ * Faz upload de avatar.
+ *
+ * @param {File} file
+ * @returns {Promise<{avatarUrl: string}>}
+ */
 export async function uploadAvatar(file) {
     const formData = new FormData();
+    // O nome do campo tem de bater com upload.single("avatar") no backend.
     formData.append("avatar", file);
 
     const res = await api.post("/api/users/avatar", formData, {
@@ -1605,6 +1981,12 @@ Sem `authReady`, as rotas protegidas podem redirecionar antes da restauração d
 ### 7.1) Substituir `frontend/src/context/PokedexContext.jsx`
 
 ```jsx
+/**
+ * Trecho: frontend/src/context/PokedexContext.jsx
+ * Objetivo: concentrar estado global da Pokédex + sessão + favoritos do utilizador.
+
+ */
+
 import {
     createContext,
     useCallback,
@@ -1621,6 +2003,12 @@ const POKEMON_LIMIT = 151;
 
 const PokedexContext = createContext(null);
 
+/**
+ * Provider global do estado da aplicação.
+ *
+ * @param {{children: import("react").ReactNode}} props
+ * @returns {JSX.Element}
+ */
 export function PokedexProvider({ children }) {
     const [pokemon, setPokemon] = useState([]);
     const [favorites, setFavorites] = useState([]);
@@ -1630,12 +2018,14 @@ export function PokedexProvider({ children }) {
     const [error, setError] = useState(null);
 
     const refreshSession = useCallback(async () => {
+        // Tenta reaproveitar cookie de sessão existente (sem guardar token no frontend).
         const data = await authApi.restoreSession();
         setUser(data.user);
         return data.user;
     }, []);
 
     const bootstrap = useCallback(async () => {
+        // Estado inicial de loading para impedir decisões de UI prematuras.
         setLoading(true);
         setError(null);
 
@@ -1648,6 +2038,7 @@ export function PokedexProvider({ children }) {
             try {
                 restoredUser = await refreshSession();
             } catch (err) {
+                // 401 é esperado quando não há sessão; outros erros devem propagar.
                 if (err?.response?.status !== 401) {
                     throw err;
                 }
@@ -1665,6 +2056,7 @@ export function PokedexProvider({ children }) {
             setError("Erro ao carregar dados iniciais.");
         } finally {
             setLoading(false);
+            // authReady evita redirect prematuro no ProtectedRoute.
             setAuthReady(true);
         }
     }, [refreshSession]);
@@ -1677,6 +2069,7 @@ export function PokedexProvider({ children }) {
         const data = await authApi.login({ email, password });
         setUser(data.user);
 
+        // Após login, carregamos favoritos reais do backend para sincronizar UI.
         const favoriteIds = await favoritesApi.getFavorites();
         setFavorites(favoriteIds);
 
@@ -1694,6 +2087,7 @@ export function PokedexProvider({ children }) {
         try {
             await authApi.logout();
         } finally {
+            // Mesmo que o backend falhe, limpamos estado local para não manter UI "autenticada".
             setUser(null);
             setFavorites([]);
         }
@@ -1707,6 +2101,7 @@ export function PokedexProvider({ children }) {
 
             if (favorites.includes(pokemonId)) {
                 await favoritesApi.removeFavorite(pokemonId);
+                // Atualização otimista simples após resposta do backend.
                 setFavorites((prev) => prev.filter((id) => id !== pokemonId));
             } else {
                 await favoritesApi.addFavorite(pokemonId);
@@ -1761,6 +2156,7 @@ export function PokedexProvider({ children }) {
         ],
     );
 
+    // Provider expõe estado + ações para qualquer componente descendente.
     return (
         <PokedexContext.Provider value={value}>
             {children}
@@ -1768,6 +2164,12 @@ export function PokedexProvider({ children }) {
     );
 }
 
+/**
+ * Hook de consumo do contexto com guard para uso fora do Provider.
+ *
+ * @returns {any}
+ * @throws {Error}
+ */
 export function usePokedex() {
     const ctx = useContext(PokedexContext);
 
@@ -1854,19 +2256,33 @@ Evitas acesso direto a páginas privadas por URL e eliminas estado visual incons
 `frontend/src/components/ProtectedRoute.jsx`:
 
 ```jsx
+/**
+ * Trecho: frontend/src/components/ProtectedRoute.jsx
+ * Objetivo: bloquear rotas privadas até existir sessão válida.
+
+ */
+
 import { Navigate, useLocation } from "react-router-dom";
 import LoadingSpinner from "@/components/LoadingSpinner.jsx";
 import { usePokedex } from "@/context/PokedexContext.jsx";
 
+/**
+ * Guarda de rota privada.
+ *
+ * @param {{children: import("react").ReactNode}} props
+ * @returns {JSX.Element}
+ */
 function ProtectedRoute({ children }) {
     const { user, authReady } = usePokedex();
     const location = useLocation();
 
     if (!authReady) {
+        // Evita redirecionar para login antes de acabar restoreSession.
         return <LoadingSpinner />;
     }
 
     if (!user) {
+        // Guardamos origem para possível redireção pós-login.
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
@@ -1881,6 +2297,12 @@ export default ProtectedRoute;
 `frontend/src/components/Layout.jsx`:
 
 ```jsx
+/**
+ * Trecho: frontend/src/components/Layout.jsx
+ * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+
+ */
+
 import { NavLink, Outlet } from "react-router-dom";
 import { usePokedex } from "@/context/PokedexContext.jsx";
 
@@ -1989,6 +2411,12 @@ export default Layout;
 `frontend/src/App.jsx`:
 
 ```jsx
+/**
+ * Trecho: frontend/src/App.jsx
+ * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+
+ */
+
 import { Route, Routes } from "react-router-dom";
 import Layout from "@/components/Layout.jsx";
 import ProtectedRoute from "@/components/ProtectedRoute.jsx";
@@ -2049,6 +2477,12 @@ export default App;
 `frontend/src/pages/LoginPage.jsx`:
 
 ```jsx
+/**
+ * Trecho: frontend/src/pages/LoginPage.jsx
+ * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+
+ */
+
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { usePokedex } from "@/context/PokedexContext.jsx";
@@ -2116,6 +2550,12 @@ export default LoginPage;
 `frontend/src/pages/RegisterPage.jsx`:
 
 ```jsx
+/**
+ * Trecho: frontend/src/pages/RegisterPage.jsx
+ * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePokedex } from "@/context/PokedexContext.jsx";
@@ -2193,9 +2633,20 @@ export default RegisterPage;
 `frontend/src/pages/TeamsPage.jsx`:
 
 ```jsx
+/**
+ * Trecho: frontend/src/pages/TeamsPage.jsx
+ * Objetivo: gerir UI de equipas (listar, criar, apagar) com paginação e pesquisa.
+
+ */
+
 import { useEffect, useState } from "react";
 import { createTeam, listTeams, removeTeam } from "@/services/teamsApi.js";
 
+/**
+ * Página de gestão de equipas.
+ *
+ * @returns {JSX.Element}
+ */
 function TeamsPage() {
     const [items, setItems] = useState([]);
     const [total, setTotal] = useState(0);
@@ -2207,11 +2658,18 @@ function TeamsPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    /**
+     * Carrega uma página de equipas.
+     *
+     * @param {number} [targetPage=page]
+     * @returns {Promise<void>}
+     */
     async function load(targetPage = page) {
         setLoading(true);
         setError("");
 
         try {
+            // Mantemos limit fixo na UI para experiência consistente.
             const data = await listTeams({ page: targetPage, limit: 6, q });
             setItems(data.items);
             setTotal(data.total);
@@ -2225,14 +2683,22 @@ function TeamsPage() {
     }
 
     useEffect(() => {
+        // Sempre que q muda, voltamos à primeira página para evitar páginas vazias inesperadas.
         load(1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [q]);
 
+    /**
+     * Cria equipa com validação básica antes do POST.
+     *
+     * @param {import("react").FormEvent<HTMLFormElement>} event
+     * @returns {Promise<void>}
+     */
     async function handleCreate(event) {
         event.preventDefault();
         setError("");
 
+        // Parsing + dedupe de IDs introduzidos em texto livre.
         const pokemonIds = [
             ...new Set(
                 pokemonIdsInput
@@ -2256,12 +2722,19 @@ function TeamsPage() {
             await createTeam({ name: name.trim(), pokemonIds });
             setName("");
             setPokemonIdsInput("");
+            // Recarrega primeira página para mostrar equipa recém-criada.
             await load(1);
         } catch {
             setError("Não foi possível criar equipa.");
         }
     }
 
+    /**
+     * Remove equipa e recarrega página atual.
+     *
+     * @param {string} id
+     * @returns {Promise<void>}
+     */
     async function handleDelete(id) {
         try {
             await removeTeam(id);
@@ -2428,16 +2901,33 @@ Se `req.file` é undefined, quase sempre o cliente não enviou multipart correta
 ### 9.1) Criar `frontend/src/pages/ProfilePage.jsx`
 
 ```jsx
+/**
+ * Trecho: frontend/src/pages/ProfilePage.jsx
+ * Objetivo: permitir upload de avatar e refletir a alteração no perfil atual.
+
+ */
+
 import { useState } from "react";
 import { usePokedex } from "@/context/PokedexContext.jsx";
 import { uploadAvatar } from "@/services/usersApi.js";
 
+/**
+ * Página de perfil com upload de avatar.
+ *
+ * @returns {JSX.Element}
+ */
 function ProfilePage() {
     const { user, refreshSession } = usePokedex();
     const [file, setFile] = useState(null);
     const [feedback, setFeedback] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
+    /**
+     * Envia imagem para o backend e atualiza sessão local.
+     *
+     * @param {import("react").FormEvent<HTMLFormElement>} event
+     * @returns {Promise<void>}
+     */
     async function handleSubmit(event) {
         event.preventDefault();
         setFeedback("");
@@ -2451,6 +2941,7 @@ function ProfilePage() {
 
         try {
             await uploadAvatar(file);
+            // refreshSession volta a pedir /api/auth/me para apanhar avatarUrl novo.
             await refreshSession();
             setFeedback("Avatar atualizado com sucesso.");
             setFile(null);
@@ -2473,6 +2964,7 @@ function ProfilePage() {
 
                     {user.avatarUrl ? (
                         <img
+                            // Construção de URL absoluta com base no backend configurado no frontend.
                             src={`${import.meta.env.VITE_API_URL}${user.avatarUrl}`}
                             alt={`Avatar de ${user.username}`}
                             width="140"
