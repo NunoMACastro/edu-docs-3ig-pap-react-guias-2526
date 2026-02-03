@@ -407,11 +407,31 @@ import { connectToMongo } from "./db/connect.js";
 const port = Number(process.env.PORT ?? 3000);
 
 /**
+ * Garante que variáveis críticas existem antes de ligar serviços externos.
+ *
+ * @returns {void}
+ * @throws {Error}
+ */
+function assertRequiredEnv() {
+    const required = ["MONGODB_URI", "JWT_SECRET"];
+    const missing = required.filter((key) => !process.env[key]);
+
+    if (missing.length > 0) {
+        throw new Error(
+            `Variáveis em falta no backend/.env: ${missing.join(", ")}`,
+        );
+    }
+}
+
+/**
  * Bootstrap da aplicação.
  *
  * @returns {Promise<void>}
  */
 async function bootstrap() {
+    // Fail fast: se faltar configuração crítica, não abrimos a porta HTTP.
+    assertRequiredEnv();
+
     // Fail fast: se Mongo falhar, não abrimos a porta HTTP.
     await connectToMongo();
 
@@ -429,12 +449,13 @@ bootstrap().catch((err) => {
 
 ### Checkpoint 2
 
-- `npm run dev` no backend arranca sem erro de `MONGODB_URI`.
+- `npm run dev` no backend arranca sem erro de `MONGODB_URI` e de `JWT_SECRET`.
 - Se o Atlas estiver mal configurado, o backend falha no arranque (comportamento correto: fail fast).
 
 ### Erros comuns (env + Mongo)
 
 - `MONGO_URI` em vez de `MONGODB_URI`.
+- `JWT_SECRECT` (typo) em vez de `JWT_SECRET`.
 - IP não autorizado no Atlas (Network Access).
 - User/password errados na connection string.
 - Falta de `dotenv/config` no `server.js`.
@@ -524,7 +545,7 @@ Header CSRF = palavra-passe curta pedida em ações sensíveis.
 403 -> sessão pode existir, mas proteção CSRF falhou
 ```
 
-### Porque fazemos isto
+### Porque importa (porque fazemos isto)
 
 Com cookies, o browser envia credenciais automaticamente. Isso pede duas coisas obrigatórias:
 
@@ -536,7 +557,30 @@ Com cookies, o browser envia credenciais automaticamente. Isso pede duas coisas 
 
 Se faltar uma destas duas peças, o login pode “parecer” funcionar mas a sessão não persiste.
 
-### 3.1) Modelo User
+### 3.0) Mapa mental Auth + Cookies + CSRF + CORS
+
+Aqui está um resumo visual do fluxo de autenticação e proteção CSRF.
+Basicamente o user faz login (1), o frontend pede dados do user (2), e depois faz mutações protegidas (3).
+
+> mutações = pedidos que alteram estado (POST/PUT/PATCH/DELETE)
+
+```txt
+(1) POST /api/auth/login
+    -> Set-Cookie: token (HttpOnly)
+    -> Set-Cookie: csrfToken (não HttpOnly)
+
+(2) GET /api/auth/me
+    -> cookie token é enviado automaticamente
+    -> requireAuth valida JWT
+
+(3) POST /api/favorites
+    -> cookie token + cookie csrfToken + header X-CSRF-Token
+    -> requireAuth + requireCsrf
+```
+
+### Passos
+
+### 3.1) Modelo User + utils (cookies/csrf)
 
 `backend/src/models/User.js`:
 
@@ -594,7 +638,7 @@ const User = mongoose.model("User", userSchema);
 export default User;
 ```
 
-### 3.2) Utils de cookies e CSRF
+#### 3.1.1) Utils de cookies e CSRF
 
 `backend/src/utils/cookies.js`:
 
@@ -682,7 +726,7 @@ export function createCsrfToken() {
 }
 ```
 
-### 3.3) Middlewares de segurança
+### 3.2) `requireAuth`
 
 `backend/src/middlewares/requireAuth.js`:
 
@@ -729,6 +773,13 @@ export function requireAuth(req, res, next) {
 }
 ```
 
+### 3.3) `requireCsrf` + preflight/CORS
+
+Antes do snippet, fixa estas duas regras práticas:
+
+- `OPTIONS` (preflight) deve passar para o browser conseguir avançar para a mutação real.
+- CORS e CSRF resolvem problemas diferentes: CORS controla origem; CSRF valida intenção da mutação autenticada.
+
 `backend/src/middlewares/requireCsrf.js`:
 
 ```js
@@ -769,7 +820,7 @@ export function requireCsrf(req, res, next) {
 }
 ```
 
-### 3.4) Rotas de autenticação
+### 3.4) Rotas de autenticação (`register`/`login`/`me`/`logout`)
 
 `backend/src/routes/auth.routes.js`:
 
@@ -1011,18 +1062,37 @@ app.use((err, _req, res, next) => {
         return next(err);
     }
 
-    const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
-    const message = err.message || "Erro no upload";
+    const isUploadError =
+        err.code === "LIMIT_FILE_SIZE" ||
+        err.code === "LIMIT_UNEXPECTED_FILE" ||
+        err.name === "MulterError";
+
+    const status = err.status ?? (err.code === "LIMIT_FILE_SIZE" ? 413 : 400);
+
+    const message =
+        err.message || (isUploadError ? "Erro no upload" : "Pedido inválido");
 
     // ATENÇÃO (armadilha): erros de upload podem parecer "genéricos".
     // Nota: mantemos resposta curta aqui para ficar alinhada com o enunciado.
     return res.status(status).json({
-        error: { code: "UPLOAD_ERROR", message },
+        error: {
+            code: isUploadError ? "UPLOAD_ERROR" : "BAD_REQUEST",
+            message,
+        },
     });
 });
 
 export default app;
 ```
+
+### 3.6) Tabela de diagnóstico rápido (401/403/422/500)
+
+| Status | Se isto acontecer...                      | Verifica primeiro...                            |
+| ------ | ----------------------------------------- | ----------------------------------------------- |
+| 401    | login parece feito mas rota privada falha | cookie `token`, `withCredentials`, `JWT_SECRET` |
+| 403    | mutações falham (`POST`/`DELETE`)         | header `X-CSRF-Token` e cookie `csrfToken`      |
+| 422    | backend recusa dados do formulário        | payload (campos obrigatórios, tipos, limites)   |
+| 500    | erro interno inesperado                   | logs do backend + último request no Network     |
 
 ### Checkpoint 3
 
@@ -1030,6 +1100,12 @@ export default app;
 2. Browser/cliente recebe cookies `token` (HttpOnly) e `csrfToken`.
 3. `GET /api/auth/me` devolve o utilizador autenticado.
 4. `POST /api/auth/logout` só funciona com CSRF header válido.
+
+Critérios binários de validação (debug guiado):
+
+- Se `/api/auth/me` devolver `401`, verifica: cookie `token` presente + `withCredentials: true` + `JWT_SECRET` estável.
+- Se qualquer mutação devolver `403`, verifica: cookie `csrfToken` presente + header `X-CSRF-Token` a coincidir.
+- Se `logout` devolver `200` mas sessão continuar, verifica: `clearCookie` usa as mesmas opções-base do `res.cookie`.
 
 ### Erros comuns (CORS/cookies/CSRF)
 
@@ -1278,6 +1354,7 @@ export default Team;
  */
 
 import { Router } from "express";
+import mongoose from "mongoose";
 import Team from "../models/Team.js";
 import { requireAuth } from "../middlewares/requireAuth.js";
 
@@ -1360,6 +1437,13 @@ router.post("/", requireAuth, async (req, res) => {
 });
 
 router.delete("/:id", requireAuth, async (req, res) => {
+    // Validação explícita evita CastError e devolve feedback imediato ao cliente.
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).json({
+            error: { code: "INVALID_ID", message: "id de equipa inválido" },
+        });
+    }
+
     const team = await Team.findOne({
         _id: req.params.id,
         userId: req.auth.userId,
@@ -1900,11 +1984,8 @@ export async function uploadAvatar(file) {
     // O nome do campo tem de bater com upload.single("avatar") no backend.
     formData.append("avatar", file);
 
-    const res = await api.post("/api/users/avatar", formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    });
+    // Sem header manual: o browser/axios definem o boundary multipart corretamente.
+    const res = await api.post("/api/users/avatar", formData);
 
     return res.data;
 }
@@ -2247,9 +2328,19 @@ Precisamos dos dois.
   /favoritos
 ```
 
-### Porque fazemos isto
+### Porque importa (porque fazemos isto)
 
 Evitas acesso direto a páginas privadas por URL e eliminas estado visual inconsistente na navbar.
+
+### 8.0) Mapa de rotas públicas vs privadas
+
+```txt
+Públicas: /, /pokemon/:id, /login, /registo
+Privadas: /favoritos, /equipas, /perfil
+Regra: privadas passam sempre por <ProtectedRoute />
+```
+
+### Passos
 
 ### 8.1) Criar `ProtectedRoute`
 
@@ -2472,7 +2563,7 @@ function App() {
 export default App;
 ```
 
-### 8.4) Páginas de auth e equipas
+### 8.4) Login/Register (fluxo de redirect)
 
 `frontend/src/pages/LoginPage.jsx`:
 
@@ -2629,6 +2720,8 @@ function RegisterPage() {
 
 export default RegisterPage;
 ```
+
+### 8.5) Teams (carregar/criar/apagar/paginar)
 
 `frontend/src/pages/TeamsPage.jsx`:
 
@@ -2829,7 +2922,13 @@ export default TeamsPage;
 - Depois de login, links privados aparecem no `Layout`.
 - Teams cria/apaga e refresca por chamada real à API.
 
-### Erros comuns (rotas protegidas)
+Critérios binários de validação (debug guiado):
+
+- Se rota privada não redirecionar sem login, verifica se está embrulhada em `<ProtectedRoute>`.
+- Se redirecionar cedo demais no refresh, verifica `authReady` antes de decidir `Navigate`.
+- Se login for bem-sucedido mas não regressar à origem, verifica `location.state?.from` + `navigate(..., { replace: true })`.
+
+### 8.6) Erros comuns de navegação/autenticação
 
 - esquecer `authReady` no `ProtectedRoute`.
 - chamar `navigate` antes de `login` terminar.
@@ -3101,6 +3200,22 @@ Se não testares o fluxo completo (login -> favoritos -> equipas -> avatar -> lo
 - **Imports**: `App.jsx` ainda a importar páginas de `components`.
 - **Env vars**: frontend sem `VITE_API_URL` ou backend sem `JWT_SECRET`.
 - **Uploads**: `express.static(uploadsDir)` em falta no `app.js`.
+
+### 10.3) Mini playbook transversal de debug (rápido)
+
+```txt
+1) Confirmar se o request chegou ao backend
+2) Ler status HTTP (401/403/422/500)
+3) Mapear status para camada provável (sessão, CSRF, validação, servidor)
+4) Corrigir a causa mais provável e repetir o mesmo teste
+```
+
+Leitura guiada por status:
+
+- `401` -> verificar sessão/cookies/JWT.
+- `403` -> verificar CSRF (cookie + header).
+- `422` -> verificar payload do cliente.
+- `500` -> verificar logs e stack do backend.
 
 ---
 
