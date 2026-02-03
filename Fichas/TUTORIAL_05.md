@@ -1293,6 +1293,25 @@ Testar o backend primeiro é uma estratégia de engenharia muito usada:
 - se a API estiver ok, o problema está no frontend (ou no CORS)
 - evitas “debug às cegas” com 2 sistemas ao mesmo tempo
 
+Utilização do `curl`:
+
+- `curl` é uma ferramenta de linha de comandos para fazer pedidos HTTP.
+- Permite testar GET/POST/DELETE sem browser.
+
+Exemplos:
+
+```bash
+curl http://localhost:3000/api/favorites
+curl -X POST http://localhost:3000/api/favorites \
+  -H "Content-Type: application/json" \
+  -d '{"id": 7}'
+curl -X DELETE http://localhost:3000/api/favorites/7
+```
+
+O 1º faz o GET de favoritos.
+O 2º faz o POST com body JSON.
+O 3º faz o DELETE do favorito com id 7.
+
 #### Ferramentas típicas
 
 - **curl** (linha de comandos)  

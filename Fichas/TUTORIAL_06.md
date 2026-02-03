@@ -168,6 +168,26 @@ PokemonCard.jsx faz fetch direto ao backend e também decide rotas
 
 Se o aluno sabe o “mapa final” desde o início, não se perde a meio da migração.
 
+### Estado inicial esperado (Fim da Ficha 05)
+
+A Ficha 06 integra-se sobre o estado final da Ficha 05. Os nomes exatos de alguns ficheiros/pastas podem variar, mas este é o mínimo compatível esperado para conseguires seguir sem ambiguidade.
+
+```text
+frontend/
+  src/
+    App.jsx
+    context/
+      PokedexContext.jsx
+    components/
+
+backend/
+  src/
+    app.js
+    server.js
+```
+
+Se o teu projeto tiver pequenas variações de naming, mantém o equivalente funcional destes caminhos ao aplicar os passos desta ficha.
+
 ### Estrutura final esperada
 
 ```text
@@ -304,6 +324,11 @@ Sem base de dados e sem `.env`, as próximas secções (auth, equipas, favoritos
 
 ### 2.1) Instalar dependências
 
+- **Ponto de situação:** o backend já está estruturado e agora precisa das bibliotecas base da ficha.
+- **Objetivo deste passo:** instalar dependências de runtime e desenvolvimento para auth, cookies, CSRF, Mongo e upload.
+- **Ficheiros:** alterar `backend/package.json` e `backend/package-lock.json` (gerados pelo `npm install`).
+- **Validação rápida:** no fim, `npm run dev` no `backend/` arranca sem erro de módulo em falta.
+
 No `backend/`:
 
 ```bash
@@ -314,6 +339,11 @@ npm install -D nodemon
 ```
 
 ### 2.2) Criar `.env` e `.env.example`
+
+- **Ponto de situação:** dependências instaladas; falta definir configuração local do backend.
+- **Objetivo deste passo:** criar variáveis de ambiente reais (`.env`) e contrato de configuração (`.env.example`).
+- **Ficheiros:** criar/editar `backend/.env`, `backend/.env.example` e confirmar `backend/.gitignore`.
+- **Validação rápida:** backend lê `PORT`, `CLIENT_ORIGIN`, `MONGODB_URI` e `JWT_SECRET` sem fallback inesperado.
 
 `backend/.env`:
 
@@ -359,6 +389,11 @@ uploads/*
 ```
 
 ### 2.3) Ligar ao MongoDB
+
+- **Ponto de situação:** configuração pronta; agora falta fechar o bootstrap do servidor.
+- **Objetivo deste passo:** ligar ao Mongo antes de abrir a porta HTTP (fail-fast no arranque).
+- **Ficheiros:** editar/criar `backend/src/db/connect.js` e `backend/src/server.js`.
+- **Validação rápida:** se a URI estiver correta, aparece log de ligação; se faltar config, o processo termina com erro explícito.
 
 `backend/src/db/connect.js`:
 
@@ -582,12 +617,18 @@ Basicamente o user faz login (1), o frontend pede dados do user (2), e depois fa
 
 ### 3.1) Modelo User + utils (cookies/csrf)
 
+- **Ponto de situação:** já tens o mapa mental de auth; agora começam as peças persistidas e reutilizáveis.
+- **Objetivo deste passo:** definir o modelo de utilizador e preparar base para sessão/favoritos/avatar.
+- **Ficheiros:** criar/editar `backend/src/models/User.js`.
+- **Validação rápida:** o modelo inclui `passwordHash`, `favorites`, `avatarUrl` e remove `passwordHash` no `toJSON`.
+
 `backend/src/models/User.js`:
 
 ```js
 /**
  * Trecho: backend/src/models/User.js
- * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+ * Objetivo: definir o schema do utilizador (credenciais, favoritos e avatar) e esconder `passwordHash` no JSON de resposta.
+ * Este ficheiro existe aqui para sustentar auth, favorites e perfil nas secções seguintes.
 
  */
 
@@ -639,6 +680,11 @@ export default User;
 ```
 
 #### 3.1.1) Utils de cookies e CSRF
+
+- **Ponto de situação:** o modelo está definido; agora precisas de utilitários para cookies e token CSRF.
+- **Objetivo deste passo:** centralizar opções de cookies e geração de CSRF para evitar inconsistências.
+- **Ficheiros:** criar/editar `backend/src/utils/cookies.js` e `backend/src/utils/csrf.js`.
+- **Validação rápida:** há funções separadas para `authCookieOptions`, `csrfCookieOptions`, `clearCookieOptions` e `createCsrfToken`.
 
 `backend/src/utils/cookies.js`:
 
@@ -728,6 +774,11 @@ export function createCsrfToken() {
 
 ### 3.2) `requireAuth`
 
+- **Ponto de situação:** já existe infraestrutura de token/cookies; agora falta proteger rotas privadas.
+- **Objetivo deste passo:** validar JWT do cookie e expor `req.auth.userId` para as rotas seguintes.
+- **Ficheiros:** criar/editar `backend/src/middlewares/requireAuth.js`.
+- **Validação rápida:** sem cookie devolve `401`; com token válido passa no `next()`.
+
 `backend/src/middlewares/requireAuth.js`:
 
 ```js
@@ -775,6 +826,11 @@ export function requireAuth(req, res, next) {
 
 ### 3.3) `requireCsrf` + preflight/CORS
 
+- **Ponto de situação:** autenticação pronta; agora falta proteger mutações contra CSRF.
+- **Objetivo deste passo:** exigir correspondência entre cookie CSRF e header `X-CSRF-Token` em métodos mutáveis.
+- **Ficheiros:** criar/editar `backend/src/middlewares/requireCsrf.js`.
+- **Validação rápida:** `GET` passa sem token; `POST/DELETE` sem token correto devolvem `403`.
+
 Antes do snippet, fixa estas duas regras práticas:
 
 - `OPTIONS` (preflight) deve passar para o browser conseguir avançar para a mutação real.
@@ -821,6 +877,11 @@ export function requireCsrf(req, res, next) {
 ```
 
 ### 3.4) Rotas de autenticação (`register`/`login`/`me`/`logout`)
+
+- **Ponto de situação:** middlewares prontos; agora montas o ciclo completo de sessão.
+- **Objetivo deste passo:** implementar registo, login, sessão atual e logout com cookies.
+- **Ficheiros:** criar/editar `backend/src/routes/auth.routes.js`.
+- **Validação rápida:** `register/login` definem cookies, `me` devolve user autenticado e `logout` limpa sessão com CSRF válido.
 
 `backend/src/routes/auth.routes.js`:
 
@@ -995,6 +1056,11 @@ export default router;
 ```
 
 ### 3.5) `app.js` com CORS, cookies e ordem correta de middlewares
+
+- **Ponto de situação:** já tens rotas/middlewares; falta compor tudo na pipeline do Express.
+- **Objetivo deste passo:** aplicar ordem correta (CORS -> parsers -> rotas -> CSRF global -> handlers finais).
+- **Ficheiros:** editar `backend/src/app.js`.
+- **Validação rápida:** `GET /api/health` responde, auth funciona, mutações fora de `/api/auth` exigem CSRF.
 
 `backend/src/app.js`:
 
@@ -1187,6 +1253,11 @@ A autenticação sem dados por utilizador não resolve o objetivo da app. Esta s
 
 ### 4.1) Contrato de favorites (único)
 
+- **Ponto de situação:** sessão pronta; agora os dados devem ficar isolados por utilizador.
+- **Objetivo deste passo:** manter contrato de favorites da ficha anterior com persistência no utilizador autenticado.
+- **Ficheiros:** criar/editar `backend/src/routes/favorites.routes.js`.
+- **Validação rápida:** `GET` devolve `number[]`, `POST`/`DELETE` devolvem `{ id }` e respeitam validações.
+
 - `GET /api/favorites` -> `number[]`
 - `POST /api/favorites` com body `{ "id": number }` -> `{ "id": number }`
 - `DELETE /api/favorites/:id` -> `{ "id": number }`
@@ -1296,6 +1367,11 @@ export default router;
 ```
 
 ### 4.2) Modelo Team e rotas de equipas
+
+- **Ponto de situação:** favorites resolvidos; agora entra o recurso de equipas com paginação e pesquisa.
+- **Objetivo deste passo:** criar schema de equipas e endpoints de listar/criar/apagar por utilizador.
+- **Ficheiros:** criar/editar `backend/src/models/Team.js` e `backend/src/routes/teams.routes.js`.
+- **Validação rápida:** `GET /api/teams` devolve paginação; `POST` valida 1..6 IDs; `DELETE` remove equipa do utilizador.
 
 `backend/src/models/Team.js`:
 
@@ -1465,6 +1541,11 @@ export default router;
 
 ### 4.3) Upload de avatar (obrigatório)
 
+- **Ponto de situação:** recursos de dados prontos; falta integração com ficheiros.
+- **Objetivo deste passo:** receber upload de avatar, guardar em disco e persistir `avatarUrl` no utilizador.
+- **Ficheiros:** criar `backend/uploads/.gitkeep` e criar/editar `backend/src/routes/users.routes.js`.
+- **Validação rápida:** `POST /api/users/avatar` devolve `{ avatarUrl }` e a imagem fica acessível em `/uploads/...`.
+
 Cria a pasta `backend/uploads/` com um ficheiro `backend/uploads/.gitkeep`.
 
 `backend/src/routes/users.routes.js`:
@@ -1561,6 +1642,22 @@ export default router;
 - `GET /api/teams?page=1&limit=5&q=` devolve `{ items, total, page, limit, pages }`.
 - `POST /api/users/avatar` grava imagem e devolve `avatarUrl`.
 
+### Mapa de migração (Checklist de integração)
+
+| Categoria | Ficheiro/Pasta                                               | Onde colocar                                                            | Checkpoint         |
+| --------- | ------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------ |
+| MOVE      | `frontend/src/components/*Page.jsx` -> `frontend/src/pages/` | executar os `mv` da secção **5.1** (antes de atualizar imports)         | Checkpoint 5       |
+| CREATE    | `frontend/src/pages/LoginPage.jsx`                           | criar ficheiro novo na secção **5.2**                                   | Checkpoint 5       |
+| CREATE    | `frontend/src/pages/RegisterPage.jsx`                        | criar ficheiro novo na secção **5.2**                                   | Checkpoint 5       |
+| CREATE    | `frontend/src/pages/TeamsPage.jsx`                           | criar ficheiro novo na secção **5.2**                                   | Checkpoint 8       |
+| CREATE    | `frontend/src/pages/ProfilePage.jsx`                         | criar ficheiro novo na secção **5.2** e preencher na secção **9.1**     | Checkpoint 9       |
+| EDIT      | `frontend/src/App.jsx`                                       | substituir/importar rotas conforme secções **5.3** e **8.3**            | Checkpoint 8       |
+| EDIT      | `frontend/src/context/PokedexContext.jsx`                    | substituir conteúdo total na secção **7.1**                             | Checkpoint 7       |
+| EDIT      | `frontend/src/services/apiClient.js`                         | criar no `services/` e adicionar bloco completo da secção **6.3**       | Checkpoint 6       |
+| EDIT      | `backend/src/server.js`                                      | aplicar bloco completo da secção **2.3** no ficheiro existente          | Checkpoint 2       |
+| EDIT      | `backend/src/app.js`                                         | aplicar bloco completo da secção **3.5** mantendo ordem de middlewares  | Checkpoint 3       |
+| VERIFY    | `frontend` + `backend` a correr em paralelo                  | validar health/auth/favoritos/equipas/avatar pela ordem dos checkpoints | Checkpoints 2 -> 9 |
+
 ---
 
 ## 5) Frontend: refactor obrigatório para pages/components
@@ -1624,6 +1721,17 @@ Sem esta separação, o projeto cresce confuso e os imports ficam incoerentes.
 
 ### 5.1) Migrar as páginas que já existem
 
+- **Ponto de situação:** backend fechado; agora reorganizas frontend sem mudar comportamento.
+- **Objetivo deste passo:** mover componentes de rota para `pages/`.
+- **Ficheiros:** mover ficheiros de `frontend/src/components/` para `frontend/src/pages/`.
+- **Validação rápida:** após os `mv`, o projeto compila e as rotas antigas continuam a abrir.
+
+Se na tua Ficha 05 já existe `src/pages`, adapta estes comandos: o objetivo é que as rotas fiquem em `pages/` e não em `components/`.
+
+Se os ficheiros têm nomes diferentes:
+
+- Move os componentes de rota (os usados no Router) para `pages/`; mantém UI reutilizável em `components/`.
+
 No root do projeto:
 
 ```bash
@@ -1643,6 +1751,11 @@ mv frontend/src/components/NotFound.jsx frontend/src/pages/NotFound.jsx
 
 ### 5.2) Criar novas páginas obrigatórias
 
+- **Ponto de situação:** páginas antigas já foram separadas.
+- **Objetivo deste passo:** garantir existência das novas rotas obrigatórias da ficha.
+- **Ficheiros:** criar `frontend/src/pages/LoginPage.jsx`, `frontend/src/pages/RegisterPage.jsx`, `frontend/src/pages/TeamsPage.jsx`, `frontend/src/pages/ProfilePage.jsx`.
+- **Validação rápida:** todos os paths existem antes de atualizar o router.
+
 Cria também em `frontend/src/pages/`:
 
 - `LoginPage.jsx`
@@ -1651,6 +1764,11 @@ Cria também em `frontend/src/pages/`:
 - `ProfilePage.jsx`
 
 ### 5.3) Atualizar imports do router
+
+- **Ponto de situação:** a estrutura de pastas mudou; falta alinhar o ponto de entrada de rotas.
+- **Objetivo deste passo:** atualizar `App.jsx` para importar páginas de `@/pages/...`.
+- **Ficheiros:** editar `frontend/src/App.jsx`.
+- **Validação rápida:** Vite deixa de mostrar erros de import e a rota `*` usa `NotFound` em `pages/`.
 
 `frontend/src/App.jsx` vai passar a importar páginas de `@/pages/...`.
 
@@ -1715,7 +1833,8 @@ Vamos centralizar chamadas HTTP num cliente Axios único.
 ```js
 /**
  * Trecho: snippet do enunciado
- * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+ * Objetivo: mostrar tratamento explícito de erro Axios por status para decisões de UI previsíveis.
+ * Este exemplo prepara a lógica usada nos services e páginas autenticadas.
 
  */
 
@@ -1736,6 +1855,11 @@ Evitas duplicação de `baseURL`, `withCredentials` e header CSRF em cada reques
 
 ### 6.1) Variáveis de ambiente frontend
 
+- **Ponto de situação:** frontend reestruturado; agora falta configurar URL base de API.
+- **Objetivo deste passo:** definir `VITE_API_URL` para centralizar origem do backend.
+- **Ficheiros:** criar/editar `frontend/.env` e `frontend/.env.example`.
+- **Validação rápida:** requests do frontend apontam para `http://localhost:3000` (ou valor definido).
+
 `frontend/.env`:
 
 ```env
@@ -1752,6 +1876,11 @@ VITE_API_URL=http://localhost:3000
 
 ### 6.2) Instalar Axios
 
+- **Ponto de situação:** env do frontend pronto; agora falta a biblioteca HTTP padrão da ficha.
+- **Objetivo deste passo:** instalar Axios para centralizar chamadas e interceptors.
+- **Ficheiros:** alterar `frontend/package.json` e `frontend/package-lock.json`.
+- **Validação rápida:** import de `axios` funciona sem erro ao arrancar o frontend.
+
 No `frontend/`:
 
 ```bash
@@ -1761,6 +1890,11 @@ npm install axios
 ```
 
 ### 6.3) Criar `apiClient.js`
+
+- **Ponto de situação:** Axios instalado; agora crias a instância única da aplicação.
+- **Objetivo deste passo:** configurar `baseURL`, `withCredentials` e injeção automática do header CSRF.
+- **Ficheiros:** criar/editar `frontend/src/services/apiClient.js`.
+- **Validação rápida:** mutações passam a enviar `X-CSRF-Token` quando o cookie existe.
 
 `frontend/src/services/apiClient.js`:
 
@@ -1816,6 +1950,11 @@ export default api;
 ```
 
 ### 6.4) Services canónicos
+
+- **Ponto de situação:** cliente HTTP pronto; agora separas contratos por recurso.
+- **Objetivo deste passo:** criar services de auth, favorites, teams e users sem espalhar requests pela UI.
+- **Ficheiros:** criar/editar `frontend/src/services/authApi.js`, `favoritesApi.js`, `teamsApi.js`, `usersApi.js`.
+- **Validação rápida:** páginas consomem services com contratos consistentes e sem `fetch` direto ao backend.
 
 `frontend/src/services/authApi.js`:
 
@@ -2060,6 +2199,11 @@ Só decide redirecionar quando a verificação de sessão termina.
 Sem `authReady`, as rotas protegidas podem redirecionar antes da restauração de sessão acabar.
 
 ### 7.1) Substituir `frontend/src/context/PokedexContext.jsx`
+
+- **Ponto de situação:** services prontos; agora concentras estado e fluxo da app.
+- **Objetivo deste passo:** integrar sessão (`authReady`, login/logout, restoreSession) mantendo compatibilidade com Ficha 05.
+- **Ficheiros:** substituir `frontend/src/context/PokedexContext.jsx`.
+- **Validação rápida:** app não redireciona cedo no refresh e favoritos sincronizam após login/restauração.
 
 ```jsx
 /**
@@ -2344,6 +2488,11 @@ Regra: privadas passam sempre por <ProtectedRoute />
 
 ### 8.1) Criar `ProtectedRoute`
 
+- **Ponto de situação:** contexto já sabe autenticação; agora precisas do guard de UI.
+- **Objetivo deste passo:** bloquear rotas privadas até `authReady` e `user` válidos.
+- **Ficheiros:** criar/editar `frontend/src/components/ProtectedRoute.jsx`.
+- **Validação rápida:** sem sessão vai para `/login`; com sessão renderiza conteúdo protegido.
+
 `frontend/src/components/ProtectedRoute.jsx`:
 
 ```jsx
@@ -2385,12 +2534,18 @@ export default ProtectedRoute;
 
 ### 8.2) Atualizar `Layout` para links por estado de login
 
+- **Ponto de situação:** guard pronto; agora ajustas navegação ao estado de sessão.
+- **Objetivo deste passo:** mostrar links públicos/privados e ação de logout no layout principal.
+- **Ficheiros:** editar `frontend/src/components/Layout.jsx`.
+- **Validação rápida:** links mudam imediatamente quando `user` passa de `null` para autenticado (e vice-versa).
+
 `frontend/src/components/Layout.jsx`:
 
 ```jsx
 /**
  * Trecho: frontend/src/components/Layout.jsx
- * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+ * Objetivo: renderizar a navegação principal com links condicionais pelo estado de sessão.
+ * Este layout centraliza a experiência pública/privada da app sem duplicação de navbar.
 
  */
 
@@ -2499,12 +2654,18 @@ export default Layout;
 
 ### 8.3) Router final
 
+- **Ponto de situação:** peças de navegação prontas; agora fechas a árvore de rotas.
+- **Objetivo deste passo:** declarar rotas públicas e privadas com `ProtectedRoute`.
+- **Ficheiros:** editar `frontend/src/App.jsx`.
+- **Validação rápida:** `/favoritos`, `/equipas`, `/perfil` exigem login; `*` cai em `NotFound`.
+
 `frontend/src/App.jsx`:
 
 ```jsx
 /**
  * Trecho: frontend/src/App.jsx
- * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+ * Objetivo: declarar a árvore final de rotas públicas e privadas usando `ProtectedRoute`.
+ * Este ficheiro liga pages, layout e fallback de rota num único ponto de entrada.
 
  */
 
@@ -2565,12 +2726,18 @@ export default App;
 
 ### 8.4) Login/Register (fluxo de redirect)
 
+- **Ponto de situação:** router definido; faltam páginas de entrada de sessão.
+- **Objetivo deste passo:** implementar formulários de login/registo com redireção correta.
+- **Ficheiros:** criar/editar `frontend/src/pages/LoginPage.jsx` e `frontend/src/pages/RegisterPage.jsx`.
+- **Validação rápida:** login regressa à rota de origem (`from`) e registo autentica/utiliza navegação esperada.
+
 `frontend/src/pages/LoginPage.jsx`:
 
 ```jsx
 /**
  * Trecho: frontend/src/pages/LoginPage.jsx
- * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+ * Objetivo: autenticar utilizador e redirecionar para a rota de origem quando aplicável.
+ * Esta página fecha o fluxo de entrada em conjunto com `ProtectedRoute` e `location.state`.
 
  */
 
@@ -2643,7 +2810,8 @@ export default LoginPage;
 ```jsx
 /**
  * Trecho: frontend/src/pages/RegisterPage.jsx
- * Objetivo: explicar o que este snippet faz e onde encaixa no fluxo da ficha.
+ * Objetivo: criar conta nova e iniciar o estado autenticado da aplicação.
+ * Esta página complementa o login e valida os campos mínimos de registo no frontend.
 
  */
 
@@ -2722,6 +2890,11 @@ export default RegisterPage;
 ```
 
 ### 8.5) Teams (carregar/criar/apagar/paginar)
+
+- **Ponto de situação:** auth frontend funcional; agora ligas gestão de equipas à API real.
+- **Objetivo deste passo:** carregar, criar, pesquisar, paginar e apagar equipas pela UI.
+- **Ficheiros:** criar/editar `frontend/src/pages/TeamsPage.jsx`.
+- **Validação rápida:** ações de equipa refletem-se no ecrã após cada request (sem mock/localStorage).
 
 `frontend/src/pages/TeamsPage.jsx`:
 
@@ -2998,6 +3171,11 @@ Se `req.file` é undefined, quase sempre o cliente não enviou multipart correta
 É o exemplo completo de `multipart/form-data` com atualização de sessão visual na UI.
 
 ### 9.1) Criar `frontend/src/pages/ProfilePage.jsx`
+
+- **Ponto de situação:** backend de upload já existe; falta integração final no frontend.
+- **Objetivo deste passo:** enviar avatar em `FormData` e refrescar sessão para mostrar imagem nova.
+- **Ficheiros:** criar/editar `frontend/src/pages/ProfilePage.jsx`.
+- **Validação rápida:** após upload com sucesso, `avatarUrl` atualizado aparece no perfil sem reiniciar app.
 
 ```jsx
 /**
@@ -3278,3 +3456,13 @@ Item checklist + teste executado + resultado observado + estado final.
 - [ ] Testes manuais fim-a-fim executados com sucesso.
 
 Se tudo estiver marcado, a Ficha 06 está concluída e consistente com a Ficha 05.
+
+## Changelog (edições do enunciado)
+
+- Substituídos placeholders de objetivo genérico em snippets (`User`, exemplo Axios, `Layout`, `App`, `LoginPage`, `RegisterPage`) por descrições concretas de função e contexto.
+- Adicionado bloco **Estado inicial esperado (Fim da Ficha 05)** imediatamente antes de **Estrutura final esperada**.
+- Adicionado bloco **Mapa de migração (Checklist de integração)** imediatamente antes da secção **5) Frontend: refactor obrigatório para pages/components**.
+- Incluídas categorias explícitas **MOVE / CREATE / EDIT / VERIFY** com caminho, local de inserção e checkpoint associado.
+- Reforçada a secção **5.1** com regra para projetos que já tenham `src/pages`.
+- Adicionada mini-regra para variações de naming em **5.1**: mover componentes de rota para `pages/` e manter UI reutilizável em `components/`.
+- Mantidos contratos, endpoints, checkpoints e ordem geral das secções sem alterações funcionais.
