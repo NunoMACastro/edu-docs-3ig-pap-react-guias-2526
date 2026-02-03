@@ -1312,6 +1312,14 @@ O 1º faz o GET de favoritos.
 O 2º faz o POST com body JSON.
 O 3º faz o DELETE do favorito com id 7.
 
+Depois de fazeres estas instruções, a consola mostra a resposta do servidor (JSON).
+
+Por exemplo, o 1º deve mostrar:
+
+```json
+[1,4,25] (Ou o que tiveres na lista de favoritos)
+```
+
 #### Ferramentas típicas
 
 - **curl** (linha de comandos)  
