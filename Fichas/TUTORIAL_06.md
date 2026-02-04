@@ -1290,7 +1290,7 @@ function parsePositiveInt(value) {
 }
 
 router.get("/", requireAuth, async (req, res) => {
-    // GET devolve array de IDs, sem envelope extra (contrato canónico da ficha).
+    // GET devolve array de IDs, sem envelope adicional (contrato canónico da ficha).
     const user = await User.findById(req.auth.userId).select("favorites");
 
     if (!user) {
@@ -3429,7 +3429,7 @@ Leitura guiada por status:
 
 - Repetir checklist após alterações relevantes.
 - Guardar evidências rápidas (prints de Network/logs) durante validação.
-- Tratar segurança como requisito funcional, não como “extra”.
+- Tratar segurança como requisito funcional, não como acessório.
 
 6. **Mini-exemplos pedagógicos (isolados)**
     > Exemplo isolado - forma de fechar tarefa
