@@ -122,6 +122,28 @@ ls
 
 Isto diz-te onde estás e o que existe nessa pasta.
 
+### 1.1.1) Processo de arranque
+
+1. **Terminal A (backend)**
+
+```bash
+cd backend
+node src/server.js
+```
+
+2. **Terminal B (frontend)**
+
+```bash
+cd frontend
+npm run dev
+```
+
+3. **Confirmações rápidas**
+
+- Terminal A mostra `API a correr em http://localhost:3000`
+- Browser abre `http://localhost:3000/api/favorites` e devolve JSON
+- Browser abre `http://localhost:5173` e mostra a app
+
 ### 1.2) Confirma Node e npm
 
 ```bash
@@ -183,6 +205,17 @@ ls frontend/src
 ```
 
 Se o `ls frontend/src` mostrar `App.jsx`, `main.jsx`, `components/` e `services/`, está tudo no sítio certo.
+
+### 2.3) Mapa mental de pastas
+
+- Backend: `pokedex-v3/backend/src/...`
+- Frontend: `pokedex-v3/frontend/src/...`
+
+Exemplos que vais usar várias vezes:
+
+- `pokedex-v3/frontend/src/main.jsx`
+- `pokedex-v3/frontend/src/context/PokedexContext.jsx`
+- `pokedex-v3/backend/src/routes/favorites.routes.js`
 
 ---
 
@@ -1450,6 +1483,17 @@ curl -X DELETE http://localhost:3000/api/favorites/9999
 
 Deve dar `404` e `error.code = "NOT_FOUND"`.
 
+### Checkpoint intermédio (memória do backend)
+
+Neste ponto, confirma:
+
+1. Adiciona um favorito com `POST /api/favorites`.
+2. Faz `GET /api/favorites` e confirma que aparece.
+3. Reinicia o backend (`Ctrl + C` e `node src/server.js`).
+4. Faz `GET /api/favorites` outra vez.
+
+Resultado esperado nesta ficha: a lista volta ao estado inicial em memória.
+
 ---
 
 # PARTE B - FRONTEND
@@ -2196,6 +2240,18 @@ const { pokemon, favorites, loading, error, toggleFavorite, reload } =
 5. Provider atualiza `favorites`
 6. React re-renderiza lista/detalhes/favoritos
 
+### 12.3.1) Fluxo visual do favorito (para debug rápido)
+
+```txt
+Clica no ❤️
+-> toggleFavorite(id) no Context
+-> favoritesApi (POST/DELETE)
+-> Express /api/favorites
+-> resposta JSON + status
+-> setFavorites(...)
+-> React re-render (card/lista/detalhes)
+```
+
 ### Checkpoint
 
 - Nenhuma page recebe props do App.
@@ -2303,6 +2359,16 @@ Regra prática:
 - Props **entre componentes próximos** (pai→filho direto) = ok
 - Props a atravessar 3–4 níveis = Context começa a compensar
 
+### 12.5) Checklist obrigatória de migração por ficheiro
+
+Verifica se já fizeste estas mudanças em cada ficheiro:
+
+- [ ] `Layout.jsx`: remove props, usa `usePokedex()`
+- [ ] `PokemonListPage.jsx`: remove props, `toggleFavorite` + `reload`
+- [ ] `PokemonDetailsPage.jsx`: remove props, `toggleFavorite` + `reload`
+- [ ] `FavoritesPage.jsx`: remove props, usa `pokemon` + `favorites` do Context
+- [ ] `App.jsx`: fica só com `<Routes>`/`<Route>` (sem estado global)
+
 ---
 
 ## 13) Executar o projeto
@@ -2328,6 +2394,14 @@ Se o frontend mostrar erro de rede, confirma primeiro que o backend está ligado
 ---
 
 ## 14) Debug: erros comuns e como pensar neles
+
+### 14.0) Tabela rápida: erro por camada
+
+| Camada     | Sintoma típico                       | Teste imediato                             | Conclusão provável                                 |
+| ---------- | ------------------------------------ | ------------------------------------------ | -------------------------------------------------- |
+| Rede/CORS  | `Failed to fetch` ou CORS no browser | `curl http://localhost:3000/api/favorites` | Se curl funciona, o problema é browser/CORS/origin |
+| API (HTTP) | 400/404/409/422 no Network           | Ver `status` + `Response` no pedido        | Backend respondeu, validação/contrato falhou       |
+| React/JS   | erro vermelho na consola             | abrir Console e ver stack trace            | problema no código da UI/Context/props             |
 
 ### 14.1) CORS policy blocked
 
@@ -2457,6 +2531,7 @@ Se isto fosse um mini-projeto a entregar, eu esperava:
 - Backend arranca com `cd backend` e `node src/server.js` (ou `npm run dev`/`npm start` se os scripts existirem).
 - Sem erros na consola ao abrir a home.
 - Favoritos funcionam em lista, detalhes e página de favoritos.
+- Reiniciar backend volta favoritos ao array inicial (comportamento esperado desta ficha).
 - Código organizado por pastas (services/context/routes).
 - Mensagens de commit (se estiverem a usar Git) descritivas.
 
