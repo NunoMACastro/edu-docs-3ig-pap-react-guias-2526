@@ -1,0 +1,8 @@
+# Dependências instaladas localmente (recriadas com npm install).
+node_modules
+# Segredos/configuração local por máquina.
+.env
+# Ficheiros de upload gerados em runtime.
+uploads/*
+# Mantém só um ficheiro vazio para garantir que a pasta existe no repositório.
+!uploads/.gitkeep

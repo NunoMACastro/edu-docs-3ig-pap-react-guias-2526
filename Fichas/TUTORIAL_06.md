@@ -107,6 +107,29 @@ Mesmo guardando no Mongo/User internamente, para o frontend o contrato mantém-s
     - `frontend/` com `npm run dev`
 - A rota `GET http://localhost:3000/api/favorites` ainda responde (estado base da Ficha 05).
 
+### 0.1) Ordem de execução (fluxo recomendado)
+
+Objetivo: reduzir erros por passos fora de ordem.
+
+1. Configurar `.env` no backend.
+2. Ligar MongoDB (fail fast no arranque).
+3. Implementar auth + cookies + CSRF.
+4. Atualizar favorites para “por utilizador”.
+5. Criar teams + upload de avatar.
+6. Refactor do frontend (pages, services, context, router).
+
+### 0.2) Checkpoints obrigatórios (versão rápida)
+
+- Checkpoint 2: backend arranca com Mongo e `JWT_SECRET`.
+- Checkpoint 3: `register/login/me/logout` funcionam e cookies são enviados.
+- Checkpoint 4: favorites/teams/avatar funcionam por utilizador.
+- Checkpoint 6: Axios com `withCredentials` e CSRF automático.
+- Checkpoint 7: `authReady` evita redirect prematuro.
+- Checkpoint 8: rotas privadas protegidas e navegação condicional.
+- Checkpoint 9: upload de avatar atualiza perfil.
+
+> Nota: se te faltar alguma rota nesta fase, usa os stubs da secção **3.5.1** para o backend arrancar.
+
 ---
 
 ## 1) Pré-requisitos e estrutura final (backend + frontend)
@@ -2189,6 +2212,16 @@ export async function uploadAvatar(file) {
     return res.data;
 }
 ```
+
+### 6.5) Diagnóstico rápido (Axios + cookies + CSRF)
+
+Se algo falhar aqui, valida pela ordem:
+
+1. `VITE_API_URL` aponta para o backend correto?
+2. `withCredentials: true` está ativo no `apiClient`?
+3. O cookie `csrfToken` existe no browser?
+4. O header `X-CSRF-Token` está a ser enviado nas mutações?
+5. O backend responde `401` (sessão) ou `403` (CSRF)?
 
 ### Checkpoint 6
 

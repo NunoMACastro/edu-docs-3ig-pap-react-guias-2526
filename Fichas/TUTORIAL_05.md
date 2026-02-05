@@ -157,6 +157,16 @@ npm -v
 - **Erro de imports** no Node → falta `"type": "module"`.
     - Erro típico: `ReferenceError: require is not defined in ES module scope`
 
+### 1.4) Erros comuns e causa provável
+
+| Sintoma                               | Causa provável                         | Onde ver          |
+| ------------------------------------- | -------------------------------------- | ----------------- |
+| Frontend abre mas nada carrega        | Backend desligado                      | Terminal A        |
+| `GET /api/favorites` falha no browser | CORS ou URL errado                     | Console + Network |
+| Erro `require is not defined`         | Falta `"type": "module"` no backend    | Terminal A        |
+| `fetch` dá erro de rede               | Porta errada ou backend não iniciado   | Console           |
+| `POST`/`DELETE` não funcionam         | API não está a responder / rota errada | Network           |
+
 ---
 
 ## 2) Criar a v3 (cópia da v2)
