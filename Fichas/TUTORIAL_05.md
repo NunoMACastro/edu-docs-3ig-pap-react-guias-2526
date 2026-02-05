@@ -154,6 +154,23 @@ Move todo o projeto Vite da Ficha 4 para dentro de frontend/.
 > Dica rápida: se te perderes no terminal, usa `pwd` para ver onde estás.
 > Para subir uma pasta, usa `cd ..`.
 
+### 2.1) Ponte Ficha 4 -> Ficha 5
+
+Na Ficha 4, o projeto **ja tinha `src/`** (como qualquer projeto Vite).
+Na Ficha 5, isso **nao desaparece**: apenas fica "um nivel mais fundo".
+
+- Antes (Ficha 4): `pokedex-v2/src/...`
+- Agora (Ficha 5): `pokedex-v3/frontend/src/...`
+
+Ou seja:
+
+- `src/App.jsx` vira `frontend/src/App.jsx`
+- `src/main.jsx` vira `frontend/src/main.jsx`
+- `src/components/...` vira `frontend/src/components/...`
+- `src/services/...` vira `frontend/src/services/...`
+
+Nada muda dentro de `src/` nesta fase: so muda a pasta "mae" do frontend.
+
 ---
 
 ## 3) Estrutura final esperada
@@ -1484,6 +1501,8 @@ A UI deve mostrar uma mensagem simples (ex.: “Esse Pokémon já é favorito.�
 4. Se aparecer `OPTIONS` antes de `POST/DELETE`, isso é **normal** (preflight).
 
 ## 8) Criar o serviço `favoritesApi.js`
+
+Este módulo é criado no lado do frontend e é o responsável por falar com o backend.
 
 ### 8.0) Mini‑teoria: `fetch`, `res.ok`, JSON e propagação de erros
 
