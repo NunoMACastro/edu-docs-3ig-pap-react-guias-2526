@@ -4,26 +4,10 @@ import LoadingSpinner from "@/components/LoadingSpinner.jsx";
 import PokemonCard from "@/components/PokemonCard.jsx";
 import { usePokedex } from "@/context/PokedexContext.jsx";
 
-/**
- * ============================================
- * FavoritesPage
- * ============================================
- *
- * Descrição: Página que lista apenas favoritos.
- *
- * CONCEITOS APLICADOS:
- * - Filtros por estado global (favorites)
- * - Renderização condicional (lista vazia)
- *
- * NOTAS PEDAGÓGICAS:
- * - Reutiliza o mesmo card e grid da lista principal.
- * - Usa LoadingSpinner/ErrorMessage para evitar estados vazios falsos.
- *
- * @returns {JSX.Element} Página de favoritos.
- */
 function FavoritesPage() {
     const { pokemon, favorites, loading, error, toggleFavorite, reload } =
         usePokedex();
+
     const navigate = useNavigate();
     const [params] = useSearchParams();
 

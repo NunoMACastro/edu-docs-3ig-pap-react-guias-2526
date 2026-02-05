@@ -3,27 +3,10 @@ import { usePokedex } from "@/context/PokedexContext.jsx";
 
 const POKEMON_LIMIT = 151;
 
-/**
- * ============================================
- * Layout
- * ============================================
- *
- * Descrição: Moldura base da app com hero, contadores e navegação.
- *
- * CONCEITOS APLICADOS:
- * - Layout route + Outlet
- * - NavLink com estado ativo
- * - Leitura da query string para contadores
- *
- * NOTAS PEDAGÓGICAS:
- * - Os contadores usam a mesma lógica de filtro da lista.
- * - `end` no NavLink evita o match por prefixo.
- *
- * @returns {JSX.Element} Layout principal com hero e navegação.
- */
 function Layout() {
     const { pokemon, favorites } = usePokedex();
     const [params] = useSearchParams();
+
     const searchTerm = params.get("q") || "";
     const selectedType = params.get("type") || "all";
 

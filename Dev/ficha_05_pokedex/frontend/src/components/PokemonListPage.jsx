@@ -7,27 +7,10 @@ import SearchBar from "@/components/SearchBar.jsx";
 import TypeFilter from "@/components/TypeFilter.jsx";
 import { usePokedex } from "@/context/PokedexContext.jsx";
 
-/**
- * ============================================
- * PokemonListPage
- * ============================================
- *
- * Descrição: Página principal com lista e filtros via query string.
- *
- * CONCEITOS APLICADOS:
- * - useSearchParams (query string como estado)
- * - useMemo (evitar cálculos repetidos)
- * - Context API (estado global)
- *
- * NOTAS PEDAGÓGICAS:
- * - A URL é a fonte de verdade para `searchTerm` (em `q`) e `type`.
- * - Hooks só podem ser chamados dentro do componente.
- *
- * @returns {JSX.Element} Página com filtros, lista e estados.
- */
 function PokemonListPage() {
     const { pokemon, favorites, loading, error, toggleFavorite, reload } =
         usePokedex();
+
     const navigate = useNavigate();
     const [params, setParams] = useSearchParams();
 

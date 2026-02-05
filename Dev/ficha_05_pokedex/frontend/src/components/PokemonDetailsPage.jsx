@@ -14,29 +14,10 @@ const STAT_LABELS = {
     speed: "Velocidade",
 };
 
-/**
- * ============================================
- * PokemonDetailsPage
- * ============================================
- *
- * Descrição: Página detalhada de cada Pokémon com layout em duas
- * colunas e barra de stats.
- *
- * CONCEITOS APLICADOS:
- * - useParams (parâmetro da rota)
- * - useNavigate (voltar para a lista)
- * - Listas e condicionais
- *
- * NOTAS PEDAGÓGICAS:
- * - Mantém as mesmas conversões da Ficha 3 (height/10, weight/10).
- * - `navigate(-1)` pode sair da app se o acesso for direto.
- * - Se chegares via URL direta, mostra loading/erro antes do “não encontrado”.
- *
- * @returns {JSX.Element} Página de detalhes completa.
- */
 function PokemonDetailsPage() {
     const { pokemon, favorites, loading, error, toggleFavorite, reload } =
         usePokedex();
+
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();

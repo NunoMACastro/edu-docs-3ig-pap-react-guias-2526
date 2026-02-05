@@ -5,19 +5,7 @@ import NotFound from "@/components/NotFound.jsx";
 import PokemonDetailsPage from "@/components/PokemonDetailsPage.jsx";
 import PokemonListPage from "@/components/PokemonListPage.jsx";
 
-/**
- * ============================================
- * App
- * ============================================
- *
- * Descrição: Componente raiz apenas com rotas.
- *
- * CONCEITOS APLICADOS:
- * - Rotas com React Router
- * - Layout com Outlet
- *
- * @returns {JSX.Element} Aplicação com Router.
- */
+// App fica responsavel apenas por definir as rotas.
 function App() {
     return (
         <Routes>

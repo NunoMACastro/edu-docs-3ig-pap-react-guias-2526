@@ -156,8 +156,8 @@ Move todo o projeto Vite da Ficha 4 para dentro de frontend/.
 
 ### 2.1) Ponte Ficha 4 -> Ficha 5
 
-Na Ficha 4, o projeto **ja tinha `src/`** (como qualquer projeto Vite).
-Na Ficha 5, isso **nao desaparece**: apenas fica "um nivel mais fundo".
+Na Ficha 4, o projeto **já tinha `src/`** (como qualquer projeto Vite).
+Na Ficha 5, isso **não desaparece**: apenas fica "um nível mais fundo".
 
 - Antes (Ficha 4): `pokedex-v2/src/...`
 - Agora (Ficha 5): `pokedex-v3/frontend/src/...`
@@ -169,7 +169,20 @@ Ou seja:
 - `src/components/...` vira `frontend/src/components/...`
 - `src/services/...` vira `frontend/src/services/...`
 
-Nada muda dentro de `src/` nesta fase: so muda a pasta "mae" do frontend.
+Nada muda dentro de `src/` nesta fase: só muda a pasta "mãe" do frontend.
+
+### 2.2) Check rápido de orientação (obrigatório antes de continuar)
+
+No terminal, confirma:
+
+```bash
+pwd
+ls
+ls frontend
+ls frontend/src
+```
+
+Se o `ls frontend/src` mostrar `App.jsx`, `main.jsx`, `components/` e `services/`, está tudo no sítio certo.
 
 ---
 
@@ -183,24 +196,31 @@ pokedex-v3/
       app.js
       routes/
         favorites.routes.js
-      data/
-        favorites.memory.js
     package.json
   frontend/
     src/
+      App.jsx
+      main.jsx
       context/
         PokedexContext.jsx
       services/
+        pokeApi.js
         favoritesApi.js
+      styles/
+        index.css
+        pokedex.css
       components/
+        ErrorMessage.jsx
+        LoadingSpinner.jsx
+        PokemonCard.jsx
+        SearchBar.jsx
+        TypeFilter.jsx
+        typeData.js
         Layout.jsx
         PokemonListPage.jsx
         PokemonDetailsPage.jsx
         FavoritesPage.jsx
         NotFound.jsx
-        ...
-      App.jsx
-      main.jsx
     package.json
     vite.config.js
 ```
@@ -208,6 +228,7 @@ pokedex-v3/
 > Nota: A partir daqui, tudo o que é React/Vite está em `frontend/` e tudo o que é Express/API está em `backend/`.
 > Nesta ficha **mantemos as páginas dentro de `components/`**, tal como na Ficha 4, para garantir compatibilidade direta.
 > Se quiseres separar `pages/`, faz isso **no fim** e atualiza os imports/rotas.
+> Convenção desta ficha: quando aparecer `src/...` no frontend, lê como `frontend/src/...`.
 
 ### Instalação e arranque
 
@@ -873,12 +894,11 @@ Quando o backend “não dá”, pensa por camadas:
 
 ---
 
-### 5.1) Criar pasta e instalar dependências
+### 5.1) Entrar em `backend/` e instalar dependências
 
-Na raiz do projeto:
+Na raiz de `pokedex-v3`:
 
 ```bash
-mkdir backend
 cd backend
 npm init -y
 npm install express cors
@@ -912,7 +932,7 @@ Já que estás a editar o `package.json`, podes também adicionar um script para
 }
 ```
 
-Se quiseres recarregar o servidor automaticamente ao mudares código, instala o `nodemon`:
+Se ainda não instalaste o `nodemon`, podes instalar para recarregar o servidor automaticamente:
 
 ```bash
 npm install --save-dev nodemon
@@ -1433,6 +1453,8 @@ Deve dar `404` e `error.code = "NOT_FOUND"`.
 ---
 
 # PARTE B - FRONTEND
+
+> A partir daqui, qualquer caminho `src/...` refere-se ao frontend (`frontend/src/...`).
 
 ## 7.2) (Extra) Como separar responsabilidades no frontend
 
@@ -2294,9 +2316,10 @@ node src/server.js
 
 ### Terminal B (frontend)
 
-Na raiz do projeto:
+Na raiz de `pokedex-v3`:
 
 ```bash
+cd frontend
 npm run dev
 ```
 
@@ -2412,7 +2435,7 @@ Sem mexer na base da ficha, podes tentar:
 
 ---
 
-## 16) Perguntas de revisão
+## 17) Perguntas de revisão
 
 1. Porque é que precisamos de CORS?
 
@@ -2430,8 +2453,8 @@ Sem mexer na base da ficha, podes tentar:
 
 Se isto fosse um mini-projeto a entregar, eu esperava:
 
-- Projeto arranca com `npm install` e `npm run dev`.
-- Backend arranca com `node src/server.js` dentro de `backend/`.
+- Frontend arranca com `cd frontend`, `npm install` e `npm run dev`.
+- Backend arranca com `cd backend` e `node src/server.js` (ou `npm run dev`/`npm start` se os scripts existirem).
 - Sem erros na consola ao abrir a home.
 - Favoritos funcionam em lista, detalhes e página de favoritos.
 - Código organizado por pastas (services/context/routes).

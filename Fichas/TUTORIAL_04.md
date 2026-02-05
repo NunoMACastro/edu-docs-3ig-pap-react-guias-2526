@@ -3228,6 +3228,16 @@ npm run dev
 - [ ] Favoritos com `localStorage`
 - [ ] Loading, erro e vazio (com UI da Ficha 3)
 
+### 18.1) Ponte para a Ficha 5 (transição de estrutura)
+
+Na próxima ficha, a app passa de "um projeto só" para "frontend + backend".
+
+- Ficha 4 (agora): `pokedex-v2/src/...`
+- Ficha 5 (depois): `pokedex-v3/frontend/src/...` + `pokedex-v3/backend/...`
+
+Importante: o conteúdo do `src/` do frontend mantém-se praticamente igual.
+Nesta transição, o que muda primeiro é a **pasta mãe** (`frontend/`), não a lógica das páginas.
+
 ---
 
 ## 19) Resumo de erros comuns

@@ -1,29 +1,20 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "@/App.jsx";
+import App from "./App.jsx";
 import { PokedexProvider } from "@/context/PokedexContext.jsx";
 import "@/styles/index.css";
 import "@/styles/pokedex.css";
 
-/**
- * ============================================
- * PONTO DE ENTRADA
- * ============================================
- *
- * Descrição: Lê o elemento root e monta o componente
- * principal da Pokédex Explorer dentro de React StrictMode.
- *
- * CONCEITOS APLICADOS:
- * - Fundamentos (entrada do React + StrictMode)
- * - Importações relativas via alias Vite (@)
- * - Estilos globais são carregados antes da renderização
- *
- * @returns {void}
- */
+// Cria a raiz React no div#root do index.html.
 ReactDOM.createRoot(document.getElementById("root")).render(
+    // StrictMode ajuda a encontrar problemas em desenvolvimento.
+    // Em modo dev, alguns efeitos podem correr duas vezes.
     <React.StrictMode>
+        {/* Router para ativar as rotas da aplicacao */}
+        {/* BrowserRouter usa o historico do browser (URLs reais) */}
         <BrowserRouter>
+            {/* Provider coloca o estado global disponivel para toda a app */}
             <PokedexProvider>
                 <App />
             </PokedexProvider>
