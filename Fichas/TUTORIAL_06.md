@@ -103,7 +103,7 @@ Mesmo guardando no Mongo/User internamente, para o frontend o contrato mantém-s
 ### Checkpoint 0
 
 - O projeto da Ficha 05 arranca em duas janelas:
-    - `backend/` com `npm run dev`
+    - `backend/` com `node src/server.js` (ou `npm run dev`, se já tiveres script)
     - `frontend/` com `npm run dev`
 - A rota `GET http://localhost:3000/api/favorites` ainda responde (estado base da Ficha 05).
 
@@ -187,6 +187,21 @@ backend/
 ```
 
 Se o teu projeto tiver pequenas variações de naming, mantém o equivalente funcional destes caminhos ao aplicar os passos desta ficha.
+
+### 1.1) Criar a v4 (cópia da v3)
+
+Objetivo: garantir que não perdes o estado final da Ficha 05 ao iniciar a Ficha 06.
+
+Copia a pasta do projeto da Ficha 05 para uma nova pasta chamada, por exemplo, `pokedex-v4`.
+
+Dentro de `pokedex-v4`, mantém as duas pastas:
+
+frontend
+
+backend
+
+> Dica rápida: se te perderes no terminal, usa `pwd` para ver onde estás.
+> Para subir uma pasta, usa `cd ..`.
 
 ### Estrutura final esperada
 
@@ -1062,6 +1077,48 @@ export default router;
 - **Ficheiros:** editar `backend/src/app.js`.
 - **Validação rápida:** `GET /api/health` responde, auth funciona, mutações fora de `/api/auth` exigem CSRF.
 
+### 3.5.1) Compatibilidade durante a migração (evitar imports partidos)
+
+Se ainda **não** criaste `teams.routes.js` e `users.routes.js` (secção 4), cria stubs temporários para o backend arrancar já nesta fase:
+
+`backend/src/routes/teams.routes.js`:
+
+```js
+import { Router } from "express";
+const router = Router();
+router.get("/", (_req, res) =>
+    res
+        .status(501)
+        .json({
+            error: {
+                code: "NOT_READY",
+                message: "Secção 4 ainda não aplicada",
+            },
+        }),
+);
+export default router;
+```
+
+`backend/src/routes/users.routes.js`:
+
+```js
+import { Router } from "express";
+const router = Router();
+router.post("/avatar", (_req, res) =>
+    res
+        .status(501)
+        .json({
+            error: {
+                code: "NOT_READY",
+                message: "Secção 4 ainda não aplicada",
+            },
+        }),
+);
+export default router;
+```
+
+> Na secção 4, estes stubs são substituídos pelos ficheiros finais.
+
 `backend/src/app.js`:
 
 ```js
@@ -1172,6 +1229,8 @@ Critérios binários de validação (debug guiado):
 - Se `/api/auth/me` devolver `401`, verifica: cookie `token` presente + `withCredentials: true` + `JWT_SECRET` estável.
 - Se qualquer mutação devolver `403`, verifica: cookie `csrfToken` presente + header `X-CSRF-Token` a coincidir.
 - Se `logout` devolver `200` mas sessão continuar, verifica: `clearCookie` usa as mesmas opções-base do `res.cookie`.
+- Se estiveres ainda com frontend da Ficha 05, é normal ver `403` em `POST/DELETE` até concluíres a secção 6
+  (`apiClient` com `withCredentials` + header CSRF automático).
 
 ### Erros comuns (CORS/cookies/CSRF)
 
@@ -1724,7 +1783,8 @@ Sem esta separação, o projeto cresce confuso e os imports ficam incoerentes.
 - **Ponto de situação:** backend fechado; agora reorganizas frontend sem mudar comportamento.
 - **Objetivo deste passo:** mover componentes de rota para `pages/`.
 - **Ficheiros:** mover ficheiros de `frontend/src/components/` para `frontend/src/pages/`.
-- **Validação rápida:** após os `mv`, o projeto compila e as rotas antigas continuam a abrir.
+- **Validação rápida:** após os `mv`, podem existir erros temporários de import; isso resolve no passo **5.3**
+  ao atualizar `App.jsx` para `@/pages/...`.
 
 Se na tua Ficha 05 já existe `src/pages`, adapta estes comandos: o objetivo é que as rotas fiquem em `pages/` e não em `components/`.
 
@@ -2321,7 +2381,8 @@ export function PokedexProvider({ children }) {
     const toggleFavorite = useCallback(
         async (pokemonId) => {
             if (!user) {
-                throw new Error("Tens de fazer login para gerir favoritos.");
+                window.alert("Faz login para gerir favoritos.");
+                return;
             }
 
             if (favorites.includes(pokemonId)) {
@@ -2549,11 +2610,15 @@ export default ProtectedRoute;
 
  */
 
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { usePokedex } from "@/context/PokedexContext.jsx";
 
 function Layout() {
     const { pokemon, favorites, user, logout } = usePokedex();
+    const location = useLocation();
+    const queryString = location.search;
+    const homeTo = queryString ? `/${queryString}` : "/";
+    const favoritesTo = queryString ? `/favoritos${queryString}` : "/favoritos";
 
     async function handleLogout() {
         try {
@@ -2593,14 +2658,14 @@ function Layout() {
 
             <nav className="type-filter" aria-label="Navegação principal">
                 <div className="type-filter__buttons">
-                    <NavLink to="/" end className="type-filter__button">
+                    <NavLink to={homeTo} end className="type-filter__button">
                         Home
                     </NavLink>
 
                     {user ? (
                         <>
                             <NavLink
-                                to="/favoritos"
+                                to={favoritesTo}
                                 className="type-filter__button"
                             >
                                 Favoritos
@@ -3461,6 +3526,7 @@ Se tudo estiver marcado, a Ficha 06 está concluída e consistente com a Ficha 0
 
 - Substituídos placeholders de objetivo genérico em snippets (`User`, exemplo Axios, `Layout`, `App`, `LoginPage`, `RegisterPage`) por descrições concretas de função e contexto.
 - Adicionado bloco **Estado inicial esperado (Fim da Ficha 05)** imediatamente antes de **Estrutura final esperada**.
+- Adicionado bloco **1.1) Criar a v4 (cópia da v3)** para preservar o estado final da Ficha 05.
 - Adicionado bloco **Mapa de migração (Checklist de integração)** imediatamente antes da secção **5) Frontend: refactor obrigatório para pages/components**.
 - Incluídas categorias explícitas **MOVE / CREATE / EDIT / VERIFY** com caminho, local de inserção e checkpoint associado.
 - Reforçada a secção **5.1** com regra para projetos que já tenham `src/pages`.
