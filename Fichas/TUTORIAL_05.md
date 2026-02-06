@@ -203,7 +203,7 @@ Ou seja:
 
 Nada muda dentro de `src/` nesta fase: só muda a pasta "mãe" do frontend.
 
-### 2.2) Check rápido de orientação (obrigatório antes de continuar)
+### 2.2) Check rápido de orientação
 
 No terminal, confirma:
 
@@ -216,7 +216,7 @@ ls frontend/src
 
 Se o `ls frontend/src` mostrar `App.jsx`, `main.jsx`, `components/` e `services/`, está tudo no sítio certo.
 
-### 2.3) Mapa mental de pastas
+### 2.3) Mapa de pastas
 
 - Backend: `pokedex-v3/backend/src/...`
 - Frontend: `pokedex-v3/frontend/src/...`
@@ -382,7 +382,7 @@ Quando queres:
 React (browser) ──fetch──▶ Express (server) ──▶ responde JSON
 ```
 
-#### Fluxo mental (muito útil para não te perderes)
+#### Fluxo mental
 
 ```txt
 UI (clique) → Context (ação) → Service (fetch) → API (Express)
@@ -468,7 +468,7 @@ Nesta ficha, o mais importante é ter uma lógica estável:
 - `409 Conflict` → conflito (duplicado)
 - `422 Unprocessable Entity` → body existe, mas falha validação (ex.: `{}`)
 
-#### Diferença 400 vs 422 (a ideia-chave)
+#### Diferença 400 vs 422
 
 - `400` → problema no **caminho/param** (URL)
 - `422` → problema nos **dados do body** (conteúdo)
@@ -486,18 +486,6 @@ Mais tarde vais ver:
 Os status codes são números que o servidor envia na resposta HTTP para indicar o resultado do pedido.
 O status diz ao frontend como interpretar a resposta:
 
-- `200` OK → correu bem
-- `201` Created → criaste algo
-- `400` Bad Request → parâmetro de URL inválido
-- `404` Not Found → não existe
-- `409` Conflict → já existe (duplicado)
-- `422` Unprocessable Entity → body inválido
-
-Repara na diferença entre `400` e `422`:
-
-- `400` → erro no URL (`/favorites/abc`)
-- `422` → erro no body (`{}` ou `{ id: "abc" }`)
-
 Os status codes são essenciais para o frontend tomar decisões. Por exemplo, se o backend responder `409` ao adicionar um favorito, o frontend sabe que esse Pokémon já é favorito e pode mostrar uma mensagem apropriada.
 Se der um `404` ao remover, o frontend pode avisar que o favorito não existe.
 
@@ -507,7 +495,7 @@ O CORS (Cross-Origin Resource Sharing) é um mecanismo de segurança do browser 
 
 O CORS existe por causa de uma regra do browser: **Same-Origin Policy**. Ou seja, um site só pode fazer pedidos ao mesmo domínio/porta de onde foi carregado, a não ser que o servidor diga explicitamente que aceita pedidos de outras origens.
 
-**CORS em duas verdades simples**
+**CORS**
 
 - CORS é **regra do browser**, não do Node/Express.
 - CORS **não** substitui autenticação nem segurança real.
@@ -555,25 +543,10 @@ Nesta ficha, o `cors(...)` trata disso por ti.
 
 #### Debug rápido
 
-- Se `curl` funciona mas o browser falha → suspeita de CORS.
-- No Network, é normal ver `OPTIONS` antes de `POST/DELETE`.
+- Se `curl` funciona mas o browser falha → problema de CORS.
+- Na opção de Network no browser, é normal ver `OPTIONS` antes de `POST/DELETE`.
 
 ---
-
-Detalhe que aparece muito no mundo real: **preflight**.
-
-- Em certos pedidos, o browser envia primeiro um `OPTIONS` automático.
-- O objetivo é perguntar ao servidor: “tu aceitas este tipo de pedido?”
-
-Nesta ficha, como usamos o middleware `cors`, isso fica resolvido sem drama.
-
-Se um dia vires um pedido `OPTIONS` no Network, não entres em pânico:
-normalmente é o browser a fazer o seu trabalho.
-
----
-
-Frontend em `http://localhost:5173` e backend em `http://localhost:3000` são origens diferentes.
-Sem CORS, o browser bloqueia pedidos por segurança.
 
 ### 4.5) Contrato de API
 
@@ -581,7 +554,7 @@ Sem CORS, o browser bloqueia pedidos por segurança.
 
 Um contrato de API é um **acordo** entre frontend e backend sobre:
 
-- que endpoints existem
+- que endpoints existem (endpoint = URL + método por exemplo `POST /api/favorites`: Método é POST, URL é /api/favorites)
 - que métodos usam
 - que dados entram (params/body)
 - que dados saem (JSON)
@@ -590,8 +563,6 @@ Um contrato de API é um **acordo** entre frontend e backend sobre:
 Por exemplo, imagina que temos no frontend a ação de adicionar favorito. Essa ação envia um pedido `POST`ao backend com uma determinada informação (body) e espera uma resposta específica. Isto é a definição básica do contrato.
 É o conjunto de regras e informação que ambos os lados concordam em seguir para cada endpoint.
 
-(Guilherme, um endpoint é uma combinação de URL + método HTTP. Por exemplo, `POST /api/favorites` é um endpoint.)
-
 #### Porque é que isto importa?
 
 Porque evita “adivinhar” e reduz bugs de integração.
@@ -599,7 +570,9 @@ Porque evita “adivinhar” e reduz bugs de integração.
 Se o backend mudar algo (ex.: deixar de aceitar `{id}` e passar a aceitar `{pokemonId}`), o frontend vai partir.
 Com contrato, tu sabes exatamente o que foi mudado e onde mexer.
 
-#### “Shape” consistente de erro
+Equipas separadas que trabalham em frontend e backend dependem muito de contratos claros. Sem eles, a comunicação torna-se caótica e cheia de erros.
+
+#### Formato uniforme de erros
 
 É muito útil o backend devolver erros sempre no mesmo formato, por exemplo:
 
@@ -625,7 +598,7 @@ Contrato desta ficha:
 | Adicionar     | POST   | `/api/favorites`     | `{ "id": 7 }` | `{ "id": 7 }` |
 | Remover       | DELETE | `/api/favorites/:id` | -             | `{ "id": 7 }` |
 
-### 4.6) Context API (o porquê)
+### 4.6) Context API
 
 #### Contexto extra
 
@@ -643,7 +616,7 @@ No entanto, para chegar ao `card`, tens que passar o estado como props por todos
 Isto cria:
 
 - ruído
-- componentes “correio”
+- componentes “correio” que só passam props
 - mais pontos onde podes falhar e mais possibilidades de bugs
 
 #### A solução: Provider + consumo com hook
@@ -824,7 +797,7 @@ Fluxo simplificado:
 Request ─▶ rota ─▶ middleware 1 ─▶ middleware 2 ─▶ rota (handler) ─▶ Response
 ```
 
-(O último "middleware" antes da rota, costuma chamar-se de "handler" ou "controlador".)
+(O último "middleware" antes da resposta, costuma chamar-se de "handler" ou "controlador".)
 
 O detalhe importante: **a ordem dos `app.use(...)` interessa**.
 
@@ -839,7 +812,7 @@ Nesta ficha tens dois middlewares “clássicos”:
 - `express.json()`
   Lê o body (quando vem em JSON) e converte para objeto JS em `req.body`.
 
-> **Nota**: O body são os dados que o cliente envia no pedido (muito comum em POST). Eles precisam de ser “interpretados” para poderes usar em JavaScript. Para isso usamos o middleware `express.json()`.
+> **Nota**: O body são os dados que o cliente envia no pedido. Eles precisam de ser “interpretados” para poderes usar em JavaScript. Para isso usamos o middleware `express.json()` uma vez que o body vem em JSON.
 
 ---
 
@@ -861,7 +834,7 @@ Vantagens reais desta separação:
 
 ---
 
-#### 6) CORS em linguagem simples (porque é que o problema só aparece no browser)
+#### 6) CORS
 
 Como já vimos, browser tem uma regra de segurança chamada **Same-Origin Policy**.
 
@@ -879,16 +852,6 @@ O backend tem de dizer explicitamente:
 
 É isso que o middleware `cors(...)` faz: mete os headers necessários na resposta.
 
-##### E o tal “preflight OPTIONS”?
-
-Às vezes o browser faz um pedido automático `OPTIONS` antes do `POST/DELETE`, para perguntar ao servidor se aceita:
-
-- este método
-- estes headers
-- a origin
-
-Se o servidor responder com os headers certos, o browser deixa passar o pedido “a sério”.
-
 ##### Porque é que no curl/Postman funciona e no browser não?
 
 Porque **CORS é uma regra do browser**.
@@ -896,27 +859,20 @@ Porque **CORS é uma regra do browser**.
 
 ---
 
-#### 7) ES Modules no Node (`"type": "module"`) - o que muda na prática
+#### 7) ES Modules no Node (`"type": "module"`)
 
 Ao adicionares `"type": "module"` no `package.json`, estás a dizer ao Node:
 
-- “vou escrever este projeto com `import/export`”
+- “vou escrever este projeto com `import/export`” em vez de `require/module.exports`.
 
 Isto traz duas vantagens grandes nesta fase:
 
 1. **Consistência com o frontend** (React já usa ES Modules)
 2. Código mais moderno e alinhado com a forma como vais escrever Node daqui para a frente
 
-Mas há duas regras práticas que apanham alunos:
-
-- Tens de usar `import ... from ...` (não `require`)
-- Muitas vezes tens de incluir a extensão no import (`.js`) em Node ESM, dependendo do caso
-
-> Regra mental: “frontend e backend falam a mesma ‘língua’ de módulos”.
-
 ---
 
-#### Mini-checklist mental
+#### Checklist de debug
 
 Quando o backend “não dá”, pensa por camadas:
 
