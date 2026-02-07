@@ -432,6 +432,12 @@ npm install -D nodemon
 
 - `cookie-parser`: middleware para ler cookies em pedidos HTTP, essencial para autenticação baseada em cookies.
 
+    **O que é um cookie HttpOnly?** É um cookie que o JavaScript do lado do cliente não pode aceder, mas que o browser envia automaticamente em pedidos para o backend. Isso aumenta a segurança contra ataques de Cross-Site Scripting (XSS), pois mesmo que um atacante consiga injetar código malicioso na página, ele não pode ler o token de autenticação armazenado no cookie HttpOnly. O backend pode ler esse cookie usando `cookie-parser` e verificar a sessão do utilizador.
+
+    Por exemplo, quando o backend responde a um pedido de login bem-sucedido, ele pode enviar um header `Set-Cookie: token=jwt_token_aqui; HttpOnly`. O browser então armazena esse cookie e o inclui automaticamente em todos os pedidos subsequentes para o mesmo domínio, permitindo que o backend autentique o utilizador sem que o JavaScript tenha acesso direto ao token.
+
+    Em resumo, os cookies HttpOnly são uma medida de segurança importante para proteger tokens de autenticação contra acesso por scripts maliciosos, e `cookie-parser` é a ferramenta que permite ao backend ler esses cookies para autenticar os utilizadores.
+
 - `multer`: middleware para lidar com uploads de ficheiros, usado para a funcionalidade de upload de avatar.
 
 ---
@@ -440,10 +446,15 @@ npm install -D nodemon
 
 - **Ponto de situação:** dependências instaladas; falta definir configuração local do backend.
 - **Objetivo deste passo:** criar variáveis de ambiente reais (`.env`) e contrato de configuração (`.env.example`).
+
+    Porque é que vamos criar 2 ficheiros `.env`?
+    O ficheiro `.env` contém as variáveis de ambiente reais que a aplicação usa em runtime. Este ficheiro não deve ser versionado (adicionado ao Git) porque pode conter segredos sensíveis, como credenciais de base de dados e segredos JWT. Cada programador ou ambiente (desenvolvimento, produção, etc.) pode ter um ficheiro `.env` diferente com valores específicos para esse ambiente.
+    O ficheiro `.env.example` é um modelo que mostra quais variáveis de ambiente são necessárias para a aplicação funcionar, mas sem valores reais. Este ficheiro é versionado no Git e serve como referência para outros programadores saberem quais variáveis precisam definir no seu próprio ficheiro `.env`. Assim, qualquer pessoa que clone o repositório pode copiar o `.env.example` para `.env` e preencher os valores corretos conforme necessário.
+
 - **Ficheiros:** criar/editar `backend/.env`, `backend/.env.example` e confirmar `backend/.gitignore`.
 - **Validação rápida:** backend lê `PORT`, `CLIENT_ORIGIN`, `MONGODB_URI` e `JWT_SECRET` sem fallback inesperado.
 
-`backend/.env`:
+Cria o ficheiro `backend/.env`:
 
 ```env
 # Porta onde o Express vai escutar pedidos HTTP no ambiente local.
@@ -458,7 +469,7 @@ MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?r
 JWT_SECRET=troca_isto_por_um_seguro
 ```
 
-`backend/.env.example`:
+Cria o ficheiro `backend/.env.example`:
 
 ```env
 # Exemplo da porta local do backend.
@@ -473,18 +484,7 @@ MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxxx.mongodb.net/pokedex_v4?r
 JWT_SECRET=define_um_valor_seguro
 ```
 
-`backend/.gitignore` (garante estas entradas):
-
-```gitignore
-# Dependências instaladas localmente (recriadas com npm install).
-node_modules
-# Segredos/configuração local por máquina.
-.env
-# Ficheiros de upload gerados em runtime.
-uploads/*
-# Mantém só um ficheiro vazio para garantir que a pasta existe no repositório.
-!uploads/.gitkeep
-```
+Cria o ficheiro `backend/.gitignore` e cola o conteúdo que está no template na pasta `Git/`
 
 ### 2.3) Ligar ao MongoDB
 
@@ -493,11 +493,11 @@ uploads/*
 - **Ficheiros:** editar/criar `backend/src/db/connect.js` e `backend/src/server.js`.
 - **Validação rápida:** se a URI estiver correta, aparece log de ligação; se faltar config, o processo termina com erro explícito.
 
-`backend/src/db/connect.js`:
+Cria o ficheiro (e as pastas) `backend/src/db/connect.js`:
 
 ```js
 /**
- * Trecho: backend/src/db/connect.js
+ * Ficheiro: backend/src/db/connect.js
  * Objetivo: centralizar ligação ao MongoDB e falhar cedo quando faltar configuração crítica.
 
  */
@@ -524,11 +524,11 @@ export async function connectToMongo() {
 }
 ```
 
-`backend/src/server.js`:
+Cria o ficheiro `backend/src/server.js`:
 
 ```js
 /**
- * Trecho: backend/src/server.js
+ * Ficheiro: backend/src/server.js
  * Objetivo: arrancar o backend pela ordem correta (env -> mongo -> listen).
 
  */
@@ -583,7 +583,7 @@ bootstrap().catch((err) => {
 ### Checkpoint 2
 
 - `npm run dev` no backend arranca sem erro de `MONGODB_URI` e de `JWT_SECRET`.
-- Se o Atlas estiver mal configurado, o backend falha no arranque (comportamento correto: fail fast).
+- Se o Atlas estiver mal configurado, o backend falha no arranque.
 
 ### Erros comuns (env + Mongo)
 
@@ -607,12 +607,33 @@ Nesta secção criamos sessão com JWT em cookie HttpOnly e proteção CSRF nas 
 
 - **Autenticação**: provar quem és (login).
 - **Autorização**: decidir o que podes fazer (acesso a recursos).
+  **Nota**: Tem atenção à diferença entre autenticação e autorização. Autenticação é o processo de verificar a identidade do utilizador, geralmente através de um login com credenciais (como username e password). Já a autorização é o processo de determinar quais recursos ou ações esse utilizador autenticado tem permissão para aceder ou executar. Por exemplo, um utilizador pode ser autenticado com sucesso (sua identidade é verificada), mas pode não ter autorização para aceder certos dados ou realizar certas ações, dependendo das regras de acesso definidas no backend.
 - **JWT**: token assinado, não encriptado; contém claims (ex.: `userId`, expiração).
 - **Cookie HttpOnly**: cookie que JavaScript não consegue ler, mas o browser envia automaticamente.
 - **CORS**: política de origens para pedidos entre frontend e backend em hosts/portas diferentes.
-- **CSRF**: ataque que explora o envio automático de cookies em pedidos mutáveis.
 
-2. **Como funciona “por baixo”**
+    Mas o que é CORS? CORS, ou Cross-Origin Resource Sharing, é um mecanismo de segurança implementado pelos browsers para controlar como recursos numa página web podem ser solicitados a partir de um domínio diferente daquele que serviu a página. Por exemplo, se o frontend está a ser executado em `http://localhost:5173` e o backend em `http://localhost:3000`, isso é considerado uma requisição cross-origin. Pois apesar de estarmos no mesmo localhost, as portas diferentes fazem com que sejam consideradas origens distintas. Para permitir que o frontend se comunique com o backend sem ser bloqueado por políticas de CORS, o backend precisa incluir headers específicos (como `Access-Control-Allow-Origin`) que autorizem essa comunicação. No nosso caso, vamos configurar o backend para permitir pedidos do frontend usando CORS, garantindo que as requisições sejam aceitas e os cookies sejam enviados corretamente.
+
+- **CSRF**: ataque que explora o envio automático de cookies em pedidos mutáveis. (definição mais à frente)
+
+    Mas o que é o CSRF? CSRF, ou Cross-Site Request Forgery, é um tipo de ataque onde um atacante engana um utilizador autenticado para fazer uma requisição indesejada a um site em que ele está autenticado. Por exemplo, se um utilizador está autênticado no nosso site e visita um site malicioso, esse site pode tentar fazer uma requisição POST para o nosso backend usando os cookies de sessão do utilizador. Como os cookies são enviados automaticamente pelo browser, o backend pode processar essa requisição como se fosse legítima, o que pode levar a ações indesejadas, como alterar dados ou realizar operações em nome do utilizador sem o seu consentimento. Para proteger contra CSRF, implementamos medidas como o uso de tokens CSRF que devem ser incluídos em requisições mutáveis (POST/PUT/PATCH/DELETE) e verificados pelo backend.
+
+    Exemplo de ataque CSRF:
+
+    ```txt
+    1) O utilizador está autenticado no nosso site (cookie de sessão válido).
+    2) O utilizador visita um site malicioso (ex: http://malicious.com).
+    3) O site malicioso tem um código que faz uma requisição POST para o nosso backend (ex: http://localhost:3000/api/favorites) usando os cookies do utilizador.
+    4) O backend recebe a requisição, vê o cookie de sessão válido e processa a ação (ex: adiciona um favorito), mesmo que o utilizador não tenha autorizado essa ação.
+    ```
+
+    **Como é que protegemos contra CSRF?** Usamos um token CSRF que é gerado pelo backend e enviado para o frontend (geralmente num cookie não HttpOnly). O frontend inclui esse token num header personalizado (ex: `X-CSRF-Token`) em requisições mutáveis. O backend, ao receber a requisição, compara o token do header com o token armazenado no cookie. Se os tokens não coincidirem, o backend rejeita a requisição com um erro 403, protegendo assim contra ataques CSRF.
+
+    Assim, basicamente ficamos com 2 tokens em cada pedido mutável:
+    - O cookie HttpOnly com o JWT para autenticação.
+    - O cookie não HttpOnly com o token CSRF, que o frontend lê e envia no header `X-CSRF-Token` para o backend verificar.
+
+2. **Como funciona**
 
 - No login/register, o backend cria JWT e envia em `Set-Cookie`.
 - Em pedidos seguintes, o browser anexa o cookie automaticamente ao backend dessa origem.
@@ -663,21 +684,6 @@ Pedidos seguintes:
 
 > Nota rápida (dev vs prod): em produção, `secure: true` exige HTTPS; em dev (`http`) pode bloquear cookies, por isso controlamos pelo `NODE_ENV`.
 
-6. **Mini-exemplos pedagógicos (isolados)**
-    > Exemplo isolado - cartão de acesso
-
-```txt
-Cookie token = cartão de acesso que o browser apresenta sozinho.
-Header CSRF = palavra-passe curta pedida em ações sensíveis.
-```
-
-> Exemplo isolado - leitura de status
-
-```txt
-401 -> sessão em falta/inválida
-403 -> sessão pode existir, mas proteção CSRF falhou
-```
-
 ### Porque importa (porque fazemos isto)
 
 Com cookies, o browser envia credenciais automaticamente. Isso pede duas coisas obrigatórias:
@@ -696,6 +702,7 @@ Aqui está um resumo visual do fluxo de autenticação e proteção CSRF.
 Basicamente o user faz login (1), o frontend pede dados do user (2), e depois faz mutações protegidas (3).
 
 > mutações = pedidos que alteram estado (POST/PUT/PATCH/DELETE)
+> Por exemplo, `GET /api/auth/me` é uma leitura que não altera estado, então não precisa de token CSRF. Já `POST /api/favorites` é uma mutação que altera os favoritos do utilizador, então precisa de proteção CSRF.
 
 ```txt
 (1) POST /api/auth/login
@@ -715,16 +722,16 @@ Basicamente o user faz login (1), o frontend pede dados do user (2), e depois fa
 
 ### 3.1) Modelo User + utils (cookies/csrf)
 
-- **Ponto de situação:** já tens o mapa mental de auth; agora começam as peças persistidas e reutilizáveis.
+- **Ponto de situação:** já tens o mapa mental de auth; agora vamos criar o modelo de utilizador e utilitários para cookies e CSRF.
 - **Objetivo deste passo:** definir o modelo de utilizador e preparar base para sessão/favoritos/avatar.
 - **Ficheiros:** criar/editar `backend/src/models/User.js`.
 - **Validação rápida:** o modelo inclui `passwordHash`, `favorites`, `avatarUrl` e remove `passwordHash` no `toJSON`.
 
-`backend/src/models/User.js`:
+Cria o ficheiro `backend/src/models/User.js`:
 
 ```js
 /**
- * Trecho: backend/src/models/User.js
+ * Ficheiro: backend/src/models/User.js
  * Objetivo: definir o schema do utilizador (credenciais, favoritos e avatar) e esconder `passwordHash` no JSON de resposta.
  * Este ficheiro existe aqui para sustentar auth, favorites e perfil nas secções seguintes.
 
@@ -788,7 +795,7 @@ export default User;
 
 ```js
 /**
- * Trecho: backend/src/utils/cookies.js
+ * Ficheiro: backend/src/utils/cookies.js
  * Objetivo: definir opções de cookies num único sítio para evitar inconsistências entre set/clear.
 
  */
@@ -853,7 +860,7 @@ export function clearCookieOptions() {
 
 ```js
 /**
- * Trecho: backend/src/utils/csrf.js
+ * Ficheiro: backend/src/utils/csrf.js
  * Objetivo: gerar token CSRF aleatório para o padrão double-submit-cookie.
 
  */
@@ -881,7 +888,7 @@ export function createCsrfToken() {
 
 ```js
 /**
- * Trecho: backend/src/middlewares/requireAuth.js
+ * Ficheiro: backend/src/middlewares/requireAuth.js
  * Objetivo: proteger rotas privadas validando o JWT recebido via cookie HttpOnly.
 
  */
@@ -938,7 +945,7 @@ Antes do snippet, fixa estas duas regras práticas:
 
 ```js
 /**
- * Trecho: backend/src/middlewares/requireCsrf.js
+ * Ficheiro: backend/src/middlewares/requireCsrf.js
  * Objetivo: bloquear mutações sem prova CSRF (header + cookie a coincidir).
 
  */
@@ -985,7 +992,7 @@ export function requireCsrf(req, res, next) {
 
 ```js
 /**
- * Trecho: backend/src/routes/auth.routes.js
+ * Ficheiro: backend/src/routes/auth.routes.js
  * Objetivo: gerir ciclo de sessão (register/login/me/logout) com cookies e JWT.
 
  */
@@ -1202,7 +1209,7 @@ export default router;
 
 ```js
 /**
- * Trecho: backend/src/app.js
+ * Ficheiro: backend/src/app.js
  * Objetivo: montar a pipeline do Express na ordem certa (CORS -> parsers -> rotas -> 404 -> erros).
 
  */
@@ -1404,7 +1411,7 @@ A autenticação sem dados por utilizador não resolve o objetivo da app. Esta s
 
 ```js
 /**
- * Trecho: backend/src/routes/favorites.routes.js
+ * Ficheiro: backend/src/routes/favorites.routes.js
  * Objetivo: gerir favoritos por utilizador mantendo contrato compatível com a Ficha 05.
 
  */
@@ -1515,7 +1522,7 @@ export default router;
 
 ```js
 /**
- * Trecho: backend/src/models/Team.js
+ * Ficheiro: backend/src/models/Team.js
  * Objetivo: definir a estrutura de dados de uma equipa no MongoDB.
 
  */
@@ -1562,7 +1569,7 @@ export default Team;
 
 ```js
 /**
- * Trecho: backend/src/routes/teams.routes.js
+ * Ficheiro: backend/src/routes/teams.routes.js
  * Objetivo: criar/listar/apagar equipas com paginação e pesquisa por nome.
 
  */
@@ -1690,7 +1697,7 @@ Cria a pasta `backend/uploads/` com um ficheiro `backend/uploads/.gitkeep`.
 
 ```js
 /**
- * Trecho: backend/src/routes/users.routes.js
+ * Ficheiro: backend/src/routes/users.routes.js
  * Objetivo: receber upload de avatar e guardar URL pública no perfil do utilizador.
 
  */
@@ -1971,7 +1978,7 @@ Vamos centralizar chamadas HTTP num cliente Axios único.
 
 ```js
 /**
- * Trecho: snippet do enunciado
+ * Ficheiro: snippet do enunciado
  * Objetivo: mostrar tratamento explícito de erro Axios por status para decisões de UI previsíveis.
  * Este exemplo prepara a lógica usada nos services e páginas autenticadas.
 
@@ -2039,7 +2046,7 @@ npm install axios
 
 ```js
 /**
- * Trecho: frontend/src/services/apiClient.js
+ * Ficheiro: frontend/src/services/apiClient.js
  * Objetivo: centralizar chamadas HTTP e injetar CSRF automaticamente nas mutações.
 
  */
@@ -2099,7 +2106,7 @@ export default api;
 
 ```js
 /**
- * Trecho: frontend/src/services/authApi.js
+ * Ficheiro: frontend/src/services/authApi.js
  * Objetivo: encapsular endpoints de autenticação para manter páginas limpas.
 
  */
@@ -2153,7 +2160,7 @@ export async function logout() {
 
 ```js
 /**
- * Trecho: frontend/src/services/favoritesApi.js
+ * Ficheiro: frontend/src/services/favoritesApi.js
  * Objetivo: isolar o contrato canónico de favoritos num único módulo.
 
  */
@@ -2197,7 +2204,7 @@ export async function removeFavorite(id) {
 
 ```js
 /**
- * Trecho: frontend/src/services/teamsApi.js
+ * Ficheiro: frontend/src/services/teamsApi.js
  * Objetivo: centralizar chamadas HTTP das equipas com paginação e CRUD básico.
 
  */
@@ -2244,7 +2251,7 @@ export async function removeTeam(id) {
 
 ```js
 /**
- * Trecho: frontend/src/services/usersApi.js
+ * Ficheiro: frontend/src/services/usersApi.js
  * Objetivo: subir avatar via multipart/form-data.
 
  */
@@ -2356,7 +2363,7 @@ Sem `authReady`, as rotas protegidas podem redirecionar antes da restauração d
 
 ```jsx
 /**
- * Trecho: frontend/src/context/PokedexContext.jsx
+ * Ficheiro: frontend/src/context/PokedexContext.jsx
  * Objetivo: concentrar estado global da Pokédex + sessão + favoritos do utilizador.
 
  */
@@ -2647,7 +2654,7 @@ Regra: privadas passam sempre por <ProtectedRoute />
 
 ```jsx
 /**
- * Trecho: frontend/src/components/ProtectedRoute.jsx
+ * Ficheiro: frontend/src/components/ProtectedRoute.jsx
  * Objetivo: bloquear rotas privadas até existir sessão válida.
 
  */
@@ -2693,7 +2700,7 @@ export default ProtectedRoute;
 
 ```jsx
 /**
- * Trecho: frontend/src/components/Layout.jsx
+ * Ficheiro: frontend/src/components/Layout.jsx
  * Objetivo: renderizar a navegação principal com links condicionais pelo estado de sessão.
  * Este layout centraliza a experiência pública/privada da app sem duplicação de navbar.
 
@@ -2817,7 +2824,7 @@ export default Layout;
 
 ```jsx
 /**
- * Trecho: frontend/src/App.jsx
+ * Ficheiro: frontend/src/App.jsx
  * Objetivo: declarar a árvore final de rotas públicas e privadas usando `ProtectedRoute`.
  * Este ficheiro liga pages, layout e fallback de rota num único ponto de entrada.
 
@@ -2889,7 +2896,7 @@ export default App;
 
 ```jsx
 /**
- * Trecho: frontend/src/pages/LoginPage.jsx
+ * Ficheiro: frontend/src/pages/LoginPage.jsx
  * Objetivo: autenticar utilizador e redirecionar para a rota de origem quando aplicável.
  * Esta página fecha o fluxo de entrada em conjunto com `ProtectedRoute` e `location.state`.
 
@@ -2963,7 +2970,7 @@ export default LoginPage;
 
 ```jsx
 /**
- * Trecho: frontend/src/pages/RegisterPage.jsx
+ * Ficheiro: frontend/src/pages/RegisterPage.jsx
  * Objetivo: criar conta nova e iniciar o estado autenticado da aplicação.
  * Esta página complementa o login e valida os campos mínimos de registo no frontend.
 
@@ -3054,7 +3061,7 @@ export default RegisterPage;
 
 ```jsx
 /**
- * Trecho: frontend/src/pages/TeamsPage.jsx
+ * Ficheiro: frontend/src/pages/TeamsPage.jsx
  * Objetivo: gerir UI de equipas (listar, criar, apagar) com paginação e pesquisa.
 
  */
@@ -3333,7 +3340,7 @@ Se `req.file` é undefined, quase sempre o cliente não enviou multipart correta
 
 ```jsx
 /**
- * Trecho: frontend/src/pages/ProfilePage.jsx
+ * Ficheiro: frontend/src/pages/ProfilePage.jsx
  * Objetivo: permitir upload de avatar e refletir a alteração no perfil atual.
 
  */
