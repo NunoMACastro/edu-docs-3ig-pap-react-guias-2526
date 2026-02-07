@@ -143,14 +143,16 @@ Antes de mudar código, fixamos a estrutura final alvo para evitar imports parti
 - **Estrutura de projeto**: organização física dos ficheiros para refletir responsabilidades.
 - **`pages` vs `components`**: `pages` são ecrãs ligados ao router; `components` são peças reutilizáveis.
 - **`services` layer**: funções de acesso a API, para não espalhar requests pelos componentes.
+  **Recordando o que são APIs:** contratos de comunicação entre frontend e backend, definidos por endpoints, métodos HTTP, formatos de pedido e resposta. Ou seja, a forma como o frontend e o backend “conversam” entre si. Estes contratos devem ser estáveis para evitar erros silenciosos de comunicação. Por exemplo, se o backend muda a resposta de `GET /api/favorites` de `number[]` para `{ favorites: number[] }`, o frontend que espera um array direto vai falhar ao tentar ler a resposta.
 - **`.env`, `.env.example`, `.gitignore`**: configuração local, exemplo versionado e proteção de segredos.
+  **Recordando o que são variáveis de ambiente:** são pares chave-valor usados para configurar a aplicação sem hardcode. O `.env` é o ficheiro local que não deve ser versionado (contém segredos); o `.env.example` é um modelo que mostra quais variáveis são necessárias, mas sem valores reais; o `.gitignore` impede que o `.env` e outros ficheiros sensíveis sejam acidentalmente comitados para o repositório.
 
-2. **Como funciona “por baixo”**
+2. **Notas**
 
 - O bundler (Vite) resolve imports com base em paths e alias (`@`).
 - Se moveres ficheiros sem atualizar imports, o build falha com “module not found”.
 - `.env` é lido em runtime/build conforme a ferramenta; `.env.example` serve de checklist de variáveis.
-- `gitignore` impede segredos e artefactos locais de entrarem no repositório.
+- `gitignore` impede segredos e artefactos locais de entrarem no repositório. Na pasta do `git`tens um template de `.gitignore` que já inclui `node_modules/` e outros padrões comuns.
 
 3. **Porque estamos a fazer assim neste projeto**
 
@@ -169,47 +171,56 @@ Antes de mudar código, fixamos a estrutura final alvo para evitar imports parti
 
 - Usa naming previsível (`*.routes.js`, `*Api.js`, `*Page.jsx`).
 - Mantém `pages` focadas em composição de ecrã e fluxo; lógica de API nos `services`.
+  **Estrutura visual das responsabilidades:**
+
+```txt
+pages/ -> composição de ecrã, ligação ao router, estado local específico da página. Por exemplo, `LoginPage.jsx` é responsável por mostrar o formulário de login e lidar com o processo de autenticação, mas não deve conter lógica de chamadas à API ou componentes reutilizáveis. Mas não é o componente que cria o formulário em si; isso é trabalho de um componente separado.
+components/ -> UI reutilizável, sem dependências de rota ou API. Por exemplo, `LoginForm.jsx` é um componente que só se preocupa com a apresentação do formulário e a captura de eventos, sem saber nada sobre como o login é processado ou quais endpoints são chamados.
+services/ -> funções de acesso a API, sem UI ou lógica de estado. Por exemplo, `authApi.js` contém funções como `login`, `register`, `logout`, que fazem chamadas HTTP para o backend, mas não sabem nada sobre como os dados são usados ou apresentados.
+```
+
 - Nunca versionar credenciais reais; usar sempre `.env.example` como contrato de configuração.
-
-6. **Mini-exemplos pedagógicos (isolados)**
-    > Exemplo isolado - separação saudável
-
-```txt
-pages/LoginPage.jsx -> usa authApi.login()
-components/LoginForm.jsx -> só UI e eventos
-services/authApi.js -> chamadas HTTP
-```
-
-> Exemplo isolado - anti-padrão
-
-```txt
-PokemonCard.jsx faz fetch direto ao backend e também decide rotas
-(isto mistura UI, rede e navegação no mesmo ponto)
-```
-
-### Porque fazemos isto
-
-Se o aluno sabe o “mapa final” desde o início, não se perde a meio da migração.
 
 ### Estado inicial esperado (Fim da Ficha 05)
 
-A Ficha 06 integra-se sobre o estado final da Ficha 05. Os nomes exatos de alguns ficheiros/pastas podem variar, mas este é o mínimo compatível esperado para conseguires seguir sem ambiguidade.
+A Ficha 06 integra-se sobre o estado final da Ficha 05.
+
+Estado final da Ficha 05 (estrutura de pastas e ficheiros):
 
 ```text
 frontend/
+  public/
   src/
-    App.jsx
+    components/
+      ErrorMessage.jsx
+      FavoritesPage.jsx
+      Layout.jsx
+      LoadingSpinner.jsx
+      NotFound.jsx
+      PokemonCard.jsx
+      PokemonDetailsPage.jsx
+      PokemonListPage.jsx
+      SearchBar.jsx
+      typeData.js
+      TypeFilter.jsx
     context/
       PokedexContext.jsx
-    components/
+    services/
+      favoritesApi.js
+      pokeApi.js
+    styles/
+      index.css
+    App.jsx
+    main.jsx
 
 backend/
   src/
+    routes/
+      favorites.routes.js
     app.js
     server.js
+  package.json
 ```
-
-Se o teu projeto tiver pequenas variações de naming, mantém o equivalente funcional destes caminhos ao aplicar os passos desta ficha.
 
 ### 1.1) Criar a v4 (cópia da v3)
 
@@ -226,7 +237,9 @@ backend
 > Dica rápida: se te perderes no terminal, usa `pwd` para ver onde estás.
 > Para subir uma pasta, usa `cd ..`.
 
-### Estrutura final esperada
+Se quiseres usar o git, inicia um novo repositório dentro de `pokedex-v4` e clona o código da Ficha 05 como commit inicial. Assim, podes fazer commits incrementais à medida que avanças na Ficha 06.
+
+### Estrutura final que vamos construir nesta ficha
 
 ```text
 backend/
@@ -293,7 +306,7 @@ frontend/
 
 ### Checkpoint 1
 
-- Tens as pastas `backend/` e `frontend/` na raiz do projeto.
+- Tens as pastas da ficha 05 `backend/` e `frontend/` na raiz do projeto.
 - O alias `@` continua ativo no frontend (confirmar em `frontend/vite.config.js`).
 
 ---
@@ -309,22 +322,34 @@ Vamos preparar o backend para usar MongoDB Atlas e configuração por variáveis
 1. **Conceitos-chave**
 
 - **Bootstrap do servidor**: sequência de arranque antes de aceitar pedidos.
+  O que é um bootstrap? É o processo inicial que a aplicação passa para se preparar antes de começar a aceitar pedidos. No nosso caso, isso inclui carregar variáveis de ambiente, estabelecer ligação à base de dados e só depois abrir a porta HTTP. O objetivo do bootstrap é garantir que tudo o que é crítico para o funcionamento da aplicação está pronto e validado antes de expor qualquer funcionalidade. É um esqueleto de preparação que garante que o ambiente está configurado corretamente e que os serviços essenciais estão disponíveis. Se algo falhar durante o bootstrap (como a ligação ao MongoDB), o processo deve terminar imediatamente para evitar um estado inconsistente onde o servidor está “up” mas não pode funcionar corretamente.
 - **Fail fast**: se configuração crítica falhar, o processo termina cedo e com erro claro.
 - **MongoDB Atlas**: base de dados gerida na cloud.
 - **Mongoose**: camada ODM para mapear documentos Mongo em objetos JavaScript.
+  **ODM:** Object Document Mapper, uma camada de abstração que facilita a interação com bases de dados NoSQL como o MongoDB, permitindo definir esquemas e modelos para os dados, e oferecendo métodos para criar, ler, atualizar e deletar documentos de forma mais intuitiva.
 
-2. **Como funciona “por baixo”**
+- **Modelos e esquemas**: definição de estrutura de dados e regras de validação. Um modelo é uma representação de uma coleção no MongoDB, enquanto um esquema define a estrutura dos documentos dentro dessa coleção, incluindo tipos de dados, validações e comportamentos personalizados. Por exemplo, um modelo `User` pode ter um esquema que define campos como `username`, `email`, `passwordHash`, e regras como “`email` deve ser único” ou “`username` deve ter entre 3 e 30 caracteres”. Primeiro definimos o esquema para garantir que os dados têm a forma correta, e depois criamos o modelo para interagir com a coleção correspondente no MongoDB.
+
+Esquema do funcionamento do mongoDB com Mongoose:
+
+```txt
+1) Definir esquema (estrutura do documento)
+2) Criar modelo (interface para a coleção)
+3) Usar modelo para criar/ler/atualizar/deletar documentos
+```
+
+2. **Setup inicial e notas**
 
 - `server.js` carrega variáveis de ambiente, liga à base de dados e só depois abre a porta.
 - Se `MONGODB_URI` estiver em falta/inválida, `mongoose.connect` rejeita e o processo deve parar.
 - Atlas exige credenciais corretas e origem/IP autorizado; falhas aqui parecem “backend caiu sem motivo”.
 - No MongoDB, guardas documentos em coleções; não há tabelas/joins clássicos como num SQL tradicional.
 
-3. **Porque estamos a fazer assim neste projeto**
+3. **Porque estamos a fazer assim nesta ficha**
 
 - Precisas de persistência real: sem Mongo, favoritos/equipas desaparecem ao reiniciar.
-- Configuração por `.env` evita hardcode de segredos no código.
-- Arranque controlado simplifica diagnóstico: se o servidor sobe, tens uma base mínima de confiança.
+- Configuração por `.env` evita hardcode de segredos no código. Por exemplo, se colocares a connection string do MongoDB Atlas diretamente no código, corres o risco de expor essas credenciais se o código for compartilhado ou versionado. Usar um `.env` permite manter esses valores fora do código e do repositório, reduzindo o risco de exposição acidental.
+- Arranque controlado simplifica diagnóstico: se o servidor arranca, tens uma base mínima de confiança e sabes que qualquer erro posterior não deverá ser de configuração ou ligação à base de dados.
 
 4. **Erros comuns e sintomas**
 
@@ -333,38 +358,12 @@ Vamos preparar o backend para usar MongoDB Atlas e configuração por variáveis
 - Timeout de ligação -> IP não autorizado ou rede bloqueada.
 - `MONGODB_URI em falta` -> variável mal escrita no `.env`.
 
-5. **Boas práticas e segurança**
-
-- Tratar falhas de arranque como críticas (não ignorar erro de DB).
-- Nunca expor `MONGODB_URI` com credenciais reais em screenshots ou commits.
-- Usar `NODE_ENV` para separar comportamentos dev/prod quando necessário.
-
-6. **Mini-exemplos pedagógicos (isolados)**
-    > Exemplo isolado - ordem certa
-
-```txt
-1) Carregar .env
-2) Ligar ao Mongo
-3) app.listen(...)
-```
-
-> Exemplo isolado - ordem errada
-
-```txt
-1) app.listen(...)
-2) Só depois tentar Mongo
-Resultado: app parece “up”, mas endpoints que dependem de DB falham.
-```
-
-### Porque fazemos isto
-
-Sem base de dados e sem `.env`, as próximas secções (auth, equipas, favoritos por utilizador) não conseguem funcionar de forma estável.
+---
 
 ### 2.1) Instalar dependências
 
 - **Ponto de situação:** o backend já está estruturado e agora precisa das bibliotecas base da ficha.
 - **Objetivo deste passo:** instalar dependências de runtime e desenvolvimento para auth, cookies, CSRF, Mongo e upload.
-- **Ficheiros:** alterar `backend/package.json` e `backend/package-lock.json` (gerados pelo `npm install`).
 - **Validação rápida:** no fim, `npm run dev` no `backend/` arranca sem erro de módulo em falta.
 
 No `backend/`:
@@ -375,6 +374,67 @@ No `backend/`:
 npm install cors mongoose dotenv bcrypt jsonwebtoken cookie-parser multer
 npm install -D nodemon
 ```
+
+#### 2.1.1) Explicação das dependências
+
+- `cors`: middleware para configurar Cross-Origin Resource Sharing, essencial para permitir que o frontend (em localhost:5173) se comunique com o backend (em localhost:3000) sem erros de CORS. Mais para a frente vamos ver a definição completa de CORS para permitir credenciais (cookies).
+
+- `mongoose`: biblioteca ODM para MongoDB, que facilita a definição de esquemas e modelos, e a interação com a base de dados usando uma API mais intuitiva.
+
+- `dotenv`: carrega variáveis de ambiente de um ficheiro `.env` para `process.env`, permitindo configurar o backend sem hardcode.
+
+- `bcrypt`: biblioteca para hashing de passwords, usada para armazenar senhas de forma segura no MongoDB.
+  **hashing de passwords:** é o processo de transformar uma senha em um valor fixo e irreversível usando um algoritmo de hash. O `bcrypt` é uma das bibliotecas mais populares para isso, pois inclui um fator de custo que torna o processo mais lento e resistente a ataques de força bruta. Ou seja, se alguém tentar adivinhar a senha, levará muito tempo para testar cada possibilidade, aumentando a segurança pois impede ataques automatizados e sequenciais.
+
+    O processo normalmente é o seguinte:
+
+    ```txt
+    Login:
+    1) O utilizador envia username e password.
+    2) O backend encontra o user pelo username.
+    3) O backend usa bcrypt.compare(password, user.passwordHash) para verificar se a senha é correta.
+
+    Registo:
+    1) O utilizador envia username, email e password.
+    2) O backend gera um hash da senha com bcrypt.hash(password, saltRounds).
+    3) O backend guarda o user com passwordHash no MongoDB.
+    ```
+
+    Ou seja, na base de dados, nunca guardamos a senha em texto claro. Guardamos apenas o hash, e para verificar a senha, usamos `bcrypt.compare` que faz o processo de hashing internamente e compara com o hash armazenado.
+
+    Exemplo:
+
+    Imagina que a password é `1234`. A password é passada para o `bcrypt.hash` que gera um hash como por exemplo `$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36S4Qn1j8a2uH0j0Q5e`. Esse hash é o que guardamos no MongoDB. Quando o utilizador tenta fazer login, ele envia `1234`, e o backend usa `bcrypt.compare('1234', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36S4Qn1j8a2uH0j0Q5e')`, que retorna `true` se a senha estiver correta. Ou seja, nunca ninguém nem nenhum processo/função tem acesso à senha original, apenas ao hash.
+
+- `jsonwebtoken`: biblioteca para criar e verificar JSON Web Tokens (JWT), que serão usados para autenticação de sessão.
+
+    **O que é um token** JWT? É um token assinado que contém informações (claims) sobre o utilizador, como `userId` e expiração. O backend gera o token no login e o envia para o cliente, que o guarda em cookie HttpOnly. Em pedidos subsequentes, o backend verifica o token para autenticar o utilizador.
+
+    Por exemplo:
+
+    ```txt
+    Login:
+    1) O utilizador envia username e password.
+    2) O backend verifica as credenciais.
+    3) O backend gera um JWT com jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' }).
+    4) O backend envia o JWT em um cookie HttpOnly.
+    Pedidos subsequentes:
+    1) O utilizador tenta fazer o login novamente ou aceder a uma rota protegida.
+    2) O browser envia o cookie JWT automaticamente com o pedido.
+    3) O backend usa jwt.verify(token, JWT_SECRET) para verificar a autenticidade do token e extrair o userId.
+    4) Se o token for válido, o backend considera o utilizador autenticado e pode usar o userId para aceder dados específicos do utilizador.
+    ```
+
+    Mas o que é o segredo `JWT_SECRET`? É uma string que o backend usa para assinar os tokens. Se alguém tiver acesso a esse segredo, pode criar tokens falsos ou verificar tokens existentes, o que compromete a segurança da aplicação. Por isso, o `JWT_SECRET` deve ser mantido em segredo (por exemplo, em um `.env` que não é versionado) e deve ser forte o suficiente para resistir a ataques de força bruta.
+
+    Em concreto, o segredo é uma string (que deve ser aleatória e segura) que é usada pelo backend para verificar a autenticidade dos tokens JWT.
+    A partir do momento em que um segredo é definido e usado para assinar tokens, qualquer alteração nesse segredo invalidará todos os tokens existentes, pois o backend não conseguirá verificar a assinatura dos tokens antigos. Por isso, é crucial escolher um segredo forte e mantê-lo consistente enquanto os tokens estiverem em uso.
+
+- `cookie-parser`: middleware para ler cookies em pedidos HTTP, essencial para autenticação baseada em cookies.
+
+- `multer`: middleware para lidar com uploads de ficheiros, usado para a funcionalidade de upload de avatar.
+
+---
 
 ### 2.2) Criar `.env` e `.env.example`
 
@@ -1110,14 +1170,12 @@ Se ainda **não** criaste `teams.routes.js` e `users.routes.js` (secção 4), cr
 import { Router } from "express";
 const router = Router();
 router.get("/", (_req, res) =>
-    res
-        .status(501)
-        .json({
-            error: {
-                code: "NOT_READY",
-                message: "Secção 4 ainda não aplicada",
-            },
-        }),
+    res.status(501).json({
+        error: {
+            code: "NOT_READY",
+            message: "Secção 4 ainda não aplicada",
+        },
+    }),
 );
 export default router;
 ```
@@ -1128,14 +1186,12 @@ export default router;
 import { Router } from "express";
 const router = Router();
 router.post("/avatar", (_req, res) =>
-    res
-        .status(501)
-        .json({
-            error: {
-                code: "NOT_READY",
-                message: "Secção 4 ainda não aplicada",
-            },
-        }),
+    res.status(501).json({
+        error: {
+            code: "NOT_READY",
+            message: "Secção 4 ainda não aplicada",
+        },
+    }),
 );
 export default router;
 ```
