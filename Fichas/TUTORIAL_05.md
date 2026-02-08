@@ -404,7 +404,7 @@ Imagina que o utilizador clica num ❤️ para favoritar um Pokémon:
 2. O Express (servidor) recebe o pedido, processa-o, comunica com o controlador correspondente, atualiza os dados e devolve uma resposta HTTP (normalmente em JSON).
 3. O React recebe a resposta e atualiza a UI em conformidade.
 
-Isto é um ciclo básico de comunicação cliente-servidor. E, por norma, é assincrono: o cliente não bloqueia enquanto espera pela resposta do servidor. Do lado do cliente, usas `fetch` ou bibliotecas como Axios para fazer estes pedidos HTTP. E ao fazê-lo, crias uma promessa que será resolvida quando o servidor responder.
+Isto é um ciclo básico de comunicação cliente-servidor. E, por norma, é assíncrono: o cliente não bloqueia enquanto espera pela resposta do servidor. Do lado do cliente, usas `fetch` ou bibliotecas como Axios para fazer estes pedidos HTTP. E ao fazê-lo, crias uma promessa que será resolvida quando o servidor responder.
 
 Além disso o React corre no browser, o que significa que só consegue guardar dados localmente.
 Quando queres dados partilhados e regras centralizadas, precisas de backend.
@@ -560,7 +560,7 @@ Um contrato de API é um **acordo** entre frontend e backend sobre:
 - que dados saem (JSON)
 - que erros existem (status + shape)
 
-Por exemplo, imagina que temos no frontend a ação de adicionar favorito. Essa ação envia um pedido `POST`ao backend com uma determinada informação (body) e espera uma resposta específica. Isto é a definição básica do contrato.
+Por exemplo, imagina que temos no frontend a ação de adicionar favorito. Essa ação envia um pedido `POST` ao backend com uma determinada informação (body) e espera uma resposta específica. Isto é a definição básica do contrato.
 É o conjunto de regras e informação que ambos os lados concordam em seguir para cada endpoint.
 
 #### Porque é que isto importa?
@@ -752,7 +752,7 @@ Queres enviar uma resposta? Usas `res`.
 Por exemplo, colocar algo no `res`:
 
 ```js
-// Define o status HTTP e envia o JSON numa unica resposta.
+// Define o status HTTP e envia o JSON numa única resposta.
 // "201" significa "Created" (criamos um novo favorito).
 // .json(...) envia um objeto JS convertido para JSON e fecha a resposta.
 // Esta linha fecha o ciclo request -> response deste handler.
@@ -968,16 +968,16 @@ Exemplo simples de `server.js`:
 
 ```js
 /* backend/src/server.js */
-// "import" traz codigo de outro ficheiro.
-// Aqui trazemos a configuracao da app Express (middlewares + rotas).
+// "import" traz código de outro ficheiro.
+// Aqui trazemos a configuração da app Express (middlewares + rotas).
 import app from "./app.js";
 
-// "const" cria uma constante (o valor nao deve mudar).
+// "const" cria uma constante (o valor não deve mudar).
 // Porta onde o servidor vai ficar "a ouvir" pedidos HTTP.
 const PORT = 3000;
 
 // app.listen abre a porta e fica a ouvir pedidos.
-// A funcao dentro de listen corre quando o servidor esta pronto.
+// A função dentro de listen corre quando o servidor está pronto.
 app.listen(PORT, () => {
     // Template string: usa ${PORT} para juntar texto + valor.
     console.log(`API a correr em http://localhost:${PORT}`);
@@ -992,12 +992,12 @@ Exemplo de `app.js` com CORS e JSON parser simples:
 
 ```js
 // backend/src/app.js
-// import: traz dependencias instaladas pelo npm ou ficheiros locais.
+// import: traz dependências instaladas pelo npm ou ficheiros locais.
 import express from "express"; // framework para criar a API HTTP
 import cors from "cors"; // middleware para permitir pedidos cross-origin
 import favoritesRoutes from "./routes/favorites.routes.js"; // rotas de favoritos
 
-// Cria a aplicacao Express (o "motor" do servidor).
+// Cria a aplicação Express (o "motor" do servidor).
 const app = express();
 
 // app.use(...) adiciona um middleware.
@@ -1018,7 +1018,7 @@ app.use(express.json());
 app.use("/api/favorites", favoritesRoutes);
 
 // Exporta a app para o server.js arrancar o servidor.
-// "default" significa que este e o export principal do ficheiro.
+// "default" significa que este é o export principal do ficheiro.
 export default app;
 ```
 
@@ -1107,8 +1107,8 @@ Vantagens:
 Quando fazemos:
 
 ```js
-// Lista inicial em memoria (perde-se ao reiniciar o servidor).
-// Isto e um array de numeros (ids de Pokemon).
+// Lista inicial em memória (perde-se ao reiniciar o servidor).
+// Isto é um array de números (ids de Pokemon).
 let favorites = [1, 4, 25];
 ```
 
@@ -1179,26 +1179,26 @@ Cria `backend/src/routes/favorites.routes.js`:
 import { Router } from "express";
 
 // Cria um router dedicado a esta feature (favoritos).
-// Router() e como uma mini-app dentro do Express.
+// Router() é como uma mini-app dentro do Express.
 const router = Router();
 
-// Estado em memoria: comeca com alguns ids para testar.
+// Estado em memória: começa com alguns ids para testar.
 let favorites = [1, 4, 25];
 
 // Helper para manter o formato de erro sempre igual.
-// Assim o frontend sabe sempre onde esta a mensagem de erro.
+// Assim o frontend sabe sempre onde está a mensagem de erro.
 // details tem valor por defeito: [] (array vazio).
 function sendError(res, status, code, message, details = []) {
     return res.status(status).json({ error: { code, message, details } });
 }
 
 // Converte e valida o id (tem de ser inteiro positivo).
-// parseId recebe um valor (string/numero) e devolve numero ou null.
+// parseId recebe um valor (string/número) e devolve número ou null.
 function parseId(value) {
-    // Number(...) tenta converter string -> numero.
+    // Number(...) tenta converter string -> número.
     const numericId = Number(value);
 
-    // Number.isInteger garante que nao e 2.5, NaN, etc.
+    // Number.isInteger garante que não é 2.5, NaN, etc.
     if (!Number.isInteger(numericId) || numericId <= 0) {
         return null;
     }
@@ -1207,7 +1207,7 @@ function parseId(value) {
 }
 
 // GET /api/favorites
-// (req, res) sao os objetos de request e response do Express.
+// (req, res) são os objetos de request e response do Express.
 router.get("/", (req, res) => {
     // Devolve o array completo de ids favoritos.
     res.status(200).json(favorites);
@@ -1217,29 +1217,29 @@ router.get("/", (req, res) => {
 router.post("/", (req, res) => {
     // O id vem do body (JSON).
     // req.body pode ser undefined se faltar express.json().
-    // Desestruturacao: const { id } = ... apanha a propriedade "id".
+    // Desestruturação: const { id } = ... apanha a propriedade "id".
     const { id } = req.body || {};
     const numericId = parseId(id);
 
-    // Body invalido -> 422 (dados invalidos no body).
+    // Body inválido -> 422 (dados inválidos no body).
     if (!numericId) {
-        // return para parar aqui e nao continuar a funcao.
+        // return para parar aqui e não continuar a função.
         return sendError(
             res,
             422,
             "VALIDATION_ERROR",
-            "Id obrigatorio e numerico",
+            "Id obrigatório e numérico",
         );
     }
 
     // Evita duplicados.
-    // includes verifica se o array ja tem aquele numero.
+    // includes verifica se o array já tem aquele número.
     if (favorites.includes(numericId)) {
-        return sendError(res, 409, "DUPLICATE_KEY", "Pokemon ja e favorito");
+        return sendError(res, 409, "DUPLICATE_KEY", "Pokémon já é favorito");
     }
 
-    // Atualiza o array de forma imutavel.
-    // Usamos [...] para criar um novo array (boa pratica em JS/React).
+    // Atualiza o array de forma imutável.
+    // Usamos [...] para criar um novo array (boa prática em JS/React).
     // O operador ... "espalha" (spread) os valores do array antigo.
     favorites = [...favorites, numericId];
     res.status(201).json({ id: numericId });
@@ -1248,22 +1248,22 @@ router.post("/", (req, res) => {
 // DELETE /api/favorites/:id
 router.delete("/:id", (req, res) => {
     // O id vem da URL (params).
-    // req.params.id e sempre string, por isso validamos.
+    // req.params.id é sempre string, por isso validamos.
     const numericId = parseId(req.params.id);
 
-    // Param invalido -> 400 (problema no URL).
+    // Param inválido -> 400 (problema no URL).
     if (!numericId) {
-        return sendError(res, 400, "INVALID_ID", "Id invalido");
+        return sendError(res, 400, "INVALID_ID", "Id inválido");
     }
 
-    // Se nao existir, devolve 404.
+    // Se não existir, devolve 404.
     if (!favorites.includes(numericId)) {
-        return sendError(res, 404, "NOT_FOUND", "Favorito nao encontrado");
+        return sendError(res, 404, "NOT_FOUND", "Favorito não encontrado");
     }
 
-    // Remove o id e devolve confirmacao.
+    // Remove o id e devolve confirmação.
     // filter cria um novo array sem o id escolhido.
-    // (id) => id !== numericId e uma funcao que diz o que fica.
+    // (id) => id !== numericId é uma função que diz o que fica.
     favorites = favorites.filter((id) => id !== numericId);
     res.status(200).json({ id: numericId });
 });
@@ -1613,19 +1613,19 @@ Cria `src/services/favoritesApi.js`:
 // src/services/favoritesApi.js
 
 // Base da API (muda aqui se a porta ou host mudar).
-// E uma string com o endereco do backend.
+// E uma string com o endereço do backend.
 const API_BASE = "http://localhost:3000";
 
 // GET /api/favorites -> devolve um array de ids.
-// async significa que a funcao devolve uma Promise.
+// async significa que a função devolve uma Promise.
 export async function getFavorites() {
     // fetch faz um pedido HTTP e devolve uma Promise.
-    // await pausa aqui ate a resposta chegar.
+    // await pausa aqui até a resposta chegar.
     const res = await fetch(`${API_BASE}/api/favorites`);
-    // res.ok indica se o status esta em 2xx.
+    // res.ok indica se o status está em 2xx.
     if (!res.ok) throw new Error("Erro API");
     // Converte o JSON da resposta para objeto JS.
-    // res.json() tambem devolve uma Promise.
+    // res.json() também devolve uma Promise.
     return res.json();
 }
 
@@ -1634,12 +1634,12 @@ export async function addFavorite(id) {
     // body vai em JSON, por isso usamos JSON.stringify(...)
     const res = await fetch(`${API_BASE}/api/favorites`, {
         method: "POST",
-        // Diz ao servidor que o body esta em JSON.
+        // Diz ao servidor que o body está em JSON.
         headers: { "Content-Type": "application/json" },
         // Envia o id no body.
         body: JSON.stringify({ id }),
     });
-    // Se o backend respondeu com 4xx/5xx, lancamos erro.
+    // Se o backend respondeu com 4xx/5xx, lançamos erro.
     if (!res.ok) throw new Error("Erro API");
     // Devolve o JSON com o id confirmado pelo servidor.
     return res.json();
@@ -1647,7 +1647,7 @@ export async function addFavorite(id) {
 
 // DELETE /api/favorites/:id -> remove um id.
 export async function removeFavorite(id) {
-    // Aqui colocamos o id no URL (endpoint com parametro).
+    // Aqui colocamos o id no URL (endpoint com parâmetro).
     const res = await fetch(`${API_BASE}/api/favorites/${id}`, {
         method: "DELETE",
     });
@@ -1811,7 +1811,7 @@ export function PokedexProvider({ children }) {
     const [error, setError] = useState(null); // null = sem erro
 
     // Carrega dados iniciais em paralelo (PokeAPI + backend).
-    // useCallback memoriza a funcao para manter a mesma referencia.
+    // useCallback memoriza a função para manter a mesma referência.
     const loadInitialData = useCallback(async () => {
         // Antes de pedir dados, marcamos "loading".
         setLoading(true);
@@ -1820,7 +1820,7 @@ export function PokedexProvider({ children }) {
 
         try {
             // Promise.all espera pelos dois pedidos ao mesmo tempo.
-            // Isto e mais rapido do que fazer um de cada vez.
+            // Isto é mais rápido do que fazer um de cada vez.
             const [pokemonList, favoritesList] = await Promise.all([
                 fetchPokemonList(POKEMON_LIMIT),
                 getFavorites(),
@@ -1834,7 +1834,7 @@ export function PokedexProvider({ children }) {
             // Mensagem simples para a UI.
             setError("Erro ao carregar dados.");
         } finally {
-            // O loading acaba quer tenha havido erro ou nao.
+            // O loading acaba quer tenha havido erro ou não.
             setLoading(false);
         }
     }, []);
@@ -1845,20 +1845,20 @@ export function PokedexProvider({ children }) {
         loadInitialData();
     }, [loadInitialData]);
 
-    // Alterna favorito: se existir, remove; se nao existir, adiciona.
-    // useCallback evita recriar a funcao a cada render.
+    // Alterna favorito: se existir, remove; se não existir, adiciona.
+    // useCallback evita recriar a função a cada render.
     const toggleFavorite = useCallback(
         async (id) => {
             try {
-                // Se o id ja esta nos favoritos, removemos.
+                // Se o id já está nos favoritos, removemos.
                 if (favorites.includes(id)) {
                     await removeFavorite(id);
-                    // Atualizacao imutavel (novo array).
+                    // Atualização imutável (novo array).
                     setFavorites(favorites.filter((favId) => favId !== id));
                 } else {
-                    // Se nao esta, adicionamos.
+                    // Se não está, adicionamos.
                     await addFavorite(id);
-                    // Atualizacao imutavel (novo array).
+                    // Atualização imutável (novo array).
                     setFavorites([...favorites, id]);
                 }
             } catch (err) {
@@ -1869,7 +1869,7 @@ export function PokedexProvider({ children }) {
         [favorites],
     );
 
-    // Objeto que sera partilhado com toda a app via Context.
+    // Objeto que será partilhado com toda a app via Context.
     // useMemo evita criar um novo objeto em cada render sem necessidade.
     const value = useMemo(
         () => ({
@@ -1878,14 +1878,14 @@ export function PokedexProvider({ children }) {
             loading,
             error,
             toggleFavorite,
-            // "reload" e apenas outro nome para a funcao loadInitialData.
+            // "reload" e apenas outro nome para a função loadInitialData.
             reload: loadInitialData,
         }),
         [pokemon, favorites, loading, error, toggleFavorite, loadInitialData],
     );
 
     return (
-        // Fornece dados e acoes a todos os filhos.
+        // Fornece dados e ações a todos os filhos.
         <PokedexContext.Provider value={value}>
             {children}
         </PokedexContext.Provider>
@@ -1969,10 +1969,10 @@ Por isso existe o:
 
 ```js
 // Efeito que corre quando o Provider monta (ou quando loadInitialData muda).
-// O array de dependencias diz ao React quando repetir este efeito.
+// O array de dependências diz ao React quando repetir este efeito.
 useEffect(() => {
     loadInitialData();
-}, [loadInitialData]); // dependencia: usamos a funcao dentro do efeito
+}, [loadInitialData]); // dependência: usamos a função dentro do efeito
 ```
 
 ### Regra 2 - `useCallback` e `useMemo` são para estabilidade (não para “performance” nesta fase)
@@ -2015,10 +2015,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     // StrictMode ajuda a encontrar problemas em desenvolvimento.
     // Em modo dev, alguns efeitos podem correr duas vezes.
     <React.StrictMode>
-        {/* Router para ativar as rotas da aplicacao */}
-        {/* BrowserRouter usa o historico do browser (URLs reais) */}
+        {/* Router para ativar as rotas da aplicação */}
+        {/* BrowserRouter usa o histórico do browser (URLs reais) */}
         <BrowserRouter>
-            {/* Provider coloca o estado global disponivel para toda a app */}
+            {/* Provider coloca o estado global disponível para toda a app */}
             <PokedexProvider>
                 <App />
             </PokedexProvider>
@@ -2057,16 +2057,16 @@ O componente final fica assim (apenas a parte do `App`):
 // App fica responsavel apenas por definir as rotas.
 function App() {
     return (
-        {/* <Routes> e o "mapa" de rotas da aplicacao */}
+        {/* <Routes> é o "mapa" de rotas da aplicação */}
         <Routes>
-            {/* Layout e rotas filhas */}
+                {/* Layout e rotas filhas */}
             <Route path="/" element={<Layout />}>
                 {/* Layout normalmente tem um <Outlet /> onde as pages aparecem */}
                 {/* Home com lista */}
                 {/* index = rota principal "/" */}
                 <Route index element={<PokemonListPage />} />
                 {/* Rota dinamica por id */}
-                {/* Como esta dentro de "/", o caminho final e /pokemon/:id */}
+                {/* Como está dentro de "/", o caminho final é /pokemon/:id */}
                 <Route path="pokemon/:id" element={<PokemonDetailsPage />} />
                 {/* Pagina de favoritos */}
                 <Route path="favoritos" element={<FavoritesPage />} />
@@ -2164,10 +2164,10 @@ Se antes tinhas isto:
 
 ```jsx
 {
-    /* Versao antiga: props passadas do App para a page */
+    /* Versão antiga: props passadas do App para a page */
 }
 {
-    /* Props sao valores/funcao passados de pai para filho */
+    /* Props são valores/função passados de pai para filho */
 }
 <PokemonListPage
     pokemon={pokemon}
@@ -2179,11 +2179,11 @@ Se antes tinhas isto:
 Agora não passas props, e dentro da page fazes:
 
 ```js
-// Importa o hook que expoe estado e acoes do Context.
+// Importa o hook que expõe estado e ações do Context.
 import { usePokedex } from "@/context/PokedexContext.jsx";
-// Desestrutura os dados/acoes que esta pagina precisa.
-// Desestruturacao: pega propriedades do objeto e cria variaveis com o mesmo nome.
-// usePokedex() devolve um objeto com dados (pokemon, favorites) e funcoes (toggle, reload).
+// Desestrutura os dados/ações que esta página precisa.
+// Desestruturação: pega propriedades do objeto e cria variáveis com o mesmo nome.
+// usePokedex() devolve um objeto com dados (pokemon, favorites) e funções (toggle, reload).
 const { pokemon, favorites, loading, error, toggleFavorite, reload } =
     usePokedex();
 ```
@@ -2244,7 +2244,7 @@ Depois:
 
 ```js
 // Hook para ler dados globais sem passar props.
-// Este import e igual em qualquer componente que precise do Context.
+// Este import é igual em qualquer componente que precise do Context.
 import { usePokedex } from "@/context/PokedexContext.jsx";
 ```
 
@@ -2252,7 +2252,7 @@ import { usePokedex } from "@/context/PokedexContext.jsx";
 
 ```js
 // Vai buscar apenas o que este componente precisa.
-// Assim o codigo fica mais limpo e facil de ler.
+// Assim o código fica mais limpo e fácil de ler.
 const { pokemon, favorites } = usePokedex();
 ```
 
@@ -2264,7 +2264,7 @@ Antes (exemplo típico):
 
 ```js
 // Antes: a page recebia tudo por props.
-// Isto obriga o App a passar muitas props para varios niveis.
+// Isto obriga o App a passar muitas props para vários níveis.
 function PokemonListPage({ pokemon, favorites, loading, error, onToggleFavorite, onRetry }) { ... }
 ```
 
@@ -2272,8 +2272,8 @@ Depois:
 
 ```js
 function PokemonListPage() {
-    // Agora a page le diretamente do Context.
-    // Nao precisa de receber props do App.
+    // Agora a page lê diretamente do Context.
+    // Não precisa de receber props do App.
     const { pokemon, favorites, loading, error, toggleFavorite, reload } = usePokedex();
     ...
 }
@@ -2300,8 +2300,8 @@ Exemplo de assinatura:
 
 ```js
 function PokemonDetailsPage() {
-    // Detalhes tambem passam a ler do Context.
-    // O padrao e o mesmo: ler dados + acoes pelo hook.
+    // Detalhes também passam a ler do Context.
+    // O padrão é o mesmo: ler dados + ações pelo hook.
     const { pokemon, favorites, loading, error, toggleFavorite, reload } =
         usePokedex();
 }

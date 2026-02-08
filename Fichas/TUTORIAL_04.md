@@ -1988,7 +1988,7 @@ function PokemonDetailsPage({
     }
 
     /**
-     * Retorna o rótulo do stat em português.
+     * Devolve o rótulo do stat em português.
      *
      * @param {string} statName - Nome técnico do stat.
      * @returns {string} Rótulo legível.
@@ -3074,7 +3074,7 @@ function App() {
 
     // A renderização começa no próximo bloco.
     // --- EXPLICAÇÃO DO RETURN ---
-    // Conceito: no retorno final do App, ligamos todas as páginas (lista, detalhe,
+    // Conceito: no return final do App, ligamos todas as páginas (lista, detalhe,
     // favoritos) e o fallback 404 dentro do Layout.
     // Programação: cada rota recebe um element com props necessárias e a rota "*"
     // captura URLs inválidas, devolvendo o componente NotFound.

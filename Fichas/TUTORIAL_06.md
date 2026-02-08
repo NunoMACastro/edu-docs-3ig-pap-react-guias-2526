@@ -326,7 +326,7 @@ Vamos preparar o backend para usar MongoDB Atlas e configuração por variáveis
 - **Fail fast**: se configuração crítica falhar, o processo termina cedo e com erro claro.
 - **MongoDB Atlas**: base de dados gerida na cloud.
 - **Mongoose**: camada ODM para mapear documentos Mongo em objetos JavaScript.
-  **ODM:** Object Document Mapper, uma camada de abstração que facilita a interação com bases de dados NoSQL como o MongoDB, permitindo definir esquemas e modelos para os dados, e oferecendo métodos para criar, ler, atualizar e deletar documentos de forma mais intuitiva.
+  **ODM:** Object Document Mapper, uma camada de abstração que facilita a interação com bases de dados NoSQL como o MongoDB, permitindo definir esquemas e modelos para os dados, e oferecendo métodos para criar, ler, atualizar e apagar documentos de forma mais intuitiva.
 
 - **Modelos e esquemas**: definição de estrutura de dados e regras de validação. Um modelo é uma representação de uma coleção no MongoDB, enquanto um esquema define a estrutura dos documentos dentro dessa coleção, incluindo tipos de dados, validações e comportamentos personalizados. Por exemplo, um modelo `User` pode ter um esquema que define campos como `username`, `email`, `passwordHash`, e regras como “`email` deve ser único” ou “`username` deve ter entre 3 e 30 caracteres”. Primeiro definimos o esquema para garantir que os dados têm a forma correta, e depois criamos o modelo para interagir com a coleção correspondente no MongoDB.
 
@@ -335,7 +335,7 @@ Esquema do funcionamento do mongoDB com Mongoose:
 ```txt
 1) Definir esquema (estrutura do documento)
 2) Criar modelo (interface para a coleção)
-3) Usar modelo para criar/ler/atualizar/deletar documentos
+3) Usar modelo para criar/ler/atualizar/apagar documentos
 ```
 
 2. **Setup inicial e notas**
@@ -348,7 +348,7 @@ Esquema do funcionamento do mongoDB com Mongoose:
 3. **Porque estamos a fazer assim nesta ficha**
 
 - Precisas de persistência real: sem Mongo, favoritos/equipas desaparecem ao reiniciar.
-- Configuração por `.env` evita hardcode de segredos no código. Por exemplo, se colocares a connection string do MongoDB Atlas diretamente no código, corres o risco de expor essas credenciais se o código for compartilhado ou versionado. Usar um `.env` permite manter esses valores fora do código e do repositório, reduzindo o risco de exposição acidental.
+- Configuração por `.env` evita hardcode de segredos no código. Por exemplo, se colocares a connection string do MongoDB Atlas diretamente no código, corres o risco de expor essas credenciais se o código for partilhado ou versionado. Usar um `.env` permite manter esses valores fora do código e do repositório, reduzindo o risco de exposição acidental.
 - Arranque controlado simplifica diagnóstico: se o servidor arranca, tens uma base mínima de confiança e sabes que qualquer erro posterior não deverá ser de configuração ou ligação à base de dados.
 
 4. **Erros comuns e sintomas**
@@ -383,8 +383,8 @@ npm install -D nodemon
 
 - `dotenv`: carrega variáveis de ambiente de um ficheiro `.env` para `process.env`, permitindo configurar o backend sem hardcode.
 
-- `bcrypt`: biblioteca para hashing de passwords, usada para armazenar senhas de forma segura no MongoDB.
-  **hashing de passwords:** é o processo de transformar uma senha em um valor fixo e irreversível usando um algoritmo de hash. O `bcrypt` é uma das bibliotecas mais populares para isso, pois inclui um fator de custo que torna o processo mais lento e resistente a ataques de força bruta. Ou seja, se alguém tentar adivinhar a senha, levará muito tempo para testar cada possibilidade, aumentando a segurança pois impede ataques automatizados e sequenciais.
+- `bcrypt`: biblioteca para hashing de passwords, usada para armazenar palavras-passe de forma segura no MongoDB.
+  **hashing de passwords:** é o processo de transformar uma palavra-passe num valor fixo e irreversível usando um algoritmo de hash. O `bcrypt` é uma das bibliotecas mais populares para isso, pois inclui um fator de custo que torna o processo mais lento e resistente a ataques de força bruta. Ou seja, se alguém tentar adivinhar a palavra-passe, levará muito tempo para testar cada possibilidade, aumentando a segurança pois impede ataques automatizados e sequenciais.
 
     O processo normalmente é o seguinte:
 
@@ -392,19 +392,19 @@ npm install -D nodemon
     Login:
     1) O utilizador envia username e password.
     2) O backend encontra o user pelo username.
-    3) O backend usa bcrypt.compare(password, user.passwordHash) para verificar se a senha é correta.
+    3) O backend usa bcrypt.compare(password, user.passwordHash) para verificar se a palavra-passe é correta.
 
     Registo:
     1) O utilizador envia username, email e password.
-    2) O backend gera um hash da senha com bcrypt.hash(password, saltRounds).
+    2) O backend gera um hash da palavra-passe com bcrypt.hash(password, saltRounds).
     3) O backend guarda o user com passwordHash no MongoDB.
     ```
 
-    Ou seja, na base de dados, nunca guardamos a senha em texto claro. Guardamos apenas o hash, e para verificar a senha, usamos `bcrypt.compare` que faz o processo de hashing internamente e compara com o hash armazenado.
+    Ou seja, na base de dados, nunca guardamos a palavra-passe em texto claro. Guardamos apenas o hash, e para verificar a palavra-passe, usamos `bcrypt.compare` que faz o processo de hashing internamente e compara com o hash armazenado.
 
     Exemplo:
 
-    Imagina que a password é `1234`. A password é passada para o `bcrypt.hash` que gera um hash como por exemplo `$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36S4Qn1j8a2uH0j0Q5e`. Esse hash é o que guardamos no MongoDB. Quando o utilizador tenta fazer login, ele envia `1234`, e o backend usa `bcrypt.compare('1234', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36S4Qn1j8a2uH0j0Q5e')`, que retorna `true` se a senha estiver correta. Ou seja, nunca ninguém nem nenhum processo/função tem acesso à senha original, apenas ao hash.
+    Imagina que a password é `1234`. A password é passada para o `bcrypt.hash` que gera um hash como por exemplo `$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36S4Qn1j8a2uH0j0Q5e`. Esse hash é o que guardamos no MongoDB. Quando o utilizador tenta fazer login, ele envia `1234`, e o backend usa `bcrypt.compare('1234', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36S4Qn1j8a2uH0j0Q5e')`, que devolve `true` se a palavra-passe estiver correta. Ou seja, nunca ninguém nem nenhum processo/função tem acesso à palavra-passe original, apenas ao hash.
 
 - `jsonwebtoken`: biblioteca para criar e verificar JSON Web Tokens (JWT), que serão usados para autenticação de sessão.
 
@@ -417,7 +417,7 @@ npm install -D nodemon
     1) O utilizador envia username e password.
     2) O backend verifica as credenciais.
     3) O backend gera um JWT com jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' }).
-    4) O backend envia o JWT em um cookie HttpOnly.
+    4) O backend envia o JWT num cookie HttpOnly.
     Pedidos subsequentes:
     1) O utilizador tenta fazer o login novamente ou aceder a uma rota protegida.
     2) O browser envia o cookie JWT automaticamente com o pedido.
@@ -425,7 +425,7 @@ npm install -D nodemon
     4) Se o token for válido, o backend considera o utilizador autenticado e pode usar o userId para aceder dados específicos do utilizador.
     ```
 
-    Mas o que é o segredo `JWT_SECRET`? É uma string que o backend usa para assinar os tokens. Se alguém tiver acesso a esse segredo, pode criar tokens falsos ou verificar tokens existentes, o que compromete a segurança da aplicação. Por isso, o `JWT_SECRET` deve ser mantido em segredo (por exemplo, em um `.env` que não é versionado) e deve ser forte o suficiente para resistir a ataques de força bruta.
+    Mas o que é o segredo `JWT_SECRET`? É uma string que o backend usa para assinar os tokens. Se alguém tiver acesso a esse segredo, pode criar tokens falsos ou verificar tokens existentes, o que compromete a segurança da aplicação. Por isso, o `JWT_SECRET` deve ser mantido em segredo (por exemplo, num `.env` que não é versionado) e deve ser forte o suficiente para resistir a ataques de força bruta.
 
     Em concreto, o segredo é uma string (que deve ser aleatória e segura) que é usada pelo backend para verificar a autenticidade dos tokens JWT.
     A partir do momento em que um segredo é definido e usado para assinar tokens, qualquer alteração nesse segredo invalidará todos os tokens existentes, pois o backend não conseguirá verificar a assinatura dos tokens antigos. Por isso, é crucial escolher um segredo forte e mantê-lo consistente enquanto os tokens estiverem em uso.
@@ -607,27 +607,27 @@ Nesta secção criamos sessão com JWT em cookie HttpOnly e proteção CSRF nas 
 
 - **Autenticação**: provar quem és (login).
 - **Autorização**: decidir o que podes fazer (acesso a recursos).
-  **Nota**: Tem atenção à diferença entre autenticação e autorização. Autenticação é o processo de verificar a identidade do utilizador, geralmente através de um login com credenciais (como username e password). Já a autorização é o processo de determinar quais recursos ou ações esse utilizador autenticado tem permissão para aceder ou executar. Por exemplo, um utilizador pode ser autenticado com sucesso (sua identidade é verificada), mas pode não ter autorização para aceder certos dados ou realizar certas ações, dependendo das regras de acesso definidas no backend.
+  **Nota**: Tem atenção à diferença entre autenticação e autorização. Autenticação é o processo de verificar a identidade do utilizador, geralmente através de um login com credenciais (como username e password). Já a autorização é o processo de determinar quais recursos ou ações esse utilizador autenticado tem permissão para aceder ou executar. Por exemplo, um utilizador pode ser autenticado com sucesso (a sua identidade é verificada), mas pode não ter autorização para aceder certos dados ou realizar certas ações, dependendo das regras de acesso definidas no backend.
 - **JWT**: token assinado, não encriptado; contém claims (ex.: `userId`, expiração).
 - **Cookie HttpOnly**: cookie que JavaScript não consegue ler, mas o browser envia automaticamente.
 - **CORS**: política de origens para pedidos entre frontend e backend em hosts/portas diferentes.
 
-    Mas o que é CORS? CORS, ou Cross-Origin Resource Sharing, é um mecanismo de segurança implementado pelos browsers para controlar como recursos numa página web podem ser solicitados a partir de um domínio diferente daquele que serviu a página. Por exemplo, se o frontend está a ser executado em `http://localhost:5173` e o backend em `http://localhost:3000`, isso é considerado uma requisição cross-origin. Pois apesar de estarmos no mesmo localhost, as portas diferentes fazem com que sejam consideradas origens distintas. Para permitir que o frontend se comunique com o backend sem ser bloqueado por políticas de CORS, o backend precisa incluir headers específicos (como `Access-Control-Allow-Origin`) que autorizem essa comunicação. No nosso caso, vamos configurar o backend para permitir pedidos do frontend usando CORS, garantindo que as requisições sejam aceitas e os cookies sejam enviados corretamente.
+    Mas o que é CORS? CORS, ou Cross-Origin Resource Sharing, é um mecanismo de segurança implementado pelos browsers para controlar como recursos numa página web podem ser solicitados a partir de um domínio diferente daquele que serviu a página. Por exemplo, se o frontend está a ser executado em `http://localhost:5173` e o backend em `http://localhost:3000`, isso é considerado um pedido cross-origin. Pois apesar de estarmos no mesmo localhost, as portas diferentes fazem com que sejam consideradas origens distintas. Para permitir que o frontend se comunique com o backend sem ser bloqueado por políticas de CORS, o backend precisa incluir headers específicos (como `Access-Control-Allow-Origin`) que autorizem essa comunicação. No nosso caso, vamos configurar o backend para permitir pedidos do frontend usando CORS, garantindo que os pedidos sejam aceites e os cookies sejam enviados corretamente.
 
 - **CSRF**: ataque que explora o envio automático de cookies em pedidos mutáveis. (definição mais à frente)
 
-    Mas o que é o CSRF? CSRF, ou Cross-Site Request Forgery, é um tipo de ataque onde um atacante engana um utilizador autenticado para fazer uma requisição indesejada a um site em que ele está autenticado. Por exemplo, se um utilizador está autênticado no nosso site e visita um site malicioso, esse site pode tentar fazer uma requisição POST para o nosso backend usando os cookies de sessão do utilizador. Como os cookies são enviados automaticamente pelo browser, o backend pode processar essa requisição como se fosse legítima, o que pode levar a ações indesejadas, como alterar dados ou realizar operações em nome do utilizador sem o seu consentimento. Para proteger contra CSRF, implementamos medidas como o uso de tokens CSRF que devem ser incluídos em requisições mutáveis (POST/PUT/PATCH/DELETE) e verificados pelo backend.
+    Mas o que é o CSRF? CSRF, ou Cross-Site Request Forgery, é um tipo de ataque onde um atacante engana um utilizador autenticado para fazer um pedido indesejado a um site em que ele está autenticado. Por exemplo, se um utilizador está autenticado no nosso site e visita um site malicioso, esse site pode tentar fazer um pedido POST para o nosso backend usando os cookies de sessão do utilizador. Como os cookies são enviados automaticamente pelo browser, o backend pode processar esse pedido como se fosse legítimo, o que pode levar a ações indesejadas, como alterar dados ou realizar operações em nome do utilizador sem o seu consentimento. Para proteger contra CSRF, implementamos medidas como o uso de tokens CSRF que devem ser incluídos em pedidos mutáveis (POST/PUT/PATCH/DELETE) e verificados pelo backend.
 
     Exemplo de ataque CSRF:
 
     ```txt
     1) O utilizador está autenticado no nosso site (cookie de sessão válido).
     2) O utilizador visita um site malicioso (ex: http://malicious.com).
-    3) O site malicioso tem um código que faz uma requisição POST para o nosso backend (ex: http://localhost:3000/api/favorites) usando os cookies do utilizador.
-    4) O backend recebe a requisição, vê o cookie de sessão válido e processa a ação (ex: adiciona um favorito), mesmo que o utilizador não tenha autorizado essa ação.
+    3) O site malicioso tem um código que faz um pedido POST para o nosso backend (ex: http://localhost:3000/api/favorites) usando os cookies do utilizador.
+    4) O backend recebe o pedido, vê o cookie de sessão válido e processa a ação (ex: adiciona um favorito), mesmo que o utilizador não tenha autorizado essa ação.
     ```
 
-    **Como é que protegemos contra CSRF?** Usamos um token CSRF que é gerado pelo backend e enviado para o frontend (geralmente num cookie não HttpOnly). O frontend inclui esse token num header personalizado (ex: `X-CSRF-Token`) em requisições mutáveis. O backend, ao receber a requisição, compara o token do header com o token armazenado no cookie. Se os tokens não coincidirem, o backend rejeita a requisição com um erro 403, protegendo assim contra ataques CSRF.
+    **Como é que protegemos contra CSRF?** Usamos um token CSRF que é gerado pelo backend e enviado para o frontend (geralmente num cookie não HttpOnly). O frontend inclui esse token num header personalizado (ex: `X-CSRF-Token`) em pedidos mutáveis. O backend, ao receber o pedido, compara o token do header com o token armazenado no cookie. Se os tokens não coincidirem, o backend rejeita o pedido com um erro 403, protegendo assim contra ataques CSRF.
 
     Assim, basicamente ficamos com 2 tokens em cada pedido mutável:
     - O cookie HttpOnly com o JWT para autenticação.
@@ -791,7 +791,7 @@ export default User;
 - **Ficheiros:** criar/editar `backend/src/utils/cookies.js` e `backend/src/utils/csrf.js`.
 - **Validação rápida:** há funções separadas para `authCookieOptions`, `csrfCookieOptions`, `clearCookieOptions` e `createCsrfToken`.
 
-`backend/src/utils/cookies.js`:
+Criar ficheiro `backend/src/utils/cookies.js`:
 
 ```js
 /**
@@ -856,7 +856,7 @@ export function clearCookieOptions() {
 }
 ```
 
-`backend/src/utils/csrf.js`:
+Criar ficheiro `backend/src/utils/csrf.js`:
 
 ```js
 /**
@@ -879,12 +879,12 @@ export function createCsrfToken() {
 
 ### 3.2) `requireAuth`
 
-- **Ponto de situação:** já existe infraestrutura de token/cookies; agora falta proteger rotas privadas.
+- **Ponto de situação:** já existe infraestrutura de token/cookies; agora falta proteger rotas privadas. Para isso vamos criar um middleware `requireAuth` que valida o JWT do cookie e expõe `req.auth.userId` para os handlers seguintes.
 - **Objetivo deste passo:** validar JWT do cookie e expor `req.auth.userId` para as rotas seguintes.
 - **Ficheiros:** criar/editar `backend/src/middlewares/requireAuth.js`.
 - **Validação rápida:** sem cookie devolve `401`; com token válido passa no `next()`.
 
-`backend/src/middlewares/requireAuth.js`:
+Cria o ficheiro `backend/src/middlewares/requireAuth.js`:
 
 ```js
 /**
@@ -931,7 +931,7 @@ export function requireAuth(req, res, next) {
 
 ### 3.3) `requireCsrf` + preflight/CORS
 
-- **Ponto de situação:** autenticação pronta; agora falta proteger mutações contra CSRF.
+- **Ponto de situação:** autenticação pronta; agora falta proteger mutações contra CSRF. Recordo que mutação é qualquer pedido que altera estado (POST/PUT/PATCH/DELETE). Para isso, vamos criar um middleware `requireCsrf` que compara o token do cookie com o token do header `X-CSRF-Token` e bloqueia pedidos mutáveis sem correspondência. Os métodos seguros (GET/HEAD/OPTIONS) passam sem exigir token CSRF, e o método `OPTIONS` é essencial para o preflight do CORS funcionar corretamente.
 - **Objetivo deste passo:** exigir correspondência entre cookie CSRF e header `X-CSRF-Token` em métodos mutáveis.
 - **Ficheiros:** criar/editar `backend/src/middlewares/requireCsrf.js`.
 - **Validação rápida:** `GET` passa sem token; `POST/DELETE` sem token correto devolvem `403`.
@@ -941,7 +941,7 @@ Antes do snippet, fixa estas duas regras práticas:
 - `OPTIONS` (preflight) deve passar para o browser conseguir avançar para a mutação real.
 - CORS e CSRF resolvem problemas diferentes: CORS controla origem; CSRF valida intenção da mutação autenticada.
 
-`backend/src/middlewares/requireCsrf.js`:
+Criar ficheiro `backend/src/middlewares/requireCsrf.js`:
 
 ```js
 /**
@@ -988,7 +988,7 @@ export function requireCsrf(req, res, next) {
 - **Ficheiros:** criar/editar `backend/src/routes/auth.routes.js`.
 - **Validação rápida:** `register/login` definem cookies, `me` devolve user autenticado e `logout` limpa sessão com CSRF válido.
 
-`backend/src/routes/auth.routes.js`:
+Cria o ficheiro `backend/src/routes/auth.routes.js`:
 
 ```js
 /**
@@ -1204,6 +1204,7 @@ export default router;
 ```
 
 > Na secção 4, estes stubs são substituídos pelos ficheiros finais.
+> Stubs são uma prática comum para manter o backend funcional durante a migração, evitando erros de importação e permitindo que testes e desenvolvimento continuem sem bloqueios.
 
 `backend/src/app.js`:
 
@@ -1332,7 +1333,7 @@ Critérios binários de validação (debug guiado):
 
 ### O que é
 
-Agora fechamos os recursos de negócio: favoritos por utilizador, equipas com paginação e upload de avatar.
+Agora fechamos os recursos: favoritos por utilizador, equipas com paginação e upload de avatar.
 
 ### Teoria
 
@@ -1363,7 +1364,7 @@ Agora fechamos os recursos de negócio: favoritos por utilizador, equipas com pa
 - `422 id inválido` em favorites -> `id` veio string vazia/não inteiro.
 - `409 Pokémon já é favorito` -> UI tentou adicionar duplicado.
 - Team criada com IDs repetidos -> deduplicação ausente no cliente ou servidor.
-- Upload retorna 413 -> ficheiro excede limite configurado.
+- Upload devolve 413 -> ficheiro excede limite configurado.
 - URL de avatar guarda path errado -> imagem não abre no browser.
 
 5. **Boas práticas e segurança**
