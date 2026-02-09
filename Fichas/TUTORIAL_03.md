@@ -1060,7 +1060,7 @@ const TYPE_NAMES = [
 const DEFAULT_TYPE = "normal";
 
 /**
- * Retorna a cor base de um tipo.
+ * Devolve a cor base de um tipo.
  *
  * @param {string} typeName - Nome do tipo.
  * @returns {string} Cor principal do tipo.
@@ -1070,7 +1070,7 @@ export function getTypeColor(typeName) {
 }
 
 /**
- * Retorna o gradiente associado a um tipo.
+ * Devolve o gradiente associado a um tipo.
  *
  * @param {string} typeName - Nome do tipo.
  * @returns {string} Gradiente linear gerado a partir das cores.
@@ -1530,7 +1530,7 @@ function PokemonDetailsPage({ pokemon, isFavorite, onToggleFavorite, onBack }) {
     }
 
     /**
-     * Retorna o rótulo do stat em português.
+     * Devolve o rótulo do stat em português.
      *
      * @param {string} statName - Nome técnico do stat.
      * @returns {string} Rótulo legível.
